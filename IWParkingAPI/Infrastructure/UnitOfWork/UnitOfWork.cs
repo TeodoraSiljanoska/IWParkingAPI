@@ -64,7 +64,7 @@ namespace IWParkingAPI.Infrastructure.UnitOfWork
 
         public IGenericRepository<TEntity> GetGenericRepository<TEntity>() where TEntity : class
         {
-            return new SQLRepository<TEntity, TContext>(_context);
+            return new SQLRepository<TEntity>(_context);
         }
 
     }

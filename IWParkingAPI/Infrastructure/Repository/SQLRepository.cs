@@ -2,7 +2,7 @@
 
 namespace IWParkingAPI.Infrastructure.Repository
 {
-    public class SQLRepository<TEntity, TContext> : IGenericRepository<TEntity> where TEntity : class
+    public class SQLRepository<TEntity> : IGenericRepository<TEntity> where TEntity : class
     {
         private DbContext _context;
         private DbSet<TEntity> _db;
