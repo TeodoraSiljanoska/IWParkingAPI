@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace IWParkingAPI.Models;
+namespace IWParkingAPI.Models.Data;
 
 public partial class AspNetRole
 {
@@ -12,6 +12,10 @@ public partial class AspNetRole
     public string? NormalizedName { get; set; }
 
     public string? ConcurrencyStamp { get; set; }
+
+    public DateTime TimeCreated { get; set; }
+
+    public DateTime? TimeModified { get; set; }
 
     public virtual ICollection<AspNetRoleClaim> AspNetRoleClaims { get; set; } = new List<AspNetRoleClaim>();
 

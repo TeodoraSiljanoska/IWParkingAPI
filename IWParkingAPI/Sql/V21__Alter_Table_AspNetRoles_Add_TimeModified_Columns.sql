@@ -1,0 +1,7 @@
+ALTER TABLE AspNetRoles
+ADD  TimeCreated DATETIME,
+	 TimeModified DATETIME
+
+
+ALTER TABLE AspNetRoles
+ALTER COLUMN TimeCreated DATETIME NOT NULL

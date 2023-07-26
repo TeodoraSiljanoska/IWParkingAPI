@@ -5,8 +5,9 @@
         IEnumerable<TEntity> GetAll();
         TEntity GetById(object id);
         void Insert(TEntity obj);
-        void Update(TEntity obj, TEntity objChanges);
+        void Update(TEntity obj);
         void Delete(TEntity id);
         void Save();
+        bool FindByPredicate(Func<TEntity, bool> predicate);
     }
 }

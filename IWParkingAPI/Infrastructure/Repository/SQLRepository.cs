@@ -37,10 +37,15 @@ namespace IWParkingAPI.Infrastructure.Repository
             _context.SaveChanges();
         }
 
-        public void Update(TEntity obj, TEntity objChanges)
+        public void Update(TEntity obj)
         {
             _db.Attach(obj);
             _context.Entry(obj).State = EntityState.Modified;
+        }
+
+        public bool FindByPredicate(Func<TEntity, bool> predicate)
+        {
+            return _db.Any(predicate);
         }
     }
 }

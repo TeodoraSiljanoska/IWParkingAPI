@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace IWParkingAPI.Models;
+namespace IWParkingAPI.Models.Data;
 
 public partial class AspNetUser
 {
@@ -32,6 +32,18 @@ public partial class AspNetUser
     public bool LockoutEnabled { get; set; }
 
     public int AccessFailedCount { get; set; }
+
+    public string? Email { get; set; }
+
+    public string? NormalizedEmail { get; set; }
+
+    public bool? EmailConfirmed { get; set; }
+
+    public bool? IsDeactivated { get; set; }
+
+    public DateTime TimeCreated { get; set; }
+
+    public DateTime? TimeModified { get; set; }
 
     public virtual ICollection<AspNetUserClaim> AspNetUserClaims { get; set; } = new List<AspNetUserClaim>();
 

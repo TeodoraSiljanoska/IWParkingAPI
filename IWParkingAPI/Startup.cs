@@ -1,6 +1,6 @@
 ﻿using IWParkingAPI.Infrastructure.Repository;
 using IWParkingAPI.Infrastructure.UnitOfWork;
-using IWParkingAPI.Models;
+using IWParkingAPI.Models.Context;
 using Microsoft.EntityFrameworkCore;
 
 namespace IWParkingAPI
@@ -31,6 +31,8 @@ namespace IWParkingAPI
 
             var connectionString = Configuration.GetConnectionString("DefaultConnection");
             services.AddDbContext<ParkingDbContext>(o => o.UseSqlServer(connectionString));
+
+            services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

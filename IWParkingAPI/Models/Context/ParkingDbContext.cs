@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using IWParkingAPI.Models.Data;
 using Microsoft.EntityFrameworkCore;
 
-namespace IWParkingAPI.Models;
+namespace IWParkingAPI.Models.Context;
 
 public partial class ParkingDbContext : DbContext
 {
@@ -50,6 +51,8 @@ public partial class ParkingDbContext : DbContext
 
             entity.Property(e => e.Name).HasMaxLength(256);
             entity.Property(e => e.NormalizedName).HasMaxLength(256);
+            entity.Property(e => e.TimeCreated).HasColumnType("datetime");
+            entity.Property(e => e.TimeModified).HasColumnType("datetime");
         });
 
         modelBuilder.Entity<AspNetRoleClaim>(entity =>
@@ -65,9 +68,16 @@ public partial class ParkingDbContext : DbContext
                 .IsUnique()
                 .HasFilter("([NormalizedUserName] IS NOT NULL)");
 
+            entity.Property(e => e.Email).HasMaxLength(256);
+            entity.Property(e => e.IsDeactivated)
+                .IsRequired()
+                .HasDefaultValueSql("('False')");
             entity.Property(e => e.Name).HasMaxLength(256);
+            entity.Property(e => e.NormalizedEmail).HasMaxLength(256);
             entity.Property(e => e.NormalizedUserName).HasMaxLength(256);
             entity.Property(e => e.Surname).HasMaxLength(256);
+            entity.Property(e => e.TimeCreated).HasColumnType("datetime");
+            entity.Property(e => e.TimeModified).HasColumnType("datetime");
             entity.Property(e => e.UserName).HasMaxLength(256);
 
             entity.HasMany(d => d.Roles).WithMany(p => p.Users)

@@ -1,7 +1,9 @@
-﻿using IWParkingAPI.Infrastructure.Repository;
+﻿using AutoMapper;
+using IWParkingAPI.Infrastructure.Repository;
 using IWParkingAPI.Infrastructure.UnitOfWork;
 using IWParkingAPI.Mappers;
-using IWParkingAPI.Models;
+using IWParkingAPI.Models.Context;
+using IWParkingAPI.Models.Data;
 using IWParkingAPI.Models.Requests;
 using IWParkingAPI.Models.Responses;
 using Microsoft.AspNetCore.Mvc;
@@ -16,6 +18,7 @@ namespace IWParkingAPI.Controllers
         private IUnitOfWork<ParkingDbContext> _unitOfWork;
         private IGenericRepository<AspNetRole> _roleRepository;
         private RoleResponse response;
+        private readonly IMapper _mapper;
 
 
         public RoleController(IUnitOfWork<ParkingDbContext> unitOfWork)
@@ -23,10 +26,11 @@ namespace IWParkingAPI.Controllers
             _unitOfWork = unitOfWork;
             _roleRepository = _unitOfWork.GetGenericRepository<AspNetRole>();
             response = new RoleResponse();
+            _mapper = MapperConfig.InitializeAutomapper();
         }
 
-        [HttpGet("getAll")]
-        public IEnumerable<AspNetRole> Index()
+        [HttpGet("GetAll")]
+        public IEnumerable<AspNetRole> GetAll()
         {
             if (_roleRepository.GetAll().Count() == 0)
             {
@@ -36,8 +40,8 @@ namespace IWParkingAPI.Controllers
             return _roleRepository.GetAll();
         }
 
-        [HttpGet("get/{id}")]
-        public RoleResponse GetRole(int id)
+        [HttpGet("Get/{id}")]
+        public RoleResponse GetById(int id)
         {
             AspNetRole role = _roleRepository.GetById(id);
             if (role == null)
@@ -51,11 +55,18 @@ namespace IWParkingAPI.Controllers
             return response;
         }
 
-        [HttpPost("create")]
+        [HttpPost("Create")]
         public RoleResponse Create(RoleRequest request)
         {
-            var mapper = MapperConfig.InitializeAutomapper();
-            var role = mapper.Map<AspNetRole>(request);
+           if (_roleRepository.FindByPredicate(role => role.Name == request.Name))
+           {
+                response.StatusCode = HttpStatusCode.BadRequest;
+                response.Errors.Add("Role with that name already exists.");
+                return response;
+            }
+
+            AspNetRole role = _mapper.Map<AspNetRole>(request);
+            role.TimeCreated = DateTime.Now;
 
             _roleRepository.Insert(role);
             _unitOfWork.Save();
@@ -66,7 +77,31 @@ namespace IWParkingAPI.Controllers
             return response;
         }
 
-        [HttpDelete("delete/{id}")]
+        [HttpPut("Update/{id}")]
+        public RoleResponse Update(int id, RoleRequest changes)
+        {
+            AspNetRole role = _roleRepository.GetById(id);
+            if (role == null)
+            {
+                response.StatusCode = HttpStatusCode.NotFound;
+                response.Errors.Add("Role not found");
+                return response;
+            }
+
+            role.Name = changes.Name;
+            role.NormalizedName = role.Name.ToUpper();
+            role.TimeModified = DateTime.Now;
+
+            _roleRepository.Update(role);
+            _unitOfWork.Save();
+
+            response.Role = role;
+            response.StatusCode = HttpStatusCode.OK;
+
+            return response;
+        }
+
+        [HttpDelete("Delete/{id}")]
         public RoleResponse Delete(int id)
         {
             AspNetRole role = _roleRepository.GetById(id);
