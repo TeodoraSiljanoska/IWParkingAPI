@@ -21,8 +21,7 @@ namespace IWParkingAPI
         {
             services.AddScoped(typeof(IGenericRepository<>), typeof(SQLRepository<>));
             services.AddScoped(typeof(IUnitOfWork<>), typeof(UnitOfWork<>));
-
-
+            services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
             services.AddControllers();
 
            services.AddIdentity<ApplicationUser, ApplicationRole>()

@@ -1,8 +1,11 @@
-﻿using IWParkingAPI.Infrastructure.Repository;
+﻿using AutoMapper;
+using IWParkingAPI.Infrastructure.Repository;
 using IWParkingAPI.Infrastructure.UnitOfWork;
+using IWParkingAPI.Mappers;
 using IWParkingAPI.Models;
 using IWParkingAPI.Models.Context;
 using IWParkingAPI.Models.Data;
+using IWParkingAPI.Models.Requests;
 using IWParkingAPI.Models.Responses;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
@@ -21,10 +24,10 @@ namespace IWParkingAPI.Controllers
         private IUnitOfWork<ParkingDbContextCustom> _unitOfWork;
         private readonly IGenericRepository<ApplicationUser> _userRepository;
         private UserResponse response;
-       
+        private readonly IMapper _mapper;
 
-             public UserController(/*IJwtUtils jwtUtils , */ UserManager<ApplicationUser> userManager, ILogger<UserController> logger,
-            IUnitOfWork<ParkingDbContextCustom> unitOfWork)
+        public UserController(/*IJwtUtils jwtUtils , */ UserManager<ApplicationUser> userManager, ILogger<UserController> logger,
+            IUnitOfWork<ParkingDbContextCustom> unitOfWork, IMapper mapper)
         {
            // _jwtUtils = jwtUtils;
             _userManager = userManager;
@@ -32,6 +35,8 @@ namespace IWParkingAPI.Controllers
             _unitOfWork = unitOfWork;
             _userRepository = _unitOfWork.GetGenericRepository<ApplicationUser>();
            response = new UserResponse();
+            _mapper = mapper;
+           
         }
 
 
@@ -48,7 +53,7 @@ namespace IWParkingAPI.Controllers
         }
 
         [HttpGet("get/{id}")]
-        public UserResponse GetRole(int id)
+        public UserResponse GetUser(int id)
         {
             ApplicationUser User = _userRepository.GetById(id)
 ;
@@ -62,6 +67,83 @@ namespace IWParkingAPI.Controllers
             response.StatusCode = HttpStatusCode.OK;
             return response;
         }
+
+        [HttpPost("create")]
+
+        public UserResponse Create(UserRequest request)
+        {
+            if (_userRepository.FindByPredicate(u => u.UserName == request.UserName))
+            {
+                response.StatusCode = HttpStatusCode.BadRequest;
+                response.Errors.Add("User already exists.");
+                return response;
+            }
+            
+                var mapper = MapperConfig.InitializeAutomapper();
+                var user = mapper.Map<ApplicationUser>(request);
+
+
+                _userRepository.Insert(user);
+                _unitOfWork.Save();
+
+                response.User = user;
+                response.StatusCode = HttpStatusCode.OK;
+
+                return response;
+            
+        }
+
+        [HttpPut("Update/{id}")]
+        public UserResponse Update(int id, UserRequest changes)
+        {
+            ApplicationUser user = _userRepository.GetById(id)
+;
+            if (user == null)
+            {
+                response.StatusCode = HttpStatusCode.NotFound;
+                response.Errors.Add("User not found");
+                return response;
+            }
+
+            user.Name = changes.Name;
+            user.Surname = changes.Surname;
+            user.UserName = changes.UserName;
+            user.NormalizedUserName = changes.UserName.ToUpper();
+            user.PhoneNumber = changes.PhoneNumber;
+            user.Email = changes.Email;
+            user.NormalizedEmail = changes.Email.ToUpper();
+            
+
+            _userRepository.Update(user);
+            _unitOfWork.Save();
+
+            response.User = user;
+            response.StatusCode = HttpStatusCode.OK;
+
+            return response;
+        }
+
+        [HttpDelete("Delete/{id}")]
+        public UserResponse Delete(int id)
+        {
+            ApplicationUser user = _userRepository.GetById(id)
+;
+            if (user == null)
+            {
+                response.StatusCode = HttpStatusCode.NotFound;
+                response.Errors.Add("User not found");
+                return response;
+            }
+
+            _userRepository.Delete(user);
+            _unitOfWork.Save();
+
+            response.User = user;
+            response.StatusCode = HttpStatusCode.OK;
+
+            return response;
+        }
+
 
     }
 }
