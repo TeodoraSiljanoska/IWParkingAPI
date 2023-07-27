@@ -30,6 +30,12 @@ namespace IWParkingAPI.Mappers
             dest.PasswordHash,
             opt => opt.MapFrom(src => src.PasswordHash))
         .ForMember(dest =>
+            dest.NormalizedUserName,
+            opt => opt.MapFrom(src => src.UserName.ToUpper()))
+        .ForMember(dest =>
+            dest.NormalizedEmail,
+            opt => opt.MapFrom(src => src.Email.ToUpper()))
+        .ForMember(dest =>
             dest.PhoneNumber,
             opt => opt.MapFrom(src => src.PhoneNumber));
             });

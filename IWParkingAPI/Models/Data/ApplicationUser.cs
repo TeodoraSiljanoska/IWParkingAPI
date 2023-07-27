@@ -17,9 +17,9 @@ namespace IWParkingAPI.Models.Data
 
         public bool? IsDeactivated { get; set; }
 
-        public DateTime TimeCreated { get; set; }
+       public DateTime TimeCreated { get; set; }
 
-        public DateTime? TimeModified { get; set; }
+       public DateTime? TimeModified { get; set; }
     }
     }
 
