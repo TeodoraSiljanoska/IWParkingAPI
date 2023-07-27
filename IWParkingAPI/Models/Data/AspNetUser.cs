@@ -14,11 +14,6 @@ public partial class AspNetUser
     public string Surname { get; set; } = null!;
 
     public string? NormalizedUserName { get; set; }
-    public string? Email { get; set; }
-
-    public string? NormalizedEmail { get; set; }
-
-    public bool EmailConfirmed { get; set; }
 
     public string? PasswordHash { get; set; }
 
@@ -37,6 +32,18 @@ public partial class AspNetUser
     public bool LockoutEnabled { get; set; }
 
     public int AccessFailedCount { get; set; }
+
+    public string? Email { get; set; }
+
+    public string? NormalizedEmail { get; set; }
+
+    public bool? EmailConfirmed { get; set; }
+
+    public bool? IsDeactivated { get; set; } 
+
+    public DateTime TimeCreated { get; set; }
+
+    public DateTime? TimeModified { get; set; }
 
     public virtual ICollection<AspNetUserClaim> AspNetUserClaims { get; set; } = new List<AspNetUserClaim>();
 

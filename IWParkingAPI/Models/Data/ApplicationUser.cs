@@ -14,6 +14,12 @@ namespace IWParkingAPI.Models.Data
 
         public string? Name { get; set; }
         public string? Surname { get; set; }
-        }
+
+        public bool? IsDeactivated { get; set; }
+
+        public DateTime TimeCreated { get; set; }
+
+        public DateTime? TimeModified { get; set; }
+    }
     }
 

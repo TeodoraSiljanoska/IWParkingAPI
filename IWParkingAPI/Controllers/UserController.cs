@@ -68,7 +68,7 @@ namespace IWParkingAPI.Controllers
             return response;
         }
 
-        [HttpPost("create")]
+        [HttpPost("Create")]
 
         public UserResponse Create(UserRequest request)
         {
@@ -81,7 +81,9 @@ namespace IWParkingAPI.Controllers
             
                 var mapper = MapperConfig.InitializeAutomapper();
                 var user = mapper.Map<ApplicationUser>(request);
-
+                
+           user.TimeCreated = DateTime.Now;
+           user.IsDeactivated = false;
 
                 _userRepository.Insert(user);
                 _unitOfWork.Save();
