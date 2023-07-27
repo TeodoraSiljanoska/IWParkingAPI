@@ -39,7 +39,7 @@ public partial class AspNetUser
 
     public bool? EmailConfirmed { get; set; }
 
-    public bool? IsDeactivated { get; set; }
+    public bool? IsDeactivated { get; set; } 
 
     public DateTime TimeCreated { get; set; }
 
