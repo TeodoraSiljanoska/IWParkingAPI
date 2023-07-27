@@ -3,7 +3,8 @@ using IWParkingAPI.Infrastructure.UnitOfWork;
 using IWParkingAPI.Models;
 using IWParkingAPI.Models.Context;
 using IWParkingAPI.Models.Data;
-using IWParkingAPI.Services;
+using IWParkingAPI.Services.Implementation;
+using IWParkingAPI.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -23,6 +24,7 @@ namespace IWParkingAPI
             services.AddScoped(typeof(IGenericRepository<>), typeof(SQLRepository<>));
             services.AddScoped(typeof(IUnitOfWork<>), typeof(UnitOfWork<>));
             services.AddScoped<IUserService, UserService>();
+            services.AddScoped<IRoleService, RoleService>();
             services.AddAutoMapper(typeof(Startup));
             services.AddControllers();
 

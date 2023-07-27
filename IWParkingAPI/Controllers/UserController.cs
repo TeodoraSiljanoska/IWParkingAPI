@@ -1,7 +1,7 @@
 ﻿using IWParkingAPI.Models.Data;
 using IWParkingAPI.Models.Requests;
 using IWParkingAPI.Models.Responses;
-using IWParkingAPI.Services;
+using IWParkingAPI.Services.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -16,51 +16,42 @@ namespace IWParkingAPI.Controllers
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly ILogger<UserController> _logger;
         private readonly IUserService _userService;
-        private readonly UserResponse response;
 
         public UserController(UserManager<ApplicationUser> userManager, ILogger<UserController> logger, IUserService userService)
         {
             _userManager = userManager;
             _logger = logger;
             _userService = userService;
-            response = new UserResponse();
         }
 
         [HttpGet("GetAll")]
         public IEnumerable<ApplicationUser> GetUsers()
         {
-            var users = _userService.GetAllUsers();
-            return users;
+            return _userService.GetAllUsers();
         }
 
         [HttpGet("Get/{id}")]
         public UserResponse GetUser(int id)
         {
-            var userResponse = _userService.GetUserById(id);
-            
-            return userResponse;
+            return _userService.GetUserById(id);
         }
 
         [HttpPost("Create")]
         public UserResponse Create(UserRequest request)
         {
-            var userResponse = _userService.CreateUser(request);
-            return userResponse;
+            return _userService.CreateUser(request);
         }
 
         [HttpPut("Update/{id}")]
         public UserResponse Update(int id, UserRequest changes)
         {
-            var userResponse = _userService.UpdateUser(id, changes);
-            return userResponse;
+            return _userService.UpdateUser(id, changes);
         }
 
         [HttpDelete("Delete/{id}")]
         public UserResponse Delete(int id)
         {
-            var userResponse = _userService.DeleteUser(id);
-            
-            return userResponse;
+            return _userService.DeleteUser(id);
         }
     }
 }

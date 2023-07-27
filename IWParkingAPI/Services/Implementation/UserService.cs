@@ -1,17 +1,13 @@
 ﻿using AutoMapper;
+using Azure.Core;
 using IWParkingAPI.Infrastructure.Repository;
 using IWParkingAPI.Infrastructure.UnitOfWork;
 using IWParkingAPI.Mappers;
-using IWParkingAPI.Models;
 using IWParkingAPI.Models.Context;
 using IWParkingAPI.Models.Data;
 using IWParkingAPI.Models.Requests;
 using IWParkingAPI.Models.Responses;
-using IWParkingAPI.Services;
-using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+using IWParkingAPI.Services.Interfaces;
 using System.Net;
 
 public class UserService : IUserService
@@ -84,6 +80,13 @@ public class UserService : IUserService
         {
             _response.StatusCode = HttpStatusCode.NotFound;
             _response.Errors.Add("User not found");
+            return _response;
+        }
+
+        if (_userRepository.FindByPredicate(u => u.UserName == changes.UserName))
+        {
+            _response.StatusCode = HttpStatusCode.BadRequest;
+            _response.Errors.Add("User with that username already exists.");
             return _response;
         }
 
