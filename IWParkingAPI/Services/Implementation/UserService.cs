@@ -1,5 +1,4 @@
 ﻿using AutoMapper;
-using Azure.Core;
 using IWParkingAPI.Infrastructure.Repository;
 using IWParkingAPI.Infrastructure.UnitOfWork;
 using IWParkingAPI.Mappers;
@@ -8,6 +7,7 @@ using IWParkingAPI.Models.Data;
 using IWParkingAPI.Models.Requests;
 using IWParkingAPI.Models.Responses;
 using IWParkingAPI.Services.Interfaces;
+using Microsoft.AspNetCore.Identity;
 using System.Net;
 
 public class UserService : IUserService
@@ -15,14 +15,18 @@ public class UserService : IUserService
     private readonly IMapper _mapper;
     private readonly IUnitOfWork<ParkingDbContextCustom> _unitOfWork;
     private readonly IGenericRepository<ApplicationUser> _userRepository;
+    private readonly IGenericRepository<ApplicationRole> _roleRepository;
     private readonly UserResponse _response;
+    private readonly UserManager<ApplicationUser> _userManager;
 
-    public UserService(IUnitOfWork<ParkingDbContextCustom> unitOfWork)
+    public UserService(IUnitOfWork<ParkingDbContextCustom> unitOfWork, UserManager<ApplicationUser> userManager)
     {
         _unitOfWork = unitOfWork;
         _userRepository = _unitOfWork.GetGenericRepository<ApplicationUser>();
+        _roleRepository = _unitOfWork.GetGenericRepository<ApplicationRole>();
         _mapper = MapperConfig.InitializeAutomapper();
         _response = new UserResponse();
+        _userManager = userManager;
     }
 
     public IEnumerable<ApplicationUser> GetAllUsers()
@@ -51,26 +55,49 @@ public class UserService : IUserService
         return _response;
     }
 
-    public UserResponse CreateUser(UserRequest request)
+    public async Task<UserResponse> CreateUser(UserRequest request, string roleName)
     {
-        if (_userRepository.FindByPredicate(u => u.UserName == request.UserName))
+        try
         {
-            _response.StatusCode = HttpStatusCode.BadRequest;
-            _response.Errors.Add("User already exists.");
+            if (_userRepository.FindByPredicate(u => u.UserName == request.UserName))
+            {
+                _response.StatusCode = HttpStatusCode.BadRequest;
+                _response.Errors.Add("User already exists.");
+                return _response;
+            }
+
+            if (!_roleRepository.FindByPredicate(r => r.Name == roleName))
+            {
+                _response.StatusCode = HttpStatusCode.BadRequest;
+                _response.Errors.Add("Role with that name doesn't exists.");
+                return _response;
+            }
+
+            var user = _mapper.Map<ApplicationUser>(request);
+            user.TimeCreated = DateTime.Now;
+            user.IsDeactivated = false;
+
+            var result = await _userManager.CreateAsync(user, user.PasswordHash);
+
+            if (result.Succeeded)
+            {
+                await _userManager.AddToRoleAsync(user, roleName);
+                _response.StatusCode = HttpStatusCode.OK;
+                _response.User = user;
+            }
+            else
+            {
+                _response.StatusCode = HttpStatusCode.BadRequest;
+                _response.Errors.Add("User registration failed.");
+            }
             return _response;
         }
-
-        var user = _mapper.Map<ApplicationUser>(request);
-        user.TimeCreated = DateTime.Now;
-        user.IsDeactivated = false;
-
-        _userRepository.Insert(user);
-        _unitOfWork.Save();
-
-        _response.User = user;
-        _response.StatusCode = HttpStatusCode.OK;
-
-        return _response;
+        catch (Exception ex)
+        {
+            _response.StatusCode = HttpStatusCode.BadRequest;
+            _response.Errors.Add("An error occurred during user registration.");
+            return _response;
+        }
     }
 
     public UserResponse UpdateUser(int id, UserRequest changes)
