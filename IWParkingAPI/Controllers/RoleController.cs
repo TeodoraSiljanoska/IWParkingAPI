@@ -15,22 +15,22 @@ namespace IWParkingAPI.Controllers
     [Route("api/[controller]")]
     public class RoleController : Controller
     {
-        private IUnitOfWork<ParkingDbContext> _unitOfWork;
-        private IGenericRepository<AspNetRole> _roleRepository;
+        private IUnitOfWork<ParkingDbContextCustom> _unitOfWork;
+        private IGenericRepository<ApplicationRole> _roleRepository;
         private RoleResponse response;
         private readonly IMapper _mapper;
 
 
-        public RoleController(IUnitOfWork<ParkingDbContext> unitOfWork)
+        public RoleController(IUnitOfWork<ParkingDbContextCustom> unitOfWork)
         {
             _unitOfWork = unitOfWork;
-            _roleRepository = _unitOfWork.GetGenericRepository<AspNetRole>();
+            _roleRepository = _unitOfWork.GetGenericRepository<ApplicationRole>();
             response = new RoleResponse();
             _mapper = MapperConfig.InitializeAutomapper();
         }
 
         [HttpGet("GetAll")]
-        public IEnumerable<AspNetRole> GetAll()
+        public IEnumerable<ApplicationRole> GetAll()
         {
             if (_roleRepository.GetAll().Count() == 0)
             {
@@ -43,7 +43,7 @@ namespace IWParkingAPI.Controllers
         [HttpGet("Get/{id}")]
         public RoleResponse GetById(int id)
         {
-            AspNetRole role = _roleRepository.GetById(id);
+            ApplicationRole role = _roleRepository.GetById(id);
             if (role == null)
             {
                 response.StatusCode = HttpStatusCode.NotFound;
@@ -65,7 +65,7 @@ namespace IWParkingAPI.Controllers
                 return response;
             }
 
-            AspNetRole role = _mapper.Map<AspNetRole>(request);
+            ApplicationRole role = _mapper.Map<ApplicationRole>(request);
             role.TimeCreated = DateTime.Now;
 
             _roleRepository.Insert(role);
@@ -80,7 +80,7 @@ namespace IWParkingAPI.Controllers
         [HttpPut("Update/{id}")]
         public RoleResponse Update(int id, RoleRequest changes)
         {
-            AspNetRole role = _roleRepository.GetById(id);
+            ApplicationRole role = _roleRepository.GetById(id);
             if (role == null)
             {
                 response.StatusCode = HttpStatusCode.NotFound;
@@ -104,7 +104,7 @@ namespace IWParkingAPI.Controllers
         [HttpDelete("Delete/{id}")]
         public RoleResponse Delete(int id)
         {
-            AspNetRole role = _roleRepository.GetById(id);
+            ApplicationRole role = _roleRepository.GetById(id);
             if (role == null)
             {
                 response.StatusCode = HttpStatusCode.NotFound;

@@ -10,7 +10,7 @@ namespace IWParkingAPI.Mappers
         {
             var config = new MapperConfiguration(cfg =>
             {
-                cfg.CreateMap<RoleRequest, AspNetRole>()
+                cfg.CreateMap<RoleRequest, ApplicationRole>()
                 .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name))
                 .ForMember(dest => dest.NormalizedName, opt => opt.MapFrom(src => src.Name.ToUpper()));
             });
