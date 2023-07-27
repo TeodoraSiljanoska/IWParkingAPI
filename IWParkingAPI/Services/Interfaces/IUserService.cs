@@ -2,7 +2,7 @@
 using IWParkingAPI.Models.Requests;
 using IWParkingAPI.Models.Responses;
 
-namespace IWParkingAPI.Services
+namespace IWParkingAPI.Services.Interfaces
 {
     public interface IUserService
     {
