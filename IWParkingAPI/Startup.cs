@@ -1,4 +1,9 @@
-﻿namespace IWParkingAPI
+﻿using IWParkingAPI.Infrastructure.Repository;
+using IWParkingAPI.Infrastructure.UnitOfWork;
+using IWParkingAPI.Models.Context;
+using Microsoft.EntityFrameworkCore;
+
+namespace IWParkingAPI
 {
     public class Startup
     {
@@ -12,18 +17,22 @@
         public void ConfigureServices(IServiceCollection services)
         {
 
+            services.AddScoped(typeof(IUnitOfWork<>), typeof(UnitOfWork<>));
+            services.AddScoped(typeof(IGenericRepository<>), typeof(SQLRepository<>));
 
             services.AddControllers();
 
 
             services.AddSwaggerGen(c =>
             {
-                c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo { Title = "endavaRestApi", Version = "v1" });
+                c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo { Title = "IWParkingAPI", Version = "v1" });
             }
         );
 
             var connectionString = Configuration.GetConnectionString("DefaultConnection");
-            //services.AddDbContext<ApplicationDbContext>(o => o.UseSqlServer(connectionString));
+            services.AddDbContext<ParkingDbContext>(o => o.UseSqlServer(connectionString));
+
+            services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
@@ -32,7 +41,7 @@
             {
                 app.UseDeveloperExceptionPage();
                 app.UseSwagger();
-                app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "endavaRestApi v1"));
+                app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "IWParkingRestApi v1"));
             }
             app.UseHttpsRedirection();
             app.UseRouting();

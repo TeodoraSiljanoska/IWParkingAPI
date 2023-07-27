@@ -2,7 +2,7 @@
 
 namespace IWParkingAPI.Infrastructure.Repository
 {
-    public class SQLRepository<TEntity, TContext> : IGenericRepository<TEntity> where TEntity : class
+    public class SQLRepository<TEntity> : IGenericRepository<TEntity> where TEntity : class
     {
         private DbContext _context;
         private DbSet<TEntity> _db;
@@ -37,10 +37,15 @@ namespace IWParkingAPI.Infrastructure.Repository
             _context.SaveChanges();
         }
 
-        public void Update(TEntity obj, TEntity objChanges)
+        public void Update(TEntity obj)
         {
             _db.Attach(obj);
             _context.Entry(obj).State = EntityState.Modified;
+        }
+
+        public bool FindByPredicate(Func<TEntity, bool> predicate)
+        {
+            return _db.Any(predicate);
         }
     }
 }
