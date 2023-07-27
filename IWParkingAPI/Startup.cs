@@ -1,7 +1,9 @@
 ﻿using IWParkingAPI.Infrastructure.Repository;
 using IWParkingAPI.Infrastructure.UnitOfWork;
+using IWParkingAPI.Models;
 using IWParkingAPI.Models.Context;
 using IWParkingAPI.Models.Data;
+using IWParkingAPI.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -18,12 +20,15 @@ namespace IWParkingAPI
 
         public void ConfigureServices(IServiceCollection services)
         {
-
-            services.AddScoped(typeof(IUnitOfWork<>), typeof(UnitOfWork<>));
             services.AddScoped(typeof(IGenericRepository<>), typeof(SQLRepository<>));
-
+            services.AddScoped(typeof(IUnitOfWork<>), typeof(UnitOfWork<>));
+            services.AddScoped<IUserService, UserService>();
+            services.AddAutoMapper(typeof(Startup));
             services.AddControllers();
 
+           services.AddIdentity<ApplicationUser, ApplicationRole>()
+            .AddEntityFrameworkStores<ParkingDbContextCustom>()
+            .AddDefaultTokenProviders();
 
             services.AddSwaggerGen(c =>
             {
@@ -34,12 +39,7 @@ namespace IWParkingAPI
             var connectionString = Configuration.GetConnectionString("DefaultConnection");
             services.AddDbContext<ParkingDbContext>(o => o.UseSqlServer(connectionString));
             services.AddDbContext<ParkingDbContextCustom>(options => options.UseSqlServer(connectionString));
-
-            services.AddIdentity<ApplicationUser, ApplicationRole>()
-            .AddEntityFrameworkStores<ParkingDbContextCustom>()
-            .AddDefaultTokenProviders();
-
-            services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+   
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

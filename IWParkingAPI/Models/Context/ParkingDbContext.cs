@@ -124,7 +124,7 @@ public partial class ParkingDbContext : DbContext
 
         modelBuilder.Entity<ParkingLot>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Parking __3214EC071BD0950E");
+            entity.HasKey(e => e.Id).HasName("PK__Parking __3214EC07B58A9194");
 
             entity.ToTable("Parking Lot");
 
@@ -148,7 +148,7 @@ public partial class ParkingDbContext : DbContext
 
         modelBuilder.Entity<Payment>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Payment__3214EC07A67200A6");
+            entity.HasKey(e => e.Id).HasName("PK__Payment__3214EC07B044856B");
 
             entity.ToTable("Payment");
 
@@ -166,7 +166,7 @@ public partial class ParkingDbContext : DbContext
 
         modelBuilder.Entity<Request>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Request__3214EC07DC5C8037");
+            entity.HasKey(e => e.Id).HasName("PK__Request__3214EC071844DB1C");
 
             entity.ToTable("Request");
 
@@ -187,7 +187,7 @@ public partial class ParkingDbContext : DbContext
 
         modelBuilder.Entity<Reservation>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Reservat__3214EC07E6E4DA8B");
+            entity.HasKey(e => e.Id).HasName("PK__Reservat__3214EC07333DC35F");
 
             entity.ToTable("Reservation");
 
@@ -217,7 +217,7 @@ public partial class ParkingDbContext : DbContext
 
         modelBuilder.Entity<Vehicle>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Vehicle__3214EC07CE7B2E42");
+            entity.HasKey(e => e.Id).HasName("PK__Vehicle__3214EC07E1039730");
 
             entity.ToTable("Vehicle");
 

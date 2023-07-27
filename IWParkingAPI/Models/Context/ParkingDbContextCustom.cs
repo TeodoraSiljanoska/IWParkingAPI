@@ -4,19 +4,20 @@ using Microsoft.EntityFrameworkCore;
 
 namespace IWParkingAPI.Models.Context
 {
-
-    public class ParkingDbContextCustom : IdentityDbContext<ApplicationUser, ApplicationRole, int>
-    {
-
-        public ParkingDbContextCustom(DbContextOptions options) : base(options)
+    
+        public class ParkingDbContextCustom : IdentityDbContext<ApplicationUser, ApplicationRole, int>
         {
-        }
 
-        protected ParkingDbContextCustom()
-        {
-        }
+            public ParkingDbContextCustom(DbContextOptions options) : base(options)
+            {
+            }
+
+            protected ParkingDbContextCustom()
+            {
+            }
         public virtual DbSet<ApplicationUser> ApplicationUsers { get; set; }
         public virtual DbSet<ApplicationRole> ApplicationRoles { get; set; }
 
     }
 }
+
