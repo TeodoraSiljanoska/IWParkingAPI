@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using IWParkingAPI.Models.Data;
 using Microsoft.EntityFrameworkCore;
 
-namespace IWParkingAPI.Models;
+namespace IWParkingAPI.Models.Context;
 
 public partial class ParkingDbContext : DbContext
 {
