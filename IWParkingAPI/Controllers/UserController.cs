@@ -25,7 +25,7 @@ namespace IWParkingAPI.Controllers
         private readonly ILogger<UserController> _logger;
         private readonly IUserService _userService;
         private readonly UserResponse response;
-        
+
 
         public UserController(IConfiguration config, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, ILogger<UserController> logger, IUserService userService)
         {
@@ -36,7 +36,8 @@ namespace IWParkingAPI.Controllers
             _userService = userService;
             response = new UserResponse();
         }
-        
+
+        [Authorize(Roles=UserRoles.SuperAdmin)]
         [HttpGet("GetAll")]
         public IEnumerable<ApplicationUser> GetUsers()
         {
@@ -67,7 +68,7 @@ namespace IWParkingAPI.Controllers
             return _userService.DeleteUser(id);
         }
 
-        
+
         [HttpPost]
         [Route("login")]
         public async Task<IActionResult> Login([FromBody] LoginDTO model)
@@ -78,33 +79,50 @@ namespace IWParkingAPI.Controllers
                 var userRoles = await _userManager.GetRolesAsync(user);
                 var authClaims = new List<Claim>
                 {
-                    new Claim(ClaimTypes.Name, user.UserName),
+                    new Claim(ClaimTypes.NameIdentifier, user.UserName),
                     new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
                 };
                 foreach (var userRole in userRoles)
                 {
                     authClaims.Add(new Claim(ClaimTypes.Role, userRole));
                 }
-                var token = GetToken(authClaims);
-                return Ok(new
-                {
-                    token = new JwtSecurityTokenHandler().WriteToken(token),
-                    expiration = token.ValidTo
-                });
+                var token = GenerateToken(user, authClaims);
+
+                return Ok(token);
+
             }
+
+
             return Unauthorized();
         }
 
-        private JwtSecurityToken GetToken(List<Claim> authClaims)
+
+        /*  private JwtSecurityToken GetToken(List<Claim> authClaims)
+          {
+              var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
+              var token = new JwtSecurityToken(issuer: _config["JWT:ValidIssuer"],
+                  audience: _config["JWT:ValidAudience"],
+                  expires: DateTime.Now.AddHours(3),
+                  claims: authClaims,
+                  signingCredentials: new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256)
+                  );
+              return token;
+          } */
+
+        private string GenerateToken(ApplicationUser user, List<Claim> authClaims)
         {
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
-            var token = new JwtSecurityToken(issuer: _config["JWT:ValidIssuer"],
-                audience: _config["JWT:ValidAudience"],
-                expires: DateTime.Now.AddHours(3),
+            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+
+
+            var token = new JwtSecurityToken(_config["Jwt:Issuer"],
+                _config["Jwt:Audience"],
                 claims: authClaims,
-                signingCredentials: new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256)
-                );
-            return token;
+                expires: DateTime.Now.AddHours(3),
+                signingCredentials: credentials);
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
+
         }
     }
 }
