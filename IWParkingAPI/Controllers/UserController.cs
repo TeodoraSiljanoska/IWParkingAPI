@@ -3,11 +3,14 @@ using IWParkingAPI.Models.Data;
 using IWParkingAPI.Models.Requests;
 using IWParkingAPI.Models.Responses;
 using IWParkingAPI.Services.Interfaces;
-using IWParkingAPI.Utilities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
 using System.Net;
+using System.Security.Claims;
+using System.Text;
 
 namespace IWParkingAPI.Controllers
 {
@@ -15,16 +18,16 @@ namespace IWParkingAPI.Controllers
     [ApiController]
     public class UserController : ControllerBase
     {
-        private readonly IJwtUtils _jwtUtils;
+        private readonly IConfiguration _config;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly ILogger<UserController> _logger;
         private readonly IUserService _userService;
-        
 
-        public UserController(IJwtUtils jwtUtils, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, ILogger<UserController> logger, IUserService userService)
+
+        public UserController(IConfiguration config, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, ILogger<UserController> logger, IUserService userService)
         {
-            _jwtUtils = jwtUtils;
+            _config = config;
             _userManager = userManager;
             _signInManager = signInManager;
             _logger = logger;
@@ -62,36 +65,42 @@ namespace IWParkingAPI.Controllers
         }
 
 
-        [HttpPost, Route("Login")]
-
-        public async Task<IActionResult> Login(LoginDTO loginDTO)
+        [HttpPost]
+        [Route("login")]
+        public async Task<IActionResult> Login([FromBody] LoginDTO model)
         {
-            try
+            var user = await _userManager.FindByEmailAsync(model.Username);
+            if (user != null && await _userManager.CheckPasswordAsync(user, model.Password))
             {
-                if (string.IsNullOrEmpty(loginDTO.UserName) || string.IsNullOrEmpty(loginDTO.Password))
-                    return BadRequest("Username and/or Password not specified");
-
-
-                var user = await _userManager.FindByEmailAsync(loginDTO.UserName);
-                if (user == null) return NotFound();
-                if (user != null)
+                var userRoles = await _userManager.GetRolesAsync(user);
+                var authClaims = new List<Claim>
                 {
-                        // Verify the user's password
-                        var signInResult = await _signInManager.CheckPasswordSignInAsync(user, loginDTO.Password, false);
-
-                        var jwt = _jwtUtils.GenerateToken(user.UserName);
-                    Response.Cookies.Append("jwt", jwt, new CookieOptions { HttpOnly = true });
-
-                    return Ok(new { token = jwt });
-
+                    new Claim(ClaimTypes.Name, user.UserName),
+                    new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                };
+                foreach (var userRole in userRoles)
+                {
+                    authClaims.Add(new Claim(ClaimTypes.Role, userRole));
                 }
-            }
-            catch (Exception ex)
-            {
-                return null;
-                //("An error occurred in generating the token");
+                var token = GetToken(authClaims);
+                return Ok(new
+                {
+                    token = new JwtSecurityTokenHandler().WriteToken(token),
+                    expiration = token.ValidTo
+                });
             }
             return Unauthorized();
+        }
+
+        private JwtSecurityToken GetToken(List<Claim> authClaims)
+        {
+            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
+            var token = new JwtSecurityToken(
+                expires: DateTime.Now.AddHours(3),
+                claims: authClaims,
+                signingCredentials: new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256)
+                );
+            return token;
         }
     }
 }
