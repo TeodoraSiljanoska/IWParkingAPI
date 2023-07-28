@@ -3,6 +3,7 @@ using IWParkingAPI.Models.Data;
 using IWParkingAPI.Models.Requests;
 using IWParkingAPI.Models.Responses;
 using IWParkingAPI.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -23,6 +24,7 @@ namespace IWParkingAPI.Controllers
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly ILogger<UserController> _logger;
         private readonly IUserService _userService;
+        private readonly UserResponse response;
         
 
         public UserController(IConfiguration config, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, ILogger<UserController> logger, IUserService userService)
@@ -32,8 +34,9 @@ namespace IWParkingAPI.Controllers
             _signInManager = signInManager;
             _logger = logger;
             _userService = userService;
+            response = new UserResponse();
         }
-
+        
         [HttpGet("GetAll")]
         public IEnumerable<ApplicationUser> GetUsers()
         {
@@ -46,10 +49,10 @@ namespace IWParkingAPI.Controllers
             return _userService.GetUserById(id);
         }
 
-        [HttpPost("Register/{role}")]
-        public Task<UserResponse> Create(UserRequest request, string role)
-        { 
-            return _userService.CreateUser(request, role);
+        [HttpPost("Register")]
+        public Task<UserResponse> Register(UserRegisterRequest request)
+        {
+            return _userService.RegisterUser(request);
         }
 
         [HttpPut("Update/{id}")]
@@ -64,7 +67,7 @@ namespace IWParkingAPI.Controllers
             return _userService.DeleteUser(id);
         }
 
-
+        
         [HttpPost]
         [Route("login")]
         public async Task<IActionResult> Login([FromBody] LoginDTO model)
@@ -95,7 +98,8 @@ namespace IWParkingAPI.Controllers
         private JwtSecurityToken GetToken(List<Claim> authClaims)
         {
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
-            var token = new JwtSecurityToken(
+            var token = new JwtSecurityToken(issuer: _config["JWT:ValidIssuer"],
+                audience: _config["JWT:ValidAudience"],
                 expires: DateTime.Now.AddHours(3),
                 claims: authClaims,
                 signingCredentials: new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256)

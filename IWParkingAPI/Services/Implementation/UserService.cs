@@ -8,6 +8,7 @@ using IWParkingAPI.Models.Requests;
 using IWParkingAPI.Models.Responses;
 using IWParkingAPI.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using System.Net;
 
 public class UserService : IUserService
@@ -18,8 +19,9 @@ public class UserService : IUserService
     private readonly IGenericRepository<ApplicationRole> _roleRepository;
     private readonly UserResponse _response;
     private readonly UserManager<ApplicationUser> _userManager;
+    private readonly RoleManager<ApplicationRole> _roleManager;
 
-    public UserService(IUnitOfWork<ParkingDbContextCustom> unitOfWork, UserManager<ApplicationUser> userManager)
+    public UserService(IUnitOfWork<ParkingDbContextCustom> unitOfWork, UserManager<ApplicationUser> userManager, RoleManager<ApplicationRole> roleManager)
     {
         _unitOfWork = unitOfWork;
         _userRepository = _unitOfWork.GetGenericRepository<ApplicationUser>();
@@ -27,6 +29,7 @@ public class UserService : IUserService
         _mapper = MapperConfig.InitializeAutomapper();
         _response = new UserResponse();
         _userManager = userManager;
+        _roleManager = roleManager;
     }
 
     public IEnumerable<ApplicationUser> GetAllUsers()
@@ -35,7 +38,7 @@ public class UserService : IUserService
         if (users.Count() == 0)
         {
             _response.StatusCode = HttpStatusCode.NoContent;
-            _response.Errors.Add("There aren't any users.");
+            _response.Message = "There aren't any users.";
         }
         _response.StatusCode = HttpStatusCode.OK;
         return users;
@@ -47,7 +50,7 @@ public class UserService : IUserService
         if (user == null)
         {
             _response.StatusCode = HttpStatusCode.NotFound;
-            _response.Errors.Add("User not found");
+            _response.Message = "User not found";
             return _response;
         }
         _response.User = user;
@@ -55,47 +58,50 @@ public class UserService : IUserService
         return _response;
     }
 
-    public async Task<UserResponse> CreateUser(UserRequest request, string roleName)
+    public async Task<UserResponse> RegisterUser([FromBody] UserRegisterRequest request)
     {
         try
         {
-            if (_userRepository.FindByPredicate(u => u.UserName == request.UserName))
+            var user = await _userManager.FindByNameAsync(request.UserName);
+            if (user != null)
             {
                 _response.StatusCode = HttpStatusCode.BadRequest;
-                _response.Errors.Add("User already exists.");
+                _response.Message = "User already exists.";
                 return _response;
             }
 
-            if (!_roleRepository.FindByPredicate(r => r.Name == roleName))
+            var role = await _roleManager.FindByNameAsync(request.RoleName);
+            if (role == null)
             {
                 _response.StatusCode = HttpStatusCode.BadRequest;
-                _response.Errors.Add("Role with that name doesn't exists.");
+                _response.Message = "Role with that name doesn't exists.";
                 return _response;
             }
 
-            var user = _mapper.Map<ApplicationUser>(request);
-            user.TimeCreated = DateTime.Now;
-            user.IsDeactivated = false;
+            var newUser = _mapper.Map<ApplicationUser>(request);
+            newUser.TimeCreated = DateTime.Now;
+            newUser.IsDeactivated = false;
 
-            var result = await _userManager.CreateAsync(user, user.PasswordHash);
+            var result = await _userManager.CreateAsync(newUser, request.Password);
 
             if (result.Succeeded)
             {
-                await _userManager.AddToRoleAsync(user, roleName);
+                await _userManager.AddToRoleAsync(newUser, request.RoleName);
                 _response.StatusCode = HttpStatusCode.OK;
-                _response.User = user;
+                _response.Message = "User created successfully";
+                _response.User = newUser;
             }
             else
             {
                 _response.StatusCode = HttpStatusCode.BadRequest;
-                _response.Errors.Add("User registration failed.");
+                _response.Message = "User creation failed! Please check user details and try again.";
             }
             return _response;
         }
         catch (Exception ex)
         {
             _response.StatusCode = HttpStatusCode.BadRequest;
-            _response.Errors.Add("An error occurred during user registration.");
+            _response.Message = "An error occurred during user registration.";
             return _response;
         }
     }
@@ -106,14 +112,14 @@ public class UserService : IUserService
         if (user == null)
         {
             _response.StatusCode = HttpStatusCode.NotFound;
-            _response.Errors.Add("User not found");
+            _response.Message = "User not found";
             return _response;
         }
 
         if (_userRepository.FindByPredicate(u => u.UserName == changes.UserName))
         {
             _response.StatusCode = HttpStatusCode.BadRequest;
-            _response.Errors.Add("User with that username already exists.");
+            _response.Message = "User with that username already exists.";
             return _response;
         }
 
@@ -140,7 +146,7 @@ public class UserService : IUserService
         if (user == null)
         {
             _response.StatusCode = HttpStatusCode.NotFound;
-            _response.Errors.Add("User not found");
+            _response.Message = "User not found";
             return _response;
         }
 

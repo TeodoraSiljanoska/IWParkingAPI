@@ -32,7 +32,7 @@ namespace IWParkingAPI.Services.Implementation
             if (roles.Count() == 0)
             {
                 _response.StatusCode = HttpStatusCode.NoContent;
-                _response.Errors.Add("There aren't any roles.");
+                _response.Message = "There aren't any roles.";
             }
             _response.StatusCode = HttpStatusCode.OK;
             return roles;
@@ -43,7 +43,7 @@ namespace IWParkingAPI.Services.Implementation
             if (role == null)
             {
                 _response.StatusCode = HttpStatusCode.NotFound;
-                _response.Errors.Add("Role not found");
+                _response.Message = "Role not found";
                 return _response;
             }
             _response.Role = role;
@@ -56,7 +56,7 @@ namespace IWParkingAPI.Services.Implementation
             if (_roleRepository.FindByPredicate(u => u.Name == request.Name))
             {
                 _response.StatusCode = HttpStatusCode.BadRequest;
-                _response.Errors.Add("Role already exists.");
+                _response.Message = "Role already exists.";
                 return _response;
             }
 
@@ -77,14 +77,14 @@ namespace IWParkingAPI.Services.Implementation
             if (role == null)
             {
                 _response.StatusCode = HttpStatusCode.NotFound;
-                _response.Errors.Add("Role not found");
+                _response.Message = "Role not found";
                 return _response;
             }
 
             if (_roleRepository.FindByPredicate(u => u.Name == changes.Name))
             {
                 _response.StatusCode = HttpStatusCode.BadRequest;
-                _response.Errors.Add("Role with that name already exists.");
+                _response.Message = "Role with that name already exists.";
                 return _response;
             }
 
@@ -107,7 +107,7 @@ namespace IWParkingAPI.Services.Implementation
             if (role == null)
             {
                 _response.StatusCode = HttpStatusCode.NotFound;
-                _response.Errors.Add("Role not found");
+                _response.Message = "Role not found";
                 return _response;
             }
 
