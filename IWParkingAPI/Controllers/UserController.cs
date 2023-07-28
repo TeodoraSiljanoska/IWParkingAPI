@@ -15,6 +15,7 @@ using System.Text;
 
 namespace IWParkingAPI.Controllers
 {
+    
     [Route("api/[controller]")]
     [ApiController]
     public class UserController : ControllerBase
@@ -37,12 +38,13 @@ namespace IWParkingAPI.Controllers
             response = new UserResponse();
         }
 
-        [Authorize(Roles=UserRoles.SuperAdmin)]
+        [Authorize(Roles ="SuperAdmin")]
         [HttpGet("GetAll")]
         public IEnumerable<ApplicationUser> GetUsers()
         {
             return _userService.GetAllUsers();
         }
+
 
         [HttpGet("Get/{id}")]
         public UserResponse GetUser(int id)
@@ -67,9 +69,8 @@ namespace IWParkingAPI.Controllers
         {
             return _userService.DeactivateUser(id);
         }
-    }
-            return _userService.DeleteUser(id);
-        }
+    
+          
 
 
         [HttpPost]
