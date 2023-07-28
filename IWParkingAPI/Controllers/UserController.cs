@@ -38,7 +38,7 @@ namespace IWParkingAPI.Controllers
             response = new UserResponse();
         }
 
-        [Authorize(Roles ="SuperAdmin")]
+        [Authorize]
         [HttpGet("GetAll")]
         public IEnumerable<ApplicationUser> GetUsers()
         {
@@ -74,7 +74,7 @@ namespace IWParkingAPI.Controllers
 
 
         [HttpPost]
-        [Route("login")]
+        [Route("Login")]
         public async Task<IActionResult> Login([FromBody] LoginDTO model)
         {
             var user = await _userManager.FindByEmailAsync(model.Username);
@@ -93,10 +93,7 @@ namespace IWParkingAPI.Controllers
                 var token = GenerateToken(user, authClaims);
 
                 return Ok(token);
-
             }
-
-
             return Unauthorized();
         }
 
@@ -119,14 +116,15 @@ namespace IWParkingAPI.Controllers
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
 
-            var token = new JwtSecurityToken(_config["Jwt:Issuer"],
+            var token = new JwtSecurityToken(
+                _config["Jwt:Issuer"],
                 _config["Jwt:Audience"],
                 claims: authClaims,
                 expires: DateTime.Now.AddHours(3),
-                signingCredentials: credentials);
+                signingCredentials: credentials
+               );
 
             return new JwtSecurityTokenHandler().WriteToken(token);
-
         }
     }
 }
