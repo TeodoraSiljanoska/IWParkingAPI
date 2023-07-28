@@ -2,11 +2,8 @@
 using IWParkingAPI.Models.Requests;
 using IWParkingAPI.Models.Responses;
 using IWParkingAPI.Services.Interfaces;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using System.Net;
-
 namespace IWParkingAPI.Controllers
 {
     [Route("api/[controller]")]
@@ -43,15 +40,15 @@ namespace IWParkingAPI.Controllers
         }
 
         [HttpPut("Update/{id}")]
-        public UserResponse Update(int id, UserRequest changes)
+        public Task<UserResponse> Update(int id, UserRequest changes)
         {
             return _userService.UpdateUser(id, changes);
         }
 
-        [HttpDelete("Delete/{id}")]
-        public UserResponse Delete(int id)
+        [HttpDelete("Deactivate/{id}")]
+        public UserResponse Deactivate(int id)
         {
-            return _userService.DeleteUser(id);
+            return _userService.DeactivateUser(id);
         }
     }
 }

@@ -8,8 +8,8 @@ namespace IWParkingAPI.Services.Interfaces
     {
         IEnumerable<ApplicationUser> GetAllUsers();
         UserResponse GetUserById(int id);
-        UserResponse UpdateUser(int id, UserRequest changes);
-        UserResponse DeleteUser(int id);
+        Task<UserResponse> UpdateUser(int id, UserRequest changes);
+        UserResponse DeactivateUser(int id);
         Task<UserResponse> RegisterUser(UserRegisterRequest request);
     }
 }

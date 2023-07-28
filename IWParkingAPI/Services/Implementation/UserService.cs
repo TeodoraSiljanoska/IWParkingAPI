@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Azure.Core;
 using IWParkingAPI.Infrastructure.Repository;
 using IWParkingAPI.Infrastructure.UnitOfWork;
 using IWParkingAPI.Mappers;
@@ -108,7 +109,7 @@ public class UserService : IUserService
         }
     }
 
-    public UserResponse UpdateUser(int id, UserRequest changes)
+    public async Task<UserResponse> UpdateUser(int id, UserRequest changes)
     {
         ApplicationUser user = _userRepository.GetById(id);
         if (user == null)
@@ -118,10 +119,11 @@ public class UserService : IUserService
             return _response;
         }
 
-        if (_userRepository.FindByPredicate(u => u.UserName == changes.UserName))
+        var userByUsername = await _userManager.FindByNameAsync(changes.UserName);
+        if (userByUsername != null)
         {
             _response.StatusCode = HttpStatusCode.BadRequest;
-            _response.Message = "User with that username already exists.";
+            _response.Message = "User already exists.";
             return _response;
         }
 
@@ -143,7 +145,7 @@ public class UserService : IUserService
         return _response;
     }
 
-    public UserResponse DeleteUser(int id)
+    public UserResponse DeactivateUser(int id)
     {
         ApplicationUser user = _userRepository.GetById(id);
         if (user == null)
@@ -153,12 +155,13 @@ public class UserService : IUserService
             return _response;
         }
 
-        _userRepository.Delete(user);
+        user.IsDeactivated = true;
+        _userRepository.Update(user);
         _unitOfWork.Save();
 
         _response.User = user;
         _response.StatusCode = HttpStatusCode.OK;
-        _response.Message = "User deleted successfully";
+        _response.Message = "User deactivated successfully";
 
         return _response;
     }
