@@ -15,8 +15,8 @@ namespace IWParkingAPI.Models.Context
             protected ParkingDbContextCustom()
             {
             }
-        public virtual DbSet<ApplicationUser> ApplicationUsers { get; set; }
-        public virtual DbSet<ApplicationRole> ApplicationRoles { get; set; }
+            public virtual DbSet<ApplicationUser> ApplicationUsers { get; set; }
+            public virtual DbSet<ApplicationRole> ApplicationRoles { get; set; }
 
     }
 }

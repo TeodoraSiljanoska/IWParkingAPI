@@ -35,6 +35,7 @@ namespace IWParkingAPI.Services.Implementation
                 _response.Message = "There aren't any roles.";
             }
             _response.StatusCode = HttpStatusCode.OK;
+            _response.Message = "Roles returned successfully";
             return roles;
         }
         public RoleResponse GetRoleById(int id)
@@ -48,6 +49,7 @@ namespace IWParkingAPI.Services.Implementation
             }
             _response.Role = role;
             _response.StatusCode = HttpStatusCode.OK;
+            _response.Message = "Role returned successfully";
             return _response;
         }
 
@@ -68,6 +70,7 @@ namespace IWParkingAPI.Services.Implementation
 
             _response.Role = role;
             _response.StatusCode = HttpStatusCode.OK;
+            _response.Message = "Role created successfully";
 
             return _response;
         }
@@ -97,6 +100,7 @@ namespace IWParkingAPI.Services.Implementation
 
             _response.Role = role;
             _response.StatusCode = HttpStatusCode.OK;
+            _response.Message = "Role updated successfully";
 
             return _response;
         }
@@ -116,6 +120,7 @@ namespace IWParkingAPI.Services.Implementation
 
             _response.Role = role;
             _response.StatusCode = HttpStatusCode.OK;
+            _response.Message = "Role deleted successfully";
 
             return _response;
         }

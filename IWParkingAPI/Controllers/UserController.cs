@@ -52,19 +52,22 @@ namespace IWParkingAPI.Controllers
 
         [HttpPost("Register")]
         public Task<UserResponse> Register(UserRegisterRequest request)
-        {
+        { 
             return _userService.RegisterUser(request);
         }
 
         [HttpPut("Update/{id}")]
-        public UserResponse Update(int id, UserRequest changes)
+        public Task<UserResponse> Update(int id, UserRequest changes)
         {
             return _userService.UpdateUser(id, changes);
         }
 
-        [HttpDelete("Delete/{id}")]
-        public UserResponse Delete(int id)
+        [HttpDelete("Deactivate/{id}")]
+        public UserResponse Deactivate(int id)
         {
+            return _userService.DeactivateUser(id);
+        }
+    }
             return _userService.DeleteUser(id);
         }
 

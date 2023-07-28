@@ -41,6 +41,7 @@ public class UserService : IUserService
             _response.Message = "There aren't any users.";
         }
         _response.StatusCode = HttpStatusCode.OK;
+        _response.Message = "Users returned successfully";
         return users;
     }
 
@@ -55,6 +56,7 @@ public class UserService : IUserService
         }
         _response.User = user;
         _response.StatusCode = HttpStatusCode.OK;
+        _response.Message = "User returned successfully";
         return _response;
     }
 
@@ -106,7 +108,7 @@ public class UserService : IUserService
         }
     }
 
-    public UserResponse UpdateUser(int id, UserRequest changes)
+    public async Task<UserResponse> UpdateUser(int id, UserRequest changes)
     {
         ApplicationUser user = _userRepository.GetById(id);
         if (user == null)
@@ -116,7 +118,8 @@ public class UserService : IUserService
             return _response;
         }
 
-        if (_userRepository.FindByPredicate(u => u.UserName == changes.UserName))
+        var userByUsername = await _userManager.FindByNameAsync(changes.UserName);
+        if (userByUsername != null)
         {
             _response.StatusCode = HttpStatusCode.BadRequest;
             _response.Message = "User with that username already exists.";
@@ -136,11 +139,12 @@ public class UserService : IUserService
 
         _response.User = user;
         _response.StatusCode = HttpStatusCode.OK;
+        _response.Message = "User updated successfully";
 
         return _response;
     }
 
-    public UserResponse DeleteUser(int id)
+    public UserResponse DeactivateUser(int id)
     {
         ApplicationUser user = _userRepository.GetById(id);
         if (user == null)
@@ -150,11 +154,13 @@ public class UserService : IUserService
             return _response;
         }
 
-        _userRepository.Delete(user);
+        user.IsDeactivated = true;
+        _userRepository.Update(user);
         _unitOfWork.Save();
 
         _response.User = user;
         _response.StatusCode = HttpStatusCode.OK;
+        _response.Message = "User deactivated successfully";
 
         return _response;
     }
