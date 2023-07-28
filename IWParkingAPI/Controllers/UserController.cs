@@ -10,14 +10,10 @@ namespace IWParkingAPI.Controllers
     [ApiController]
     public class UserController : ControllerBase
     {
-        private readonly UserManager<ApplicationUser> _userManager;
-        private readonly ILogger<UserController> _logger;
         private readonly IUserService _userService;
 
-        public UserController(UserManager<ApplicationUser> userManager, ILogger<UserController> logger, IUserService userService)
+        public UserController(IUserService userService)
         {
-            _userManager = userManager;
-            _logger = logger;
             _userService = userService;
         }
 

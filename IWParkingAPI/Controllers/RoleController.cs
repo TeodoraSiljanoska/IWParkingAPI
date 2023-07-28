@@ -5,7 +5,6 @@ using IWParkingAPI.Models.Requests;
 using IWParkingAPI.Models.Responses;
 using IWParkingAPI.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
-using System.Net;
 
 namespace IWParkingAPI.Controllers
 {
@@ -13,13 +12,11 @@ namespace IWParkingAPI.Controllers
     [Route("api/[controller]")]
     public class RoleController : Controller
     {
-        private IUnitOfWork<ParkingDbContextCustom> _unitOfWork;
         private readonly IRoleService _roleService;
 
 
-        public RoleController(IUnitOfWork<ParkingDbContextCustom> unitOfWork, IRoleService roleService)
+        public RoleController(IRoleService roleService)
         {
-            _unitOfWork = unitOfWork;
             _roleService = roleService;
         }
 
