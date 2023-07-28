@@ -1,7 +1,4 @@
-﻿using AutoMapper;
-using IWParkingAPI.Infrastructure.Repository;
-using IWParkingAPI.Infrastructure.UnitOfWork;
-using IWParkingAPI.Mappers;
+﻿using IWParkingAPI.Infrastructure.UnitOfWork;
 using IWParkingAPI.Models.Context;
 using IWParkingAPI.Models.Data;
 using IWParkingAPI.Models.Requests;

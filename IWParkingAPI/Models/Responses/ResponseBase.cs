@@ -4,8 +4,8 @@ namespace IWParkingAPI.Models.Responses
 {
     public class ResponseBase
     {
-            public List<string> Errors { get; set; } = new List<string>();
-            public HttpStatusCode StatusCode { get; set; }
+        public string? Message { get; set; }
+        public HttpStatusCode? StatusCode { get; set; }
         
     }
 }

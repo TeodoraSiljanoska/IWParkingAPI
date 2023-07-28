@@ -36,10 +36,10 @@ namespace IWParkingAPI.Controllers
             return _userService.GetUserById(id);
         }
 
-        [HttpPost("Register/{role}")]
-        public Task<UserResponse> Create(UserRequest request, string role)
+        [HttpPost("Register")]
+        public Task<UserResponse> Register(UserRegisterRequest request)
         { 
-            return _userService.CreateUser(request, role);
+            return _userService.RegisterUser(request);
         }
 
         [HttpPut("Update/{id}")]

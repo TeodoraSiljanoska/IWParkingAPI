@@ -32,9 +32,10 @@ namespace IWParkingAPI.Services.Implementation
             if (roles.Count() == 0)
             {
                 _response.StatusCode = HttpStatusCode.NoContent;
-                _response.Errors.Add("There aren't any roles.");
+                _response.Message = "There aren't any roles.";
             }
             _response.StatusCode = HttpStatusCode.OK;
+            _response.Message = "Roles returned successfully";
             return roles;
         }
         public RoleResponse GetRoleById(int id)
@@ -43,11 +44,12 @@ namespace IWParkingAPI.Services.Implementation
             if (role == null)
             {
                 _response.StatusCode = HttpStatusCode.NotFound;
-                _response.Errors.Add("Role not found");
+                _response.Message = "Role not found";
                 return _response;
             }
             _response.Role = role;
             _response.StatusCode = HttpStatusCode.OK;
+            _response.Message = "Role returned successfully";
             return _response;
         }
 
@@ -56,7 +58,7 @@ namespace IWParkingAPI.Services.Implementation
             if (_roleRepository.FindByPredicate(u => u.Name == request.Name))
             {
                 _response.StatusCode = HttpStatusCode.BadRequest;
-                _response.Errors.Add("Role already exists.");
+                _response.Message = "Role already exists.";
                 return _response;
             }
 
@@ -68,6 +70,7 @@ namespace IWParkingAPI.Services.Implementation
 
             _response.Role = role;
             _response.StatusCode = HttpStatusCode.OK;
+            _response.Message = "Role created successfully";
 
             return _response;
         }
@@ -77,14 +80,14 @@ namespace IWParkingAPI.Services.Implementation
             if (role == null)
             {
                 _response.StatusCode = HttpStatusCode.NotFound;
-                _response.Errors.Add("Role not found");
+                _response.Message = "Role not found";
                 return _response;
             }
 
             if (_roleRepository.FindByPredicate(u => u.Name == changes.Name))
             {
                 _response.StatusCode = HttpStatusCode.BadRequest;
-                _response.Errors.Add("Role with that name already exists.");
+                _response.Message = "Role with that name already exists.";
                 return _response;
             }
 
@@ -97,6 +100,7 @@ namespace IWParkingAPI.Services.Implementation
 
             _response.Role = role;
             _response.StatusCode = HttpStatusCode.OK;
+            _response.Message = "Role updated successfully";
 
             return _response;
         }
@@ -107,7 +111,7 @@ namespace IWParkingAPI.Services.Implementation
             if (role == null)
             {
                 _response.StatusCode = HttpStatusCode.NotFound;
-                _response.Errors.Add("Role not found");
+                _response.Message = "Role not found";
                 return _response;
             }
 
@@ -116,6 +120,7 @@ namespace IWParkingAPI.Services.Implementation
 
             _response.Role = role;
             _response.StatusCode = HttpStatusCode.OK;
+            _response.Message = "Role deleted successfully";
 
             return _response;
         }
