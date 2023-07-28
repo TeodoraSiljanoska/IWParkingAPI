@@ -2,25 +2,18 @@
 using IWParkingAPI.Models.Requests;
 using IWParkingAPI.Models.Responses;
 using IWParkingAPI.Services.Interfaces;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using System.Net;
-
 namespace IWParkingAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
     public class UserController : ControllerBase
     {
-        private readonly UserManager<ApplicationUser> _userManager;
-        private readonly ILogger<UserController> _logger;
         private readonly IUserService _userService;
 
-        public UserController(UserManager<ApplicationUser> userManager, ILogger<UserController> logger, IUserService userService)
+        public UserController(IUserService userService)
         {
-            _userManager = userManager;
-            _logger = logger;
             _userService = userService;
         }
 
@@ -36,22 +29,22 @@ namespace IWParkingAPI.Controllers
             return _userService.GetUserById(id);
         }
 
-        [HttpPost("Register/{role}")]
-        public Task<UserResponse> Create(UserRequest request, string role)
+        [HttpPost("Register")]
+        public Task<UserResponse> Register(UserRegisterRequest request)
         { 
-            return _userService.CreateUser(request, role);
+            return _userService.RegisterUser(request);
         }
 
         [HttpPut("Update/{id}")]
-        public UserResponse Update(int id, UserRequest changes)
+        public Task<UserResponse> Update(int id, UserRequest changes)
         {
             return _userService.UpdateUser(id, changes);
         }
 
-        [HttpDelete("Delete/{id}")]
-        public UserResponse Delete(int id)
+        [HttpDelete("Deactivate/{id}")]
+        public UserResponse Deactivate(int id)
         {
-            return _userService.DeleteUser(id);
+            return _userService.DeactivateUser(id);
         }
     }
 }
