@@ -122,7 +122,7 @@ public class UserService : IUserService
         if (userByUsername != null)
         {
             _response.StatusCode = HttpStatusCode.BadRequest;
-            _response.Message = "User already exists.";
+            _response.Message = "User with that username already exists.";
             return _response;
         }
 
@@ -164,4 +164,11 @@ public class UserService : IUserService
 
         return _response;
     }
+
+    
+
+
+
+
 }
+

@@ -1,27 +1,50 @@
-﻿using IWParkingAPI.Models.Data;
+﻿using IWParkingAPI.DTOs;
+using IWParkingAPI.Models.Data;
 using IWParkingAPI.Models.Requests;
 using IWParkingAPI.Models.Responses;
 using IWParkingAPI.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Net;
+using System.Security.Claims;
+using System.Text;
+
 namespace IWParkingAPI.Controllers
 {
+    
     [Route("api/[controller]")]
     [ApiController]
     public class UserController : ControllerBase
     {
+        private readonly IConfiguration _config;
+        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly SignInManager<ApplicationUser> _signInManager;
+        private readonly ILogger<UserController> _logger;
         private readonly IUserService _userService;
+        private readonly UserResponse response;
 
-        public UserController(IUserService userService)
+
+        public UserController(IConfiguration config, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, ILogger<UserController> logger, IUserService userService)
         {
+            _config = config;
+            _userManager = userManager;
+            _signInManager = signInManager;
+            _logger = logger;
             _userService = userService;
+            response = new UserResponse();
         }
 
+        [Authorize(Roles ="SuperAdmin")]
         [HttpGet("GetAll")]
         public IEnumerable<ApplicationUser> GetUsers()
         {
             return _userService.GetAllUsers();
         }
+
 
         [HttpGet("Get/{id}")]
         public UserResponse GetUser(int id)
@@ -45,6 +68,65 @@ namespace IWParkingAPI.Controllers
         public UserResponse Deactivate(int id)
         {
             return _userService.DeactivateUser(id);
+        }
+    
+          
+
+
+        [HttpPost]
+        [Route("login")]
+        public async Task<IActionResult> Login([FromBody] LoginDTO model)
+        {
+            var user = await _userManager.FindByEmailAsync(model.Username);
+            if (user != null && await _userManager.CheckPasswordAsync(user, model.Password))
+            {
+                var userRoles = await _userManager.GetRolesAsync(user);
+                var authClaims = new List<Claim>
+                {
+                    new Claim(ClaimTypes.NameIdentifier, user.UserName),
+                    new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                };
+                foreach (var userRole in userRoles)
+                {
+                    authClaims.Add(new Claim(ClaimTypes.Role, userRole));
+                }
+                var token = GenerateToken(user, authClaims);
+
+                return Ok(token);
+
+            }
+
+
+            return Unauthorized();
+        }
+
+
+        /*  private JwtSecurityToken GetToken(List<Claim> authClaims)
+          {
+              var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
+              var token = new JwtSecurityToken(issuer: _config["JWT:ValidIssuer"],
+                  audience: _config["JWT:ValidAudience"],
+                  expires: DateTime.Now.AddHours(3),
+                  claims: authClaims,
+                  signingCredentials: new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256)
+                  );
+              return token;
+          } */
+
+        private string GenerateToken(ApplicationUser user, List<Claim> authClaims)
+        {
+            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
+            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+
+
+            var token = new JwtSecurityToken(_config["Jwt:Issuer"],
+                _config["Jwt:Audience"],
+                claims: authClaims,
+                expires: DateTime.Now.AddHours(3),
+                signingCredentials: credentials);
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
+
         }
     }
 }
