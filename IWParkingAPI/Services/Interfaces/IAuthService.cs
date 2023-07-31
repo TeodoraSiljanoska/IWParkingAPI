@@ -1,6 +1,5 @@
 ﻿using IWParkingAPI.Models.Requests;
 using IWParkingAPI.Models.Responses;
-using Microsoft.AspNetCore.Mvc;
 
 namespace IWParkingAPI.Services.Interfaces
 {
@@ -9,5 +8,6 @@ namespace IWParkingAPI.Services.Interfaces
         Task<UserResponse> RegisterUser(UserRegisterRequest request);
         Task<UserLoginResponse> LoginUser(UserLoginRequest model);
         Task<UserResponse> ResetPassword(UserResetPasswordRequest request);
+        Task<UserResponse> ChangeUsername(UserChangeEmailRequest request);
     }
 }

@@ -61,7 +61,7 @@ public class UserService : IUserService
             return _response;
         }
 
-        var userByUsername = await _userManager.FindByNameAsync(changes.UserName);
+        var userByUsername = await _userManager.FindByEmailAsync(changes.UserName);
         if (userByUsername != null)
         {
             _response.StatusCode = HttpStatusCode.BadRequest;
@@ -76,7 +76,7 @@ public class UserService : IUserService
         user.PhoneNumber = changes.PhoneNumber;
         user.Email = changes.Email;
         user.NormalizedEmail = changes.Email.ToUpper();
-
+        user.TimeModified = DateTime.Now;
         _userRepository.Update(user);
         _unitOfWork.Save();
 
