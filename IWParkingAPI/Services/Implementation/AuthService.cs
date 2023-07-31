@@ -111,7 +111,7 @@ namespace IWParkingAPI.Services.Implementation
 
         public async Task<UserResponse> ResetPassword(UserResetPasswordRequest model)
         {
-            var user = await _userManager.FindByNameAsync(model.Username);
+            var user = await _userManager.FindByEmailAsync(model.Username);
 
             if (user == null)
             {
@@ -157,6 +157,52 @@ namespace IWParkingAPI.Services.Implementation
                 _response.StatusCode = HttpStatusCode.BadRequest;
                 return _response;
             }
+
+
+
+        }
+
+        public async Task<UserResponse> ChangeUsername(UserChangeEmailRequest model)
+        {
+            var user = await _userManager.FindByNameAsync(model.OldUsername);
+
+            if (user == null)
+            {
+                _response.Message = "User with that username doesn't exist";
+                _response.StatusCode = HttpStatusCode.BadRequest;
+                return _response;
+            }
+          
+                var userwiththatusername = await _userManager.FindByNameAsync(model.NewUsername);
+                if (userwiththatusername != null)
+                {
+                    _response.Message = "Username is already taken";
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    return _response;
+                }
+                
+
+                
+            user.UserName = model.NewUsername;
+            user.NormalizedUserName = model.NewUsername.ToUpper();
+            user.TimeModified = DateTime.Now;
+           // user.SecurityStamp = await _userManager.UpdateSecurityStampAsync(user);
+            var result = await _userManager.UpdateAsync(user);
+            if (result.Succeeded)
+            {
+                _response.Message = "Username changed successfully!";
+                _response.StatusCode = HttpStatusCode.OK;
+                return _response;
+            }
+            else
+            {
+                _response.Message = "There was a problem updating the username!";
+                _response.StatusCode = HttpStatusCode.BadRequest;
+                return _response;
+            }
+
+
+
         }
     }
 }
