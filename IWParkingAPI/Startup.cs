@@ -1,10 +1,12 @@
 ﻿using IWParkingAPI.Infrastructure.Repository;
 using IWParkingAPI.Infrastructure.UnitOfWork;
+using IWParkingAPI.Middleware;
 using IWParkingAPI.Models;
 using IWParkingAPI.Models.Context;
 using IWParkingAPI.Models.Data;
 using IWParkingAPI.Services.Implementation;
 using IWParkingAPI.Services.Interfaces;
+using IWParkingAPI.Utilities;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -30,10 +32,12 @@ namespace IWParkingAPI
             services.AddScoped(typeof(IUnitOfWork<>), typeof(UnitOfWork<>));
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IRoleService, RoleService>();
+            services.AddScoped<IJwtUtils, JwtUtils>();
+            services.AddScoped<IAuthService, AuthService>();
             services.AddAutoMapper(typeof(Startup));
             services.AddControllers();
 
-           services.AddIdentity<ApplicationUser, ApplicationRole>()
+            services.AddIdentity<ApplicationUser, ApplicationRole>()
             .AddEntityFrameworkStores<ParkingDbContextCustom>()
             .AddDefaultTokenProviders();
             services.AddSwaggerGen(options =>
@@ -69,6 +73,7 @@ namespace IWParkingAPI
                     ValidAudience = Configuration["Jwt:Audience"],
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["Jwt:Key"]))
                 };
+                options.IncludeErrorDetails = true;
             });
 
 
@@ -89,6 +94,7 @@ namespace IWParkingAPI
             app.UseHttpsRedirection();
             app.UseRouting();
 
+            app.UseMiddleware<JwtMiddleware>();
             app.UseAuthentication();
             app.UseAuthorization();
 

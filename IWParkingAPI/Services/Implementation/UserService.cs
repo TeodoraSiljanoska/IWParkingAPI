@@ -1,35 +1,26 @@
-﻿using AutoMapper;
-using IWParkingAPI.Infrastructure.Repository;
+﻿using IWParkingAPI.Infrastructure.Repository;
 using IWParkingAPI.Infrastructure.UnitOfWork;
-using IWParkingAPI.Mappers;
 using IWParkingAPI.Models.Context;
 using IWParkingAPI.Models.Data;
 using IWParkingAPI.Models.Requests;
 using IWParkingAPI.Models.Responses;
 using IWParkingAPI.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
 using System.Net;
 
 public class UserService : IUserService
 {
-    private readonly IMapper _mapper;
     private readonly IUnitOfWork<ParkingDbContextCustom> _unitOfWork;
     private readonly IGenericRepository<ApplicationUser> _userRepository;
-    private readonly IGenericRepository<ApplicationRole> _roleRepository;
     private readonly UserResponse _response;
     private readonly UserManager<ApplicationUser> _userManager;
-    private readonly RoleManager<ApplicationRole> _roleManager;
 
-    public UserService(IUnitOfWork<ParkingDbContextCustom> unitOfWork, UserManager<ApplicationUser> userManager, RoleManager<ApplicationRole> roleManager)
+    public UserService(IUnitOfWork<ParkingDbContextCustom> unitOfWork, UserManager<ApplicationUser> userManager)
     {
         _unitOfWork = unitOfWork;
         _userRepository = _unitOfWork.GetGenericRepository<ApplicationUser>();
-        _roleRepository = _unitOfWork.GetGenericRepository<ApplicationRole>();
-        _mapper = MapperConfig.InitializeAutomapper();
         _response = new UserResponse();
         _userManager = userManager;
-        _roleManager = roleManager;
     }
 
     public IEnumerable<ApplicationUser> GetAllUsers()
@@ -58,54 +49,6 @@ public class UserService : IUserService
         _response.StatusCode = HttpStatusCode.OK;
         _response.Message = "User returned successfully";
         return _response;
-    }
-
-    public async Task<UserResponse> RegisterUser([FromBody] UserRegisterRequest request)
-    {
-        try
-        {
-            var user = await _userManager.FindByNameAsync(request.UserName);
-            if (user != null)
-            {
-                _response.StatusCode = HttpStatusCode.BadRequest;
-                _response.Message = "User already exists.";
-                return _response;
-            }
-
-            var role = await _roleManager.FindByNameAsync(request.RoleName);
-            if (role == null)
-            {
-                _response.StatusCode = HttpStatusCode.BadRequest;
-                _response.Message = "Role with that name doesn't exists.";
-                return _response;
-            }
-
-            var newUser = _mapper.Map<ApplicationUser>(request);
-            newUser.TimeCreated = DateTime.Now;
-            newUser.IsDeactivated = false;
-
-            var result = await _userManager.CreateAsync(newUser, request.Password);
-
-            if (result.Succeeded)
-            {
-                await _userManager.AddToRoleAsync(newUser, request.RoleName);
-                _response.StatusCode = HttpStatusCode.OK;
-                _response.Message = "User created successfully";
-                _response.User = newUser;
-            }
-            else
-            {
-                _response.StatusCode = HttpStatusCode.BadRequest;
-                _response.Message = "User creation failed! Please check user details and try again.";
-            }
-            return _response;
-        }
-        catch (Exception ex)
-        {
-            _response.StatusCode = HttpStatusCode.BadRequest;
-            _response.Message = "An error occurred during user registration.";
-            return _response;
-        }
     }
 
     public async Task<UserResponse> UpdateUser(int id, UserRequest changes)
@@ -165,7 +108,7 @@ public class UserService : IUserService
         return _response;
     }
 
-    
+
 
 
 

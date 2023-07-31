@@ -10,6 +10,5 @@ namespace IWParkingAPI.Services.Interfaces
         UserResponse GetUserById(int id);
         Task<UserResponse> UpdateUser(int id, UserRequest changes);
         UserResponse DeactivateUser(int id);
-        Task<UserResponse> RegisterUser(UserRegisterRequest request);
     }
 }

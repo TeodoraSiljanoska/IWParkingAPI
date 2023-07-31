@@ -1,5 +1,4 @@
 ﻿using AutoMapper;
-using Azure.Core;
 using IWParkingAPI.Infrastructure.Repository;
 using IWParkingAPI.Infrastructure.UnitOfWork;
 using IWParkingAPI.Mappers;
