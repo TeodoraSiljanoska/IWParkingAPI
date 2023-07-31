@@ -111,7 +111,7 @@ namespace IWParkingAPI.Services.Implementation
 
         public async Task<UserResponse> ResetPassword(UserResetPasswordRequest model)
         {
-            var user = await _userManager.FindByEmailAsync(model.Username);
+            var user = await _userManager.FindByNameAsync(model.Username);
 
             if (user == null)
             {
