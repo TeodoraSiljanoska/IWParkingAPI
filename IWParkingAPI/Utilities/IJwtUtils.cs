@@ -1,8 +1,11 @@
-﻿namespace IWParkingAPI.Utilities
+﻿using IWParkingAPI.Models.Data;
+using IWParkingAPI.Models.Responses;
+
+namespace IWParkingAPI.Utilities
 {
     public interface IJwtUtils
     {
-       string GenerateToken(string name);
+        Task<UserLoginResponse> GenerateToken(ApplicationUser model);
         public bool ValidateToken(string token);
     }
 }

@@ -33,10 +33,11 @@ namespace IWParkingAPI
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IRoleService, RoleService>();
             services.AddScoped<IJwtUtils, JwtUtils>();
+            services.AddScoped<IAuthService, AuthService>();
             services.AddAutoMapper(typeof(Startup));
             services.AddControllers();
 
-           services.AddIdentity<ApplicationUser, ApplicationRole>()
+            services.AddIdentity<ApplicationUser, ApplicationRole>()
             .AddEntityFrameworkStores<ParkingDbContextCustom>()
             .AddDefaultTokenProviders();
             services.AddSwaggerGen(options =>
@@ -72,6 +73,7 @@ namespace IWParkingAPI
                     ValidAudience = Configuration["Jwt:Audience"],
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["Jwt:Key"]))
                 };
+                options.IncludeErrorDetails = true;
             });
 
 
