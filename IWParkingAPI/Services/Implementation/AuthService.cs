@@ -1,8 +1,5 @@
 ﻿using AutoMapper;
-using IWParkingAPI.Infrastructure.Repository;
-using IWParkingAPI.Infrastructure.UnitOfWork;
 using IWParkingAPI.Mappers;
-using IWParkingAPI.Models.Context;
 using IWParkingAPI.Models.Data;
 using IWParkingAPI.Models.Requests;
 using IWParkingAPI.Models.Responses;
@@ -17,19 +14,15 @@ namespace IWParkingAPI.Services.Implementation
     {
 
         private readonly IMapper _mapper;
-        private readonly IUnitOfWork<ParkingDbContextCustom> _unitOfWork;
-        private readonly IGenericRepository<ApplicationUser> _userRepository;
         private readonly UserResponse _response;
         private readonly UserLoginResponse _loginResponse;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly RoleManager<ApplicationRole> _roleManager;
         private readonly IJwtUtils _jwtUtils;
-        public AuthService(IUnitOfWork<ParkingDbContextCustom> unitOfWork, RoleManager<ApplicationRole> roleManager,
-            UserManager<ApplicationUser> userManager, IJwtUtils jwtUtils, SignInManager<ApplicationUser> signInManager)
+        public AuthService(RoleManager<ApplicationRole> roleManager, UserManager<ApplicationUser> userManager,
+            IJwtUtils jwtUtils, SignInManager<ApplicationUser> signInManager)
         {
-            _unitOfWork = unitOfWork;
-            _userRepository = _unitOfWork.GetGenericRepository<ApplicationUser>();
             _mapper = MapperConfig.InitializeAutomapper();
             _response = new UserResponse();
             _loginResponse = new UserLoginResponse();
@@ -37,77 +30,6 @@ namespace IWParkingAPI.Services.Implementation
             _signInManager = signInManager;
             _roleManager = roleManager;
             _jwtUtils = jwtUtils;
-        }
-        public async Task<UserLoginResponse> LoginUser(UserLoginRequest model)
-        {
-            var user = await _userManager.FindByNameAsync(model.Username);
-
-            if (user == null)
-            {
-                _loginResponse.Message = "User with that username doesn't exist";
-                _loginResponse.StatusCode = HttpStatusCode.BadRequest;
-                return _loginResponse;
-            }
-
-            if (!await _userManager.CheckPasswordAsync(user, model.Password))
-            {
-                _loginResponse.Message = "Password isn't correct";
-                _loginResponse.StatusCode = HttpStatusCode.Unauthorized;
-                return _loginResponse;
-            }
-
-            // authentication successful so generate jwt token
-            return await _jwtUtils.GenerateToken(user);
-        }
-
-        public async Task<UserResponse> ResetPassword(UserResetPasswordRequest model)
-        {
-            var user = await _userManager.FindByNameAsync(model.Username);
-
-            if (user == null)
-            {
-                _response.Message = "User with that username doesn't exist";
-                _response.StatusCode = HttpStatusCode.BadRequest;
-                return _response;
-            }
-
-            var checkOldPass = await _signInManager.PasswordSignInAsync(user.UserName, model.OldPassword, false, false);
-            if (!checkOldPass.Succeeded) 
-            {
-                _response.Message = "The old password isn't correct";
-                _response.StatusCode = HttpStatusCode.BadRequest;
-                return _response;
-            }
-
-            string resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
-            if (string.IsNullOrEmpty(resetToken))
-            {
-                _response.Message = "Error while generating reset token";
-                _response.StatusCode = HttpStatusCode.BadRequest;
-                return _response;
-            }
-
-            if (model.NewPassword != model.ConfirmNewPassword)
-            {
-                _response.Message = "The new passwords don't match";
-                _response.StatusCode = HttpStatusCode.BadRequest;
-                return _response;
-            }
-
-            var result = await _userManager.ResetPasswordAsync(user, resetToken, model.NewPassword);
-
-            if (result.Succeeded)
-            {
-                _response.Message = "User reset password successfully";
-                _response.StatusCode = HttpStatusCode.OK;
-                return _response;
-            } 
-            else
-            {
-                _response.Message = "User didn't reset password successfully";
-                _response.StatusCode = HttpStatusCode.BadRequest;
-                return _response;
-            }
         }
 
         public async Task<UserResponse> RegisterUser(UserRegisterRequest request)
@@ -161,6 +83,78 @@ namespace IWParkingAPI.Services.Implementation
             {
                 _response.StatusCode = HttpStatusCode.BadRequest;
                 _response.Message = "An error occurred during user registration.";
+                return _response;
+            }
+        }
+
+        public async Task<UserLoginResponse> LoginUser(UserLoginRequest model)
+        {
+            var user = await _userManager.FindByNameAsync(model.Username);
+
+            if (user == null)
+            {
+                _loginResponse.Message = "User with that username doesn't exist";
+                _loginResponse.StatusCode = HttpStatusCode.BadRequest;
+                return _loginResponse;
+            }
+
+            if (!await _userManager.CheckPasswordAsync(user, model.Password))
+            {
+                _loginResponse.Message = "Password isn't correct";
+                _loginResponse.StatusCode = HttpStatusCode.Unauthorized;
+                return _loginResponse;
+            }
+
+            // authentication successful so generate jwt token
+            return await _jwtUtils.GenerateToken(user);
+        }
+
+        public async Task<UserResponse> ResetPassword(UserResetPasswordRequest model)
+        {
+            var user = await _userManager.FindByNameAsync(model.Username);
+
+            if (user == null)
+            {
+                _response.Message = "User with that username doesn't exist";
+                _response.StatusCode = HttpStatusCode.BadRequest;
+                return _response;
+            }
+
+            var checkOldPass = await _signInManager.PasswordSignInAsync(user.UserName, model.OldPassword, false, false);
+            if (!checkOldPass.Succeeded)
+            {
+                _response.Message = "The old password isn't correct";
+                _response.StatusCode = HttpStatusCode.BadRequest;
+                return _response;
+            }
+
+            string resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
+            if (string.IsNullOrEmpty(resetToken))
+            {
+                _response.Message = "Error while generating reset token";
+                _response.StatusCode = HttpStatusCode.BadRequest;
+                return _response;
+            }
+
+            if (model.NewPassword != model.ConfirmNewPassword)
+            {
+                _response.Message = "The new passwords don't match";
+                _response.StatusCode = HttpStatusCode.BadRequest;
+                return _response;
+            }
+
+            var result = await _userManager.ResetPasswordAsync(user, resetToken, model.NewPassword);
+
+            if (result.Succeeded)
+            {
+                _response.Message = "User reset password successfully";
+                _response.StatusCode = HttpStatusCode.OK;
+                return _response;
+            }
+            else
+            {
+                _response.Message = "User didn't reset password successfully";
+                _response.StatusCode = HttpStatusCode.BadRequest;
                 return _response;
             }
         }

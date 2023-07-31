@@ -1,39 +1,26 @@
-﻿using AutoMapper;
-using IWParkingAPI.Infrastructure.Repository;
+﻿using IWParkingAPI.Infrastructure.Repository;
 using IWParkingAPI.Infrastructure.UnitOfWork;
-using IWParkingAPI.Mappers;
 using IWParkingAPI.Models.Context;
 using IWParkingAPI.Models.Data;
 using IWParkingAPI.Models.Requests;
 using IWParkingAPI.Models.Responses;
 using IWParkingAPI.Services.Interfaces;
-using IWParkingAPI.Utilities;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Options;
 using System.Net;
 
 public class UserService : IUserService
 {
-    private readonly IMapper _mapper;
     private readonly IUnitOfWork<ParkingDbContextCustom> _unitOfWork;
     private readonly IGenericRepository<ApplicationUser> _userRepository;
     private readonly UserResponse _response;
-    private readonly UserLoginResponse _loginResponse;
     private readonly UserManager<ApplicationUser> _userManager;
-    private readonly RoleManager<ApplicationRole> _roleManager;
-    private readonly IJwtUtils _jwtUtils;
-    public UserService(IUnitOfWork<ParkingDbContextCustom> unitOfWork, RoleManager<ApplicationRole> roleManager,
-        UserManager<ApplicationUser> userManager, IJwtUtils jwtUtils)
+
+    public UserService(IUnitOfWork<ParkingDbContextCustom> unitOfWork, UserManager<ApplicationUser> userManager)
     {
         _unitOfWork = unitOfWork;
         _userRepository = _unitOfWork.GetGenericRepository<ApplicationUser>();
-        _mapper = MapperConfig.InitializeAutomapper();
         _response = new UserResponse();
-        _loginResponse = new UserLoginResponse();
         _userManager = userManager;
-        _roleManager = roleManager;
-        _jwtUtils = jwtUtils;
     }
 
     public IEnumerable<ApplicationUser> GetAllUsers()
