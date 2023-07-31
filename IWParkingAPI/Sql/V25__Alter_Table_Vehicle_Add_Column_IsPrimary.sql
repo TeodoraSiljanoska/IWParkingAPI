@@ -1,0 +1,2 @@
+ALTER TABLE [Vehicle]
+ADD IsPrimary BIT DEFAULT 'False' NOT NULL

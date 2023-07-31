@@ -8,6 +8,6 @@ namespace IWParkingAPI.Services.Interfaces
         Task<UserResponse> RegisterUser(UserRegisterRequest request);
         Task<UserLoginResponse> LoginUser(UserLoginRequest model);
         Task<UserResponse> ResetPassword(UserResetPasswordRequest request);
-
+        Task<UserResponse> ChangeUsername(UserChangeEmailRequest request);
     }
 }

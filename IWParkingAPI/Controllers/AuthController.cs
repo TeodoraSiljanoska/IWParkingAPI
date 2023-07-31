@@ -34,6 +34,11 @@ namespace IWParkingAPI.Controllers
             return _authService.ResetPassword(request);
         }
 
-       
+        [HttpPost("Change-Username")]
+        public Task<UserResponse> ChangeUsername([FromBody] UserChangeEmailRequest request)
+        {
+            return _authService.ChangeUsername(request);
+        }
+
     }
 }
