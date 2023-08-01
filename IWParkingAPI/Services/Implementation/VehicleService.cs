@@ -139,5 +139,47 @@ namespace IWParkingAPI.Services.Implementation
             
         
         }
+
+        public VehicleResponse GetVehicleById(GetVehicleByIdRequest request)
+        {
+           // var userofvehicle = _mapper.Map<GetVehicleByIdRequest>(request);
+
+            if (request.Id == 0 || request.UserId == 0)
+            {
+                _response.StatusCode = HttpStatusCode.BadRequest;
+                _response.Message = "VehicleId and UserId are required.";
+                return _response;
+                    
+            }
+            
+            ApplicationUser user = _userRepository.GetById(request.UserId);
+            var existinguser = _vehicleRepository.FindByPredicate(u => u.UserId == request.UserId);
+
+            if (user == null || user.IsDeactivated == true)
+            {
+                _response.StatusCode = HttpStatusCode.BadRequest;
+                _response.Message = "User does not exist.";
+                return _response;
+            }
+
+            Vehicle vehicle = _vehicleRepository.GetById(request.Id);
+            if (vehicle == null)
+            {
+                _response.StatusCode = HttpStatusCode.NotFound;
+                _response.Message = "Vehicle not found";
+                return _response;
+            }
+            if(existinguser == false)
+            {
+                _response.StatusCode=HttpStatusCode.NotFound;
+                _response.Message = "This user isn't the owner of this car";
+                return _response;
+            }
+            _response.Vehicle = vehicle;
+            _response.StatusCode = HttpStatusCode.OK;
+            _response.Message = "Vehicle returned successfully";
+            return _response;
+        }
+
     }
 }
