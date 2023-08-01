@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using IWParkingAPI.Models.Data;
 using Microsoft.EntityFrameworkCore;
 
-namespace IWParkingAPI.Models.Context;
+namespace IWParkingAPI.Models;
 
 public partial class ParkingDbContext : DbContext
 {
@@ -132,7 +131,15 @@ public partial class ParkingDbContext : DbContext
             entity.Property(e => e.CapacityAdaptedCar).HasColumnName("Capacity_Adapted_Car");
             entity.Property(e => e.CapacityCar).HasColumnName("Capacity_Car");
             entity.Property(e => e.City).HasMaxLength(20);
+            entity.Property(e => e.IsDeactivated)
+                .IsRequired()
+                .HasDefaultValueSql("('False')");
+            entity.Property(e => e.IsFavourite)
+                .IsRequired()
+                .HasDefaultValueSql("('False')");
             entity.Property(e => e.Name).HasMaxLength(20);
+            entity.Property(e => e.TimeCreated).HasColumnType("datetime");
+            entity.Property(e => e.TimeModified).HasColumnType("datetime");
             entity.Property(e => e.UserId).HasColumnName("User_Id");
             entity.Property(e => e.WorkingHourFrom)
                 .HasColumnType("datetime")
@@ -201,6 +208,8 @@ public partial class ParkingDbContext : DbContext
                 .HasColumnType("date")
                 .HasColumnName("Start_Date");
             entity.Property(e => e.StartTime).HasColumnName("Start_Time");
+            entity.Property(e => e.TimeCreated).HasColumnType("datetime");
+            entity.Property(e => e.TimeModified).HasColumnType("datetime");
             entity.Property(e => e.Type).HasMaxLength(30);
             entity.Property(e => e.UserId).HasColumnName("User_Id");
 
@@ -221,9 +230,14 @@ public partial class ParkingDbContext : DbContext
 
             entity.ToTable("Vehicle");
 
+            entity.Property(e => e.IsPrimary)
+                .IsRequired()
+                .HasDefaultValueSql("('False')");
             entity.Property(e => e.PlateNumber)
                 .HasMaxLength(8)
                 .HasColumnName("Plate_Number");
+            entity.Property(e => e.TimeCreated).HasColumnType("datetime");
+            entity.Property(e => e.TimeModified).HasColumnType("datetime");
             entity.Property(e => e.Type).HasMaxLength(20);
             entity.Property(e => e.UserId).HasColumnName("User_Id");
 

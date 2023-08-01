@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace IWParkingAPI.Models.Data;
+namespace IWParkingAPI.Models;
 
 public partial class ParkingLot
 {
@@ -26,6 +26,14 @@ public partial class ParkingLot
     public int Price { get; set; }
 
     public int UserId { get; set; }
+
+    public bool? IsDeactivated { get; set; }
+
+    public DateTime TimeCreated { get; set; }
+
+    public DateTime? TimeModified { get; set; }
+
+    public bool? IsFavourite { get; set; }
 
     public virtual ICollection<Request> Requests { get; set; } = new List<Request>();
 

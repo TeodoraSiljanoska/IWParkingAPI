@@ -1,6 +1,6 @@
-﻿namespace IWParkingAPI.Models.Data
+﻿namespace IWParkingAPI.Models
 {
-    public class UserRoles
+    public static class UserRoles
     {
         public const string SuperAdmin = "SuperAdmin";
         public const string User = "User";
