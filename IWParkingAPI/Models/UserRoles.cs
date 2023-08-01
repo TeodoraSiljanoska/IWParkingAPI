@@ -4,5 +4,6 @@
     {
         public const string SuperAdmin = "SuperAdmin";
         public const string User = "User";
+        public const string Owner = "ParkingOwner";
     }
 }

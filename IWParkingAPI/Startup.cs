@@ -1,7 +1,6 @@
 ﻿using IWParkingAPI.Infrastructure.Repository;
 using IWParkingAPI.Infrastructure.UnitOfWork;
-using IWParkingAPI.Middleware;
-using IWParkingAPI.Models;
+using IWParkingAPI.Middleware.Authentication;
 using IWParkingAPI.Models.Context;
 using IWParkingAPI.Models.Data;
 using IWParkingAPI.Services.Implementation;
@@ -42,24 +41,36 @@ namespace IWParkingAPI
             .AddDefaultTokenProviders();
             services.AddSwaggerGen(options =>
             {
-                options.AddSecurityDefinition("oauth2", new OpenApiSecurityScheme
+                options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
                 {
                     Description = "Standard Authorization header using the Bearer scheme (\"bearer {token}\")",
                     In = ParameterLocation.Header,
                     Name = "Authorization",
-                    Type = SecuritySchemeType.ApiKey
+                    Type = SecuritySchemeType.ApiKey,
+                    Scheme = "Bearer"
 
                 });
+                options.AddSecurityRequirement(new OpenApiSecurityRequirement()
+                  {
+                    {
+                      new OpenApiSecurityScheme
+                      {
+                        Reference = new OpenApiReference
+                          {
+                            Type = ReferenceType.SecurityScheme,
+                            Id = "Bearer"
+                          },
+                          Scheme = "oauth2",
+                          Name = "Bearer",
+                          In = ParameterLocation.Header,
+
+                        },
+                        new List<string>()
+                      }
+                    });
                 options.OperationFilter<SecurityRequirementsOperationFilter>();
-                options.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo { Title = "IWParkingAPI", Version = "v1" });
+                options.SwaggerDoc("v1", new OpenApiInfo { Title = "IWParkingAPI", Version = "v1" });
             });
-
-
-            /*  services.AddSwaggerGen(c =>
-              {
-                  c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo { Title = "IWParkingAPI", Version = "v1" });
-              }
-          ); */
 
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
             {
@@ -76,11 +87,10 @@ namespace IWParkingAPI
                 options.IncludeErrorDetails = true;
             });
 
-
             var connectionString = Configuration.GetConnectionString("DefaultConnection");
             services.AddDbContext<ParkingDbContext>(o => o.UseSqlServer(connectionString));
             services.AddDbContext<ParkingDbContextCustom>(options => options.UseSqlServer(connectionString));
-   
+
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
@@ -94,9 +104,9 @@ namespace IWParkingAPI
             app.UseHttpsRedirection();
             app.UseRouting();
 
-            app.UseMiddleware<JwtMiddleware>();
-            app.UseAuthentication();
-            app.UseAuthorization();
+            app.UseMiddleware<AuthenticationMiddleware>();
+           // app.UseAuthentication();
+           // app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>
             {

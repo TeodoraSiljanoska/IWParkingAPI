@@ -1,5 +1,4 @@
-﻿using IWParkingAPI.Infrastructure.UnitOfWork;
-using IWParkingAPI.Models.Context;
+﻿using IWParkingAPI.Middleware.Authorization;
 using IWParkingAPI.Models.Data;
 using IWParkingAPI.Models.Requests;
 using IWParkingAPI.Models.Responses;
@@ -10,6 +9,7 @@ namespace IWParkingAPI.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [AuthorizeCustom(UserRoles.SuperAdmin)]
     public class RoleController : Controller
     {
         private readonly IRoleService _roleService;
