@@ -36,15 +36,18 @@ namespace IWParkingAPI.Mappers
                 .ForMember(dest => dest.PhoneNumber, opt => opt.MapFrom(src => src.Phone));
 
                 cfg.CreateMap<VehicleRequest, Vehicle>()
-              // .ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.UserId))
+               .ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.UserId))
                .ForMember(dest => dest.Type, opt => opt.MapFrom(src => src.Type))
                .ForMember(dest => dest.PlateNumber, opt => opt.MapFrom(src => src.PlateNumber));
                 //   .ForSourceMember(src => src.Type, opt => opt.DoNotValidate())
                 //   .ForSourceMember(src => src.PlateNumber, opt => opt.DoNotValidate()); ;
 
-                cfg.CreateMap<GetVehicleByIdRequest, Vehicle>()
-                .ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.UserId))
-                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id));
+               
+
+                cfg.CreateMap<UpdateVehicleRequest, Vehicle>()
+               .ForMember(dest => dest.Type, opt => opt.MapFrom(src => src.Type))
+               .ForMember(dest => dest.PlateNumber, opt => opt.MapFrom(src => src.PlateNumber));
+
             }
             );
             var mapper = new Mapper(config);

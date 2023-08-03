@@ -97,6 +97,12 @@ namespace IWParkingAPI.Services.Implementation
                 _loginResponse.StatusCode = HttpStatusCode.BadRequest;
                 return _loginResponse;
             }
+            if(user.IsDeactivated == true)
+            {
+                _loginResponse.Message = "User is deactivated.";
+                _loginResponse.StatusCode = HttpStatusCode.BadRequest;
+                return _loginResponse;
+            }
 
             if (!await _userManager.CheckPasswordAsync(user, model.Password))
             {
