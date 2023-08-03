@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Azure;
 using IWParkingAPI.Infrastructure.Repository;
 using IWParkingAPI.Infrastructure.UnitOfWork;
 using IWParkingAPI.Mappers;
@@ -36,7 +37,7 @@ namespace IWParkingAPI.Services.Implementation
             _getresponse = new GetVehiclesResponse();
         }
 
-     //   [AuthorizeCustom(UserRoles.SuperAdmin)]
+        //   [AuthorizeCustom(UserRoles.SuperAdmin)]
         public GetVehiclesResponse GetAllVehicles()
         {
             var vehicles = _vehicleRepository.GetAll();
@@ -200,6 +201,40 @@ namespace IWParkingAPI.Services.Implementation
             return _response;
         }
 
+        public GetVehiclesResponse GetVehiclesByUserId(int userid)
+        {
+            ApplicationUser user = _userRepository.GetById(userid);
+            var existinguser = _vehicleRepository.FindByPredicate(u => u.UserId == userid);
+
+            if (user == null || user.IsDeactivated == true)
+            {
+                _getresponse.StatusCode = HttpStatusCode.BadRequest;
+                _getresponse.Message = "User does not exist.";
+                return _getresponse;
+            }
+            if (existinguser == false)
+            {
+                _getresponse.StatusCode = HttpStatusCode.NotFound;
+                _getresponse.Message = "This user doesn't own any car.";
+                return _getresponse;
+
+            }
+
+
+            var vehicles = _vehicleRepository.GetAll().Where(v => v.UserId == userid);
+            if (vehicles.Count() == 0)
+            {
+                _getresponse.StatusCode = HttpStatusCode.NotFound;
+                _getresponse.Message = "There aren't any vehicles.";
+                _getresponse.Vehicles = Enumerable.Empty<Vehicle>();
+                return _getresponse;
+            }
+            _getresponse.StatusCode = HttpStatusCode.OK;
+            _getresponse.Message = "Vehicles returned successfully";
+            _getresponse.Vehicles = vehicles;
+            return _getresponse;
+        }
+
         public VehicleResponse MakeVehiclePrimary(PrimaryVehicleRequest request)
         {
             if (request.VehicleId == 0)
@@ -226,57 +261,32 @@ namespace IWParkingAPI.Services.Implementation
                 _response.Message = "User not found";
                 return _response;
             }
-
-        public GetVehiclesResponse GetVehiclesByUserId(int userid)
-        {
-            ApplicationUser user = _userRepository.GetById(userid);
-            var existinguser = _vehicleRepository.FindByPredicate(u => u.UserId == userid);
-
-            if (user == null || user.IsDeactivated == true)
-            {
-                _getresponse.StatusCode = HttpStatusCode.BadRequest;
-                _getresponse.Message = "User does not exist.";
-                return _getresponse;
-            }
-            if (existinguser == false)
-            {
-                _getresponse.StatusCode = HttpStatusCode.NotFound;
-                _getresponse.Message = "This user doesn't own any car.";
-                return _getresponse;
-                
-            }
-
-
-            var vehicles = _vehicleRepository.GetAll().Where(v => v.UserId == userid); 
-            if (vehicles.Count() == 0)
-            {
-                _getresponse.StatusCode = HttpStatusCode.NotFound;
-                _getresponse.Message = "There aren't any vehicles.";
-                _getresponse.Vehicles = Enumerable.Empty<Vehicle>(); 
-                return _getresponse;
-            }
-            _getresponse.StatusCode = HttpStatusCode.OK;
-            _getresponse.Message = "Vehicles returned successfully";
-            _getresponse.Vehicles = vehicles;
-            return _getresponse;
-        }
-
-    }
-
-
-}
-
-            /*IEnumerable<Vehicle> vehiclesOfTheUser = _vehicleRepository.GetAll().Where(v => v.User.Id == user.Id);
+            /*IEnumerable<Vehicle> vehiclesOfTheUser = _vehicleRepository.GetAll().Where(v => v.UserId.Equals(request.UserId));
 
             foreach (Vehicle vehicles in vehiclesOfTheUser)
             {
                 vehicles.IsPrimary = false;
             }*/
+            IEnumerable<Vehicle> vehiclesOfTheUser = _vehicleRepository.GetAll();
 
-            vehicle.IsPrimary = true;
-            vehicle.TimeModified = DateTime.Now;
+            foreach (Vehicle userVehicle in vehiclesOfTheUser)
+            {
+                if (userVehicle.UserId == request.UserId)
+                {
+                    if (userVehicle.Id == request.VehicleId)
+                    {
+                        userVehicle.IsPrimary = true;
+                        userVehicle.TimeModified = DateTime.Now;
+                    }
+                    else
+                    {
+                        userVehicle.IsPrimary = false;
+                    }
 
-            _vehicleRepository.Update(vehicle);
+                    _vehicleRepository.Update(userVehicle);
+                }
+            }
+
             _unitOfWork.Save();
 
             _response.StatusCode = HttpStatusCode.OK;
