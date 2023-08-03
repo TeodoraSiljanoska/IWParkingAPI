@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace IWParkingAPI.Models.Data;
+namespace IWParkingAPI.Models;
 
 public partial class Request
 {
