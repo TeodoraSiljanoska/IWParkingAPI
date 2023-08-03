@@ -66,9 +66,9 @@ namespace IWParkingAPI.Controllers
 
         [HttpPost("GetByUserid/{userid}")]
 
-        public GetVehiclesResponse GetVehicleByUserId(int userid)
+        public GetVehiclesResponse GetVehiclesByUserId(int userid)
         {
-            return _vehicleService.GetVehicleByUserId(userid);
+            return _vehicleService.GetVehiclesByUserId(userid);
         }
     }
 }

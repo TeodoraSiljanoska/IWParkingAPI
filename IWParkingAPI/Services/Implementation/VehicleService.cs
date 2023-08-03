@@ -200,7 +200,7 @@ namespace IWParkingAPI.Services.Implementation
             return _response;
         }
 
-        public GetVehiclesResponse GetVehicleByUserId(int userid)
+        public GetVehiclesResponse GetVehiclesByUserId(int userid)
         {
             ApplicationUser user = _userRepository.GetById(userid);
             var existinguser = _vehicleRepository.FindByPredicate(u => u.UserId == userid);
