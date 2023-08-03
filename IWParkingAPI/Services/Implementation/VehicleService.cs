@@ -2,12 +2,14 @@
 using IWParkingAPI.Infrastructure.Repository;
 using IWParkingAPI.Infrastructure.UnitOfWork;
 using IWParkingAPI.Mappers;
+using IWParkingAPI.Middleware.Authorization;
 using IWParkingAPI.Models;
 using IWParkingAPI.Models.Context;
 using IWParkingAPI.Models.Data;
 using IWParkingAPI.Models.Requests;
 using IWParkingAPI.Models.Responses;
 using IWParkingAPI.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using System.Net;
 
 namespace IWParkingAPI.Services.Implementation
@@ -21,6 +23,7 @@ namespace IWParkingAPI.Services.Implementation
         private readonly IGenericRepository<ApplicationUser> _userRepository;
         private readonly IUnitOfWork<ParkingDbContextCustom> _custom;
         private readonly VehicleResponse _response;
+        private readonly GetVehiclesResponse _getresponse;
 
         public VehicleService(IUnitOfWork<ParkingDbContext> unitOfWork, IUnitOfWork<ParkingDbContextCustom> custom)
         {
@@ -30,8 +33,25 @@ namespace IWParkingAPI.Services.Implementation
             _vehicleRepository = _unitOfWork.GetGenericRepository<Vehicle>();
             _userRepository = _custom.GetGenericRepository<ApplicationUser>();
             _response = new VehicleResponse();
+            _getresponse = new GetVehiclesResponse();
         }
 
+     //   [AuthorizeCustom(UserRoles.SuperAdmin)]
+        public GetVehiclesResponse GetAllVehicles()
+        {
+            var vehicles = _vehicleRepository.GetAll();
+            if (vehicles.Count() == 0)
+            {
+                _getresponse.StatusCode = HttpStatusCode.NoContent;
+                _getresponse.Message = "There aren't any vehicles.";
+                _getresponse.Vehicles = Enumerable.Empty<Vehicle>();
+
+            }
+            _getresponse.StatusCode = HttpStatusCode.OK;
+            _getresponse.Message = "Vehicles returned successfully";
+            _getresponse.Vehicles = vehicles;
+            return _getresponse;
+        }
 
         public VehicleResponse AddNewVehicle(VehicleRequest request)
         {
@@ -180,5 +200,42 @@ namespace IWParkingAPI.Services.Implementation
             return _response;
         }
 
+        public GetVehiclesResponse GetVehiclesByUserId(int userid)
+        {
+            ApplicationUser user = _userRepository.GetById(userid);
+            var existinguser = _vehicleRepository.FindByPredicate(u => u.UserId == userid);
+
+            if (user == null || user.IsDeactivated == true)
+            {
+                _getresponse.StatusCode = HttpStatusCode.BadRequest;
+                _getresponse.Message = "User does not exist.";
+                return _getresponse;
+            }
+            if (existinguser == false)
+            {
+                _getresponse.StatusCode = HttpStatusCode.NotFound;
+                _getresponse.Message = "This user doesn't own any car.";
+                return _getresponse;
+                
+            }
+
+
+            var vehicles = _vehicleRepository.GetAll().Where(v => v.UserId == userid); 
+            if (vehicles.Count() == 0)
+            {
+                _getresponse.StatusCode = HttpStatusCode.NotFound;
+                _getresponse.Message = "There aren't any vehicles.";
+                _getresponse.Vehicles = Enumerable.Empty<Vehicle>(); 
+                return _getresponse;
+            }
+            _getresponse.StatusCode = HttpStatusCode.OK;
+            _getresponse.Message = "Vehicles returned successfully";
+            _getresponse.Vehicles = vehicles;
+            return _getresponse;
+        }
+
     }
+
+
 }
+
