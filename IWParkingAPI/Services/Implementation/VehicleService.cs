@@ -35,7 +35,7 @@ namespace IWParkingAPI.Services.Implementation
 
         public VehicleResponse AddNewVehicle(VehicleRequest request)
         {
-            ApplicationUser existinguser = _userRepository.GetById(request.UserId);
+           ApplicationUser existinguser = _userRepository.GetById(request.UserId);
             if (existinguser == null)
             {
                 _response.StatusCode = HttpStatusCode.NotFound;
@@ -47,12 +47,19 @@ namespace IWParkingAPI.Services.Implementation
                 _response.StatusCode = HttpStatusCode.BadRequest;
                 _response.Message = "User is deactivated.";
                 return _response;
-            }
+            } 
 
             if (_vehicleRepository.FindByPredicate(u => u.PlateNumber == request.PlateNumber))
             {
                 _response.StatusCode = HttpStatusCode.BadRequest;
                 _response.Message = "The plate number already exists.";
+                return _response;
+            }
+
+            if (request.Type != "Car" && request.Type != "Adapted Car")
+            {
+                _response.StatusCode = HttpStatusCode.BadRequest;
+                _response.Message = "Vehicle Type must be Car or Adapted Car.";
                 return _response;
             }
 
@@ -92,7 +99,7 @@ namespace IWParkingAPI.Services.Implementation
 
         public VehicleResponse UpdateVehicle(int id, VehicleRequest request)
         {   
-            if(request.UserId == null)
+           /* if(request.UserId == null)
             {
                 _response.StatusCode = HttpStatusCode.BadRequest;
                 _response.Message = "UserId is required.";
@@ -106,7 +113,8 @@ namespace IWParkingAPI.Services.Implementation
                 _response.StatusCode = HttpStatusCode.BadRequest;
                 _response.Message = "User does not exist.";
                 return _response;
-            }
+            } */
+
             Vehicle vehicle = _vehicleRepository.GetById(id);
             if (vehicle == null)
             {
@@ -122,6 +130,13 @@ namespace IWParkingAPI.Services.Implementation
                     _response.Message = "Vehicle with that plate number already exists.";
                     return _response;
                 }
+
+                if(request.Type != null && (request.Type != "Car" && request.Type != "Adapted Car"))
+            {
+                _response.StatusCode = HttpStatusCode.BadRequest;
+                _response.Message = "Vehicle Type must be Car or Adapted Car.";
+                return _response;
+            }
 
 
             vehicle.PlateNumber = string.IsNullOrEmpty(request.PlateNumber) ? vehicle.PlateNumber : request.PlateNumber;
@@ -140,41 +155,25 @@ namespace IWParkingAPI.Services.Implementation
         
         }
 
-        public VehicleResponse GetVehicleById(GetVehicleByIdRequest request)
+        public VehicleResponse GetVehicleById(int id)
         {
-           // var userofvehicle = _mapper.Map<GetVehicleByIdRequest>(request);
 
-            if (request.Id == 0 || request.UserId == 0)
+            if (id == 0)
             {
                 _response.StatusCode = HttpStatusCode.BadRequest;
-                _response.Message = "VehicleId and UserId are required.";
+                _response.Message = "VehicleId is required.";
                 return _response;
                     
             }
             
-            ApplicationUser user = _userRepository.GetById(request.UserId);
-            var existinguser = _vehicleRepository.FindByPredicate(u => u.UserId == request.UserId);
-
-            if (user == null || user.IsDeactivated == true)
-            {
-                _response.StatusCode = HttpStatusCode.BadRequest;
-                _response.Message = "User does not exist.";
-                return _response;
-            }
-
-            Vehicle vehicle = _vehicleRepository.GetById(request.Id);
+            Vehicle vehicle = _vehicleRepository.GetById(id);
             if (vehicle == null)
             {
                 _response.StatusCode = HttpStatusCode.NotFound;
                 _response.Message = "Vehicle not found";
                 return _response;
             }
-            if(existinguser == false)
-            {
-                _response.StatusCode=HttpStatusCode.NotFound;
-                _response.Message = "This user isn't the owner of this car";
-                return _response;
-            }
+           
             _response.Vehicle = vehicle;
             _response.StatusCode = HttpStatusCode.OK;
             _response.Message = "Vehicle returned successfully";

@@ -34,11 +34,11 @@ namespace IWParkingAPI.Controllers
             return _vehicleService.DeleteVehicle(id);
         }
 
-        [HttpPost("GetById")]
+        [HttpPost("Get/{id}")]
 
-        public VehicleResponse GetVehicleById(GetVehicleByIdRequest request)
+        public VehicleResponse GetVehicleById(int id)
         {
-            return _vehicleService.GetVehicleById(request);
+            return _vehicleService.GetVehicleById(id);
         }
     }
 }
