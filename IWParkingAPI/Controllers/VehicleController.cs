@@ -1,4 +1,6 @@
-﻿using IWParkingAPI.Models.Requests;
+﻿using IWParkingAPI.Middleware.Authorization;
+using IWParkingAPI.Models;
+using IWParkingAPI.Models.Requests;
 using IWParkingAPI.Models.Responses;
 using IWParkingAPI.Services.Interfaces;
 using Microsoft.AspNetCore.Http;
@@ -16,11 +18,24 @@ namespace IWParkingAPI.Controllers
             _vehicleService = vehicleService;
         }
 
+
+        [AuthorizeCustom(UserRoles.SuperAdmin)]
+        [HttpGet("GetAll")]
+        public GetVehiclesResponse GetVehicles()
+        {
+            return _vehicleService.GetAllVehicles();
+        }
+
+
+        [AuthorizeCustom(UserRoles.User)]
         [HttpPost("Create")]
         public VehicleResponse Create(VehicleRequest request)
         {
             return _vehicleService.AddNewVehicle(request);
         }
+
+
+        [AuthorizeCustom(UserRoles.User)]
 
         [HttpPut("Update/{id}")]
         public VehicleResponse Update(int id, VehicleRequest changes)
@@ -28,17 +43,30 @@ namespace IWParkingAPI.Controllers
             return _vehicleService.UpdateVehicle(id, changes);
         }
 
+        [AuthorizeCustom(UserRoles.User)]
+
         [HttpDelete("Delete/{id}")]
         public VehicleResponse Delete(int id)
         {
             return _vehicleService.DeleteVehicle(id);
         }
 
+
+        [AuthorizeCustom(UserRoles.User)]
+
         [HttpPost("Get/{id}")]
 
         public VehicleResponse GetVehicleById(int id)
         {
             return _vehicleService.GetVehicleById(id);
+        }
+
+
+        [HttpPost("GetByUserid/{userid}")]
+
+        public GetVehiclesResponse GetVehicleByUserId(int userid)
+        {
+            return _vehicleService.GetVehicleByUserId(userid);
         }
     }
 }

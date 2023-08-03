@@ -1,4 +1,5 @@
 ﻿using IWParkingAPI.Middleware.Authorization;
+using IWParkingAPI.Models;
 using IWParkingAPI.Models.Data;
 using IWParkingAPI.Models.Requests;
 using IWParkingAPI.Models.Responses;
