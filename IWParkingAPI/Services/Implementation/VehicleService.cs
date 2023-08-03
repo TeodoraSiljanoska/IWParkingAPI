@@ -262,32 +262,16 @@ namespace IWParkingAPI.Services.Implementation
                 _response.Message = "User not found";
                 return _response;
             }
-            /*IEnumerable<Vehicle> vehiclesOfTheUser = _vehicleRepository.GetAll().Where(v => v.UserId.Equals(request.UserId));
+            var vehiclesOfTheUser = _vehicleRepository.GetAll().Where(v => v.UserId == request.UserId);
 
-            foreach (Vehicle vehicles in vehiclesOfTheUser)
+            foreach (Vehicle veh in vehiclesOfTheUser)
             {
-                vehicles.IsPrimary = false;
-            }*/
-            IEnumerable<Vehicle> vehiclesOfTheUser = _vehicleRepository.GetAll();
-
-            foreach (Vehicle userVehicle in vehiclesOfTheUser)
-            {
-                if (userVehicle.UserId == request.UserId)
-                {
-                    if (userVehicle.Id == request.VehicleId)
-                    {
-                        userVehicle.IsPrimary = true;
-                        userVehicle.TimeModified = DateTime.Now;
-                    }
-                    else
-                    {
-                        userVehicle.IsPrimary = false;
-                    }
-
-                    _vehicleRepository.Update(userVehicle);
-                }
+                veh.IsPrimary = false;
+                _vehicleRepository.Update(veh);
             }
 
+            vehicle.IsPrimary = true;
+            _vehicleRepository.Update(vehicle);
             _unitOfWork.Save();
 
             _response.StatusCode = HttpStatusCode.OK;
