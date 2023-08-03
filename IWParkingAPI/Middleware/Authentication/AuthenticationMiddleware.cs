@@ -40,8 +40,8 @@ namespace IWParkingAPI.Middleware.Authentication
 
                     var responseMessage = new
                     {
-                        Message = "Token for authentication was not found",
-                        StatusCode = context.Response.StatusCode
+                        message = "Token for authentication was not found",
+                        statusCode = context.Response.StatusCode
                     };
 
                     var responseBody = JsonConvert.SerializeObject(responseMessage);
@@ -64,8 +64,8 @@ namespace IWParkingAPI.Middleware.Authentication
 
                     var responseMessage = new
                     {
-                        Message = validation.Message,
-                        StatusCode = (int)validation.StatusCode
+                        message = validation.Message,
+                        statusCode = (int)validation.StatusCode
                     };
 
                     var responseBody = JsonConvert.SerializeObject(responseMessage);

@@ -13,13 +13,13 @@ namespace IWParkingAPI.Middleware.Authorization
 
     public class ErrorResponse
     {
-        public string Message { get; }
-        public HttpStatusCode StatusCode { get; }
+        public string message { get; }
+        public HttpStatusCode statusCode { get; }
 
-        public ErrorResponse(HttpStatusCode statusCode ,string message)
+        public ErrorResponse(HttpStatusCode status, string mes)
         {
-            Message = message;
-            StatusCode = statusCode;
+            message = mes;
+            statusCode = status;
         }
     }
 

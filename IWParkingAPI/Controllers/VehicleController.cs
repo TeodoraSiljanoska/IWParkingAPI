@@ -1,7 +1,6 @@
 ﻿using IWParkingAPI.Models.Requests;
 using IWParkingAPI.Models.Responses;
 using IWParkingAPI.Services.Interfaces;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace IWParkingAPI.Controllers
@@ -35,10 +34,15 @@ namespace IWParkingAPI.Controllers
         }
 
         [HttpPost("Get/{id}")]
-
         public VehicleResponse GetVehicleById(int id)
         {
             return _vehicleService.GetVehicleById(id);
+        }
+
+        [HttpPost("MakePrimary")]
+        public VehicleResponse MakePrimary(PrimaryVehicleRequest request)
+        {
+            return _vehicleService.MakeVehiclePrimary(request);
         }
     }
 }
