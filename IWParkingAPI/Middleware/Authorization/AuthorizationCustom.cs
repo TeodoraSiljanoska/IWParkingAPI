@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc;
 using System.IdentityModel.Tokens.Jwt;
+using System.Net;
 
 namespace IWParkingAPI.Middleware.Authorization
 {
@@ -21,7 +22,7 @@ namespace IWParkingAPI.Middleware.Authorization
 
             if (token == null)
             {
-                context.Result = new UnauthorizedResult();
+                context.Result = new CustomUnauthorizedResult(HttpStatusCode.BadRequest, "Token validation failed.");
                 return;
             }
 
@@ -40,14 +41,14 @@ namespace IWParkingAPI.Middleware.Authorization
                 }
                 else
                 {
-                    context.Result = new ForbidResult();
+                    context.Result = new CustomUnauthorizedResult(HttpStatusCode.Forbidden, "You do not have permission to view this action");
                     return;
                 }
             }
             catch (Exception)
             {
                 // Token validation failed
-                context.Result = new UnauthorizedResult();
+                context.Result = new CustomUnauthorizedResult(HttpStatusCode.Unauthorized, "Token authorization validation failed");
                 return;
             }
         }

@@ -13,13 +13,15 @@ namespace IWParkingAPI.Utilities
     {
         private readonly IConfiguration _config;
         private readonly UserManager<ApplicationUser> _userManager;
-        private readonly UserLoginResponse response;
+        private readonly UserLoginResponse userLoginResponse;
+        private readonly TokenValidationResponse tokenValidationResponse;
         private readonly string secretKey;
         public JwtUtils(IConfiguration configuration, UserManager<ApplicationUser> userManager)
         {
             _config = configuration;
             _userManager = userManager;
-            response = new UserLoginResponse();
+            userLoginResponse = new UserLoginResponse();
+            tokenValidationResponse = new TokenValidationResponse();
             secretKey = _config["Jwt:Key"];
     }
         public async Task<UserLoginResponse> GenerateToken(ApplicationUser user)
@@ -48,15 +50,15 @@ namespace IWParkingAPI.Utilities
 
             var usertoken = new JwtSecurityTokenHandler().WriteToken(token);
 
-            response.StatusCode = HttpStatusCode.OK;
-            response.Message = "User logged in successfully";
-            response.Token = usertoken;
-            return response;
+            userLoginResponse.StatusCode = HttpStatusCode.OK;
+            userLoginResponse.Message = "User logged in successfully";
+            userLoginResponse.Token = usertoken;
+            return userLoginResponse;
 
         }
 
 
-        public bool ValidateToken(string token)
+        public TokenValidationResponse ValidateToken(string token)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.UTF8.GetBytes(secretKey);
@@ -74,12 +76,17 @@ namespace IWParkingAPI.Utilities
                     ClockSkew = TimeSpan.Zero // Optional: Adjust the tolerance for expired tokens
                 }, out SecurityToken validatedToken);
 
-                return true;
+                tokenValidationResponse.StatusCode = HttpStatusCode.OK;
+                tokenValidationResponse.Message = "Token authentication validation is successful";
+                tokenValidationResponse.IsValid = true;
+                return tokenValidationResponse;
             }
             catch (Exception ex)
             {
-                // Log or handle the validation exception as needed
-                return false;
+                tokenValidationResponse.StatusCode = HttpStatusCode.BadRequest;
+                tokenValidationResponse.Message = "Token authentication validation failed";
+                tokenValidationResponse.IsValid = false;
+                return tokenValidationResponse;
             }
         }
     }

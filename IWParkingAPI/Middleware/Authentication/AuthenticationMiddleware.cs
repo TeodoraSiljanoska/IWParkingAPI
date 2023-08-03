@@ -1,11 +1,14 @@
 ﻿using IWParkingAPI.Utilities;
+using Newtonsoft.Json;
 using System.Net;
+using System.Text;
 
 namespace IWParkingAPI.Middleware.Authentication
 {
     public class AuthenticationMiddleware
     {
         private readonly RequestDelegate _next;
+        private const string contentType = "application/json";
 
         public AuthenticationMiddleware(RequestDelegate next)
         {
@@ -33,18 +36,43 @@ namespace IWParkingAPI.Middleware.Authentication
                 if (token == null)
                 {
                     context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
+                    context.Response.ContentType = contentType;
+
+                    var responseMessage = new
+                    {
+                        Message = "Token for authentication was not found",
+                        StatusCode = context.Response.StatusCode
+                    };
+
+                    var responseBody = JsonConvert.SerializeObject(responseMessage);
+                    await context.Response.WriteAsync(responseBody, Encoding.UTF8);
                     return;
                 }
 
                 // else, if token is not null, validate it
-                bool response = jwtUtils.ValidateToken(token);
+                var validation = jwtUtils.ValidateToken(token);
 
                 // return the validation response
-                if (response)
+                if (validation.IsValid)
                 {
                     await _next(context);
+                }
+                else
+                {
+                    context.Response.StatusCode = (int)validation.StatusCode;
+                    context.Response.ContentType = contentType;
+
+                    var responseMessage = new
+                    {
+                        Message = validation.Message,
+                        StatusCode = (int)validation.StatusCode
+                    };
+
+                    var responseBody = JsonConvert.SerializeObject(responseMessage);
+                    await context.Response.WriteAsync(responseBody, Encoding.UTF8);
                 }
             }
         }
     }
 }
+
