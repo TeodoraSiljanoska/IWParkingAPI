@@ -117,23 +117,8 @@ namespace IWParkingAPI.Services.Implementation
         }
 
 
-        public VehicleResponse UpdateVehicle(int id, VehicleRequest request)
+        public VehicleResponse UpdateVehicle(int id, UpdateVehicleRequest request)
         {   
-           /* if(request.UserId == null)
-            {
-                _response.StatusCode = HttpStatusCode.BadRequest;
-                _response.Message = "UserId is required.";
-                return _response;
-            }
-
-            ApplicationUser existinguser = _userRepository.GetById(request.UserId);
-            
-            if (existinguser == null || existinguser.IsDeactivated == true)
-            {
-                _response.StatusCode = HttpStatusCode.BadRequest;
-                _response.Message = "User does not exist.";
-                return _response;
-            } */
 
             Vehicle vehicle = _vehicleRepository.GetById(id);
             if (vehicle == null)
@@ -142,25 +127,41 @@ namespace IWParkingAPI.Services.Implementation
                 _response.Message = "Vehicle not found";
                 return _response;
             }
-            
 
-                if (_vehicleRepository.FindByPredicate(u => u.PlateNumber == request.PlateNumber))
+            if(request.PlateNumber == null || request.Type == null)
+            {
+                _response.StatusCode = HttpStatusCode.BadRequest;
+                _response.Message = "PlateNumber and Type are required.";
+                return _response;
+            }
+
+           /* if (_vehicleRepository.FindByPredicate(u => u.PlateNumber == request.PlateNumber))
                 {
                     _response.StatusCode = HttpStatusCode.BadRequest;
                     _response.Message = "Vehicle with that plate number already exists.";
                     return _response;
-                }
+                } */
 
-                if(request.Type != null && (request.Type != "Car" && request.Type != "Adapted Car"))
+                if(request.Type != "Car" && request.Type != "Adapted Car")
             {
                 _response.StatusCode = HttpStatusCode.BadRequest;
                 _response.Message = "Vehicle Type must be Car or Adapted Car.";
                 return _response;
             }
+                if(vehicle.PlateNumber == request.PlateNumber && vehicle.Type == request.Type)
+            {
+                _response.Vehicle = vehicle;
+                _response.StatusCode = HttpStatusCode.BadRequest;
+                _response.Message = "No updates were entered. Please enter the updates";
+                return _response;
+            }
+
+            /*  vehicle.PlateNumber = string.IsNullOrEmpty(request.PlateNumber) ? vehicle.PlateNumber : request.PlateNumber;
+              vehicle.Type = string.IsNullOrEmpty(request.Type) ? vehicle.Type : request.Type; */
 
 
-            vehicle.PlateNumber = string.IsNullOrEmpty(request.PlateNumber) ? vehicle.PlateNumber : request.PlateNumber;
-            vehicle.Type = string.IsNullOrEmpty(request.Type) ? vehicle.Type : request.Type;
+          vehicle.PlateNumber =  (vehicle.PlateNumber == request.PlateNumber) ? vehicle.PlateNumber : request.PlateNumber;
+          vehicle.Type =  (vehicle.Type == request.Type) ? vehicle.Type : request.Type;
             vehicle.TimeModified = DateTime.Now;
 
                 _vehicleRepository.Update(vehicle);

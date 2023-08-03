@@ -38,7 +38,7 @@ namespace IWParkingAPI.Controllers
         [AuthorizeCustom(UserRoles.User)]
 
         [HttpPut("Update/{id}")]
-        public VehicleResponse Update(int id, VehicleRequest changes)
+        public VehicleResponse Update(int id, UpdateVehicleRequest changes)
         {
             return _vehicleService.UpdateVehicle(id, changes);
         }
