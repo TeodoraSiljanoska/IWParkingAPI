@@ -61,6 +61,8 @@ namespace IWParkingAPI.Controllers
             return _vehicleService.GetVehicleById(id);
         }
 
+        [AuthorizeCustom(UserRoles.User,UserRoles.SuperAdmin)]
+
 
         [HttpPost("GetByUserid/{userid}")]
 
