@@ -26,9 +26,14 @@ namespace IWParkingAPI.Utilities
         {
             var userRoles = await _userManager.GetRolesAsync(user);
 
+            IdentityOptions _options = new IdentityOptions();
             var authClaims = new List<Claim>
             {
-                new Claim(ClaimTypes.NameIdentifier, user.UserName),
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Name, user.UserName),
+
+                //new Claim(_options.ClaimsIdentity.UserNameClaimType, user.UserName),
+                //new Claim(_options.ClaimsIdentity.UserIdClaimType, user.Id.ToString())
             };
 
             foreach (var userRole in userRoles)
