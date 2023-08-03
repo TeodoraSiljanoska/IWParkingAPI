@@ -3,7 +3,6 @@ using IWParkingAPI.Models;
 using IWParkingAPI.Models.Requests;
 using IWParkingAPI.Models.Responses;
 using IWParkingAPI.Services.Interfaces;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace IWParkingAPI.Controllers
@@ -55,20 +54,15 @@ namespace IWParkingAPI.Controllers
         [AuthorizeCustom(UserRoles.User)]
 
         [HttpPost("Get/{id}")]
-
         public VehicleResponse GetVehicleById(int id)
         {
             return _vehicleService.GetVehicleById(id);
         }
 
-        [AuthorizeCustom(UserRoles.User,UserRoles.SuperAdmin)]
-
-
-        [HttpPost("GetByUserid/{userid}")]
-
-        public GetVehiclesResponse GetVehiclesByUserId(int userid)
+        [HttpPost("MakePrimary")]
+        public VehicleResponse MakePrimary(PrimaryVehicleRequest request)
         {
-            return _vehicleService.GetVehiclesByUserId(userid);
+            return _vehicleService.MakeVehiclePrimary(request);
         }
     }
 }

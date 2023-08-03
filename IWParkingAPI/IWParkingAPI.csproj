@@ -19,6 +19,7 @@
 
   <ItemGroup>
     <Compile Remove="Models\Data\ApplicationDbContextCustom.cs" />
+    <Compile Remove="Models\Requests\MakeVehiclePrimary.cs" />
   </ItemGroup>
 
   <ItemGroup>

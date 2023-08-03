@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Azure;
 using IWParkingAPI.Infrastructure.Repository;
 using IWParkingAPI.Infrastructure.UnitOfWork;
 using IWParkingAPI.Mappers;
@@ -36,7 +37,7 @@ namespace IWParkingAPI.Services.Implementation
             _getresponse = new GetVehiclesResponse();
         }
 
-     //   [AuthorizeCustom(UserRoles.SuperAdmin)]
+        //   [AuthorizeCustom(UserRoles.SuperAdmin)]
         public GetVehiclesResponse GetAllVehicles()
         {
             var vehicles = _vehicleRepository.GetAll();
@@ -55,19 +56,19 @@ namespace IWParkingAPI.Services.Implementation
 
         public VehicleResponse AddNewVehicle(VehicleRequest request)
         {
-           ApplicationUser existinguser = _userRepository.GetById(request.UserId);
+            ApplicationUser existinguser = _userRepository.GetById(request.UserId);
             if (existinguser == null)
             {
                 _response.StatusCode = HttpStatusCode.NotFound;
                 _response.Message = "User does not exists.";
                 return _response;
             }
-            if(existinguser != null && existinguser.IsDeactivated == true)
+            if (existinguser != null && existinguser.IsDeactivated == true)
             {
                 _response.StatusCode = HttpStatusCode.BadRequest;
                 _response.Message = "User is deactivated.";
                 return _response;
-            } 
+            }
 
             if (_vehicleRepository.FindByPredicate(u => u.PlateNumber == request.PlateNumber))
             {
@@ -164,16 +165,16 @@ namespace IWParkingAPI.Services.Implementation
           vehicle.Type =  (vehicle.Type == request.Type) ? vehicle.Type : request.Type;
             vehicle.TimeModified = DateTime.Now;
 
-                _vehicleRepository.Update(vehicle);
-                _unitOfWork.Save();
+            _vehicleRepository.Update(vehicle);
+            _unitOfWork.Save();
 
-                _response.Vehicle = vehicle;
-                _response.StatusCode = HttpStatusCode.OK;
-                _response.Message = "Vehicle updated successfully";
+            _response.Vehicle = vehicle;
+            _response.StatusCode = HttpStatusCode.OK;
+            _response.Message = "Vehicle updated successfully";
 
-                return _response;
-            
-        
+            return _response;
+
+
         }
 
         public VehicleResponse GetVehicleById(int id)
@@ -184,9 +185,9 @@ namespace IWParkingAPI.Services.Implementation
                 _response.StatusCode = HttpStatusCode.BadRequest;
                 _response.Message = "VehicleId is required.";
                 return _response;
-                    
+
             }
-            
+
             Vehicle vehicle = _vehicleRepository.GetById(id);
             if (vehicle == null)
             {
@@ -194,7 +195,7 @@ namespace IWParkingAPI.Services.Implementation
                 _response.Message = "Vehicle not found";
                 return _response;
             }
-           
+
             _response.Vehicle = vehicle;
             _response.StatusCode = HttpStatusCode.OK;
             _response.Message = "Vehicle returned successfully";
@@ -217,16 +218,16 @@ namespace IWParkingAPI.Services.Implementation
                 _getresponse.StatusCode = HttpStatusCode.NotFound;
                 _getresponse.Message = "This user doesn't own any car.";
                 return _getresponse;
-                
+
             }
 
 
-            var vehicles = _vehicleRepository.GetAll().Where(v => v.UserId == userid); 
+            var vehicles = _vehicleRepository.GetAll().Where(v => v.UserId == userid);
             if (vehicles.Count() == 0)
             {
                 _getresponse.StatusCode = HttpStatusCode.NotFound;
                 _getresponse.Message = "There aren't any vehicles.";
-                _getresponse.Vehicles = Enumerable.Empty<Vehicle>(); 
+                _getresponse.Vehicles = Enumerable.Empty<Vehicle>();
                 return _getresponse;
             }
             _getresponse.StatusCode = HttpStatusCode.OK;
@@ -235,8 +236,49 @@ namespace IWParkingAPI.Services.Implementation
             return _getresponse;
         }
 
+        public VehicleResponse MakeVehiclePrimary(PrimaryVehicleRequest request)
+        {
+            if (request.VehicleId == 0)
+            {
+                _response.StatusCode = HttpStatusCode.BadRequest;
+                _response.Message = "VehicleId is required.";
+                return _response;
+
+            }
+
+            Vehicle vehicle = _vehicleRepository.GetById(request.VehicleId);
+            if (vehicle == null)
+            {
+                _response.StatusCode = HttpStatusCode.NotFound;
+                _response.Message = "Vehicle not found";
+                return _response;
+            }
+
+            var user = _userRepository.GetById(request.UserId);
+
+            if (user == null)
+            {
+                _response.StatusCode = HttpStatusCode.NotFound;
+                _response.Message = "User not found";
+                return _response;
+            }
+            var vehiclesOfTheUser = _vehicleRepository.GetAll().Where(v => v.UserId == request.UserId);
+
+            foreach (Vehicle veh in vehiclesOfTheUser)
+            {
+                veh.IsPrimary = false;
+                _vehicleRepository.Update(veh);
+            }
+
+            vehicle.IsPrimary = true;
+            _vehicleRepository.Update(vehicle);
+            _unitOfWork.Save();
+
+            _response.StatusCode = HttpStatusCode.OK;
+            _response.Message = "Vehicle is made to be primary";
+            _response.Vehicle = vehicle;
+            return _response;
+
+        }
     }
-
-
 }
-
