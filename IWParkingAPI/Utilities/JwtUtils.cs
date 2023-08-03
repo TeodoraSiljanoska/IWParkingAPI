@@ -28,7 +28,8 @@ namespace IWParkingAPI.Utilities
 
             var authClaims = new List<Claim>
             {
-                new Claim(ClaimTypes.NameIdentifier, user.UserName),
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Name, user.UserName),
             };
 
             foreach (var userRole in userRoles)
