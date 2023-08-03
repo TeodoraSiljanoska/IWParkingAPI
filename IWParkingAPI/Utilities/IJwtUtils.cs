@@ -6,6 +6,6 @@ namespace IWParkingAPI.Utilities
     public interface IJwtUtils
     {
         Task<UserLoginResponse> GenerateToken(ApplicationUser model);
-        public bool ValidateToken(string token);
+        public TokenValidationResponse ValidateToken(string token);
     }
 }
