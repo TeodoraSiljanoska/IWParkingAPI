@@ -11,18 +11,20 @@ namespace IWParkingAPI.Services.Implementation
     public class ParkingLotService : IParkingLotService
     {
         private readonly IUnitOfWork<ParkingDbContext> _unitOfWork;
-        private readonly IGenericRepository<ParkingLot> _parkingPlotRepository;
+        private readonly IGenericRepository<ParkingLot> _parkingLotRepository;
         private readonly GetParkingLotsResponse _response;
+        private readonly ParkingLotResponse response;
 
         public ParkingLotService(IUnitOfWork<ParkingDbContext> unitOfWork)
         {
             _unitOfWork = unitOfWork;
-            _parkingPlotRepository = _unitOfWork.GetGenericRepository<ParkingLot>();
+            _parkingLotRepository = _unitOfWork.GetGenericRepository<ParkingLot>();
             _response = new GetParkingLotsResponse();
+            response = new ParkingLotResponse();
         }
         public GetParkingLotsResponse GetAllParkingLots()
         {
-            var parkingLots = _parkingPlotRepository.GetAll();
+            var parkingLots = _parkingLotRepository.GetAll();
             if (parkingLots.Count() == 0)
             {
                 _response.StatusCode = HttpStatusCode.NoContent;
@@ -35,5 +37,31 @@ namespace IWParkingAPI.Services.Implementation
             _response.ParkingLots = parkingLots;
             return _response;
         }
+
+        public ParkingLotResponse GetParkingLotById(int id)
+        {
+            if (id == 0)
+            {
+                response.StatusCode = HttpStatusCode.BadRequest;
+                response.Message = "Parking Lot Id is required.";
+                return response;
+
+            }
+
+           ParkingLot parkingLot = _parkingLotRepository.GetById(id);
+
+            if (parkingLot == null)
+            {
+                response.StatusCode = HttpStatusCode.NotFound;
+                response.Message = "Parking Lot not found";
+                return response;
+            }
+
+            response.ParkingLot = parkingLot;
+            response.StatusCode = HttpStatusCode.OK;
+            response.Message = "Parking Lot returned successfully";
+            return response;
+        }
+
     }
 }

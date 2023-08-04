@@ -21,5 +21,11 @@ namespace IWParkingAPI.Controllers
         {
             return _parkingLotsService.GetAllParkingLots();
         }
+
+        [HttpGet("Get/{id}")]
+        public ParkingLotResponse GetParkingLotById(int id)
+        {
+            return _parkingLotsService.GetParkingLotById(id);
+        }
     }
 }
