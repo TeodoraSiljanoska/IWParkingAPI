@@ -1,16 +1,13 @@
 ﻿using AutoMapper;
-using Azure;
 using IWParkingAPI.Infrastructure.Repository;
 using IWParkingAPI.Infrastructure.UnitOfWork;
 using IWParkingAPI.Mappers;
-using IWParkingAPI.Middleware.Authorization;
 using IWParkingAPI.Models;
 using IWParkingAPI.Models.Context;
 using IWParkingAPI.Models.Data;
 using IWParkingAPI.Models.Requests;
 using IWParkingAPI.Models.Responses;
 using IWParkingAPI.Services.Interfaces;
-using Microsoft.AspNetCore.Authorization;
 using System.Net;
 
 namespace IWParkingAPI.Services.Implementation
@@ -83,8 +80,15 @@ namespace IWParkingAPI.Services.Implementation
                 _response.Message = "Vehicle Type must be Car or Adapted Car.";
                 return _response;
             }
-
+            
             var vehicle = _mapper.Map<Vehicle>(request);
+
+            var vehiclesOfTheUser = _vehicleRepository.GetAll().Where(v => v.UserId == request.UserId);
+            if (vehiclesOfTheUser.Count() == 0)
+            {
+                vehicle.IsPrimary = true;
+            }
+            
             vehicle.TimeCreated = DateTime.Now;
             _vehicleRepository.Insert(vehicle);
             _unitOfWork.Save();
