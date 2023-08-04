@@ -6,5 +6,7 @@ namespace IWParkingAPI.Services.Interfaces
     {
         public GetParkingLotsResponse GetAllParkingLots();
         public ParkingLotResponse GetParkingLotById(int id);
+        public ParkingLotResponse DeactivateParkingLot(int id);
+
     }
 }

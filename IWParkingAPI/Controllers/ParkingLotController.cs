@@ -27,5 +27,12 @@ namespace IWParkingAPI.Controllers
         {
             return _parkingLotsService.GetParkingLotById(id);
         }
+
+        [HttpPost("Deactivate/{id}")]
+        public ParkingLotResponse DeactivateParkingLot(int id)
+        {
+            return _parkingLotsService.DeactivateParkingLot(id)
+;
+        }
     }
 }

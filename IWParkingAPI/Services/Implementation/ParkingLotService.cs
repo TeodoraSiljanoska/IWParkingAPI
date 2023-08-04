@@ -12,39 +12,39 @@ namespace IWParkingAPI.Services.Implementation
     {
         private readonly IUnitOfWork<ParkingDbContext> _unitOfWork;
         private readonly IGenericRepository<ParkingLot> _parkingLotRepository;
-        private readonly GetParkingLotsResponse _response;
-        private readonly ParkingLotResponse response;
+        private readonly GetParkingLotsResponse _getResponse;
+        private readonly ParkingLotResponse _response;
 
         public ParkingLotService(IUnitOfWork<ParkingDbContext> unitOfWork)
         {
             _unitOfWork = unitOfWork;
             _parkingLotRepository = _unitOfWork.GetGenericRepository<ParkingLot>();
-            _response = new GetParkingLotsResponse();
-            response = new ParkingLotResponse();
+            _getResponse = new GetParkingLotsResponse();
+            _response = new ParkingLotResponse();
         }
         public GetParkingLotsResponse GetAllParkingLots()
         {
             var parkingLots = _parkingLotRepository.GetAll();
             if (parkingLots.Count() == 0)
             {
-                _response.StatusCode = HttpStatusCode.NoContent;
-                _response.Message = "There aren't any parking lots.";
-                _response.ParkingLots = Enumerable.Empty<ParkingLot>();
-                return _response;
+                _getResponse.StatusCode = HttpStatusCode.NoContent;
+                _getResponse.Message = "There aren't any parking lots.";
+                _getResponse.ParkingLots = Enumerable.Empty<ParkingLot>();
+                return _getResponse;
             }
-            _response.StatusCode = HttpStatusCode.OK;
-            _response.Message = "Parking lots returned successfully";
-            _response.ParkingLots = parkingLots;
-            return _response;
+            _getResponse.StatusCode = HttpStatusCode.OK;
+            _getResponse.Message = "Parking lots returned successfully";
+            _getResponse.ParkingLots = parkingLots;
+            return _getResponse;
         }
 
         public ParkingLotResponse GetParkingLotById(int id)
         {
             if (id == 0)
             {
-                response.StatusCode = HttpStatusCode.BadRequest;
-                response.Message = "Parking Lot Id is required.";
-                return response;
+                _response.StatusCode = HttpStatusCode.BadRequest;
+                _response.Message = "Parking Lot Id is required.";
+                return _response;
 
             }
 
@@ -52,15 +52,45 @@ namespace IWParkingAPI.Services.Implementation
 
             if (parkingLot == null)
             {
-                response.StatusCode = HttpStatusCode.NotFound;
-                response.Message = "Parking Lot not found";
-                return response;
+                _response.StatusCode = HttpStatusCode.NotFound;
+                _response.Message = "Parking Lot not found";
+                return _response;
             }
 
-            response.ParkingLot = parkingLot;
-            response.StatusCode = HttpStatusCode.OK;
-            response.Message = "Parking Lot returned successfully";
-            return response;
+            _response.ParkingLot = parkingLot;
+            _response.StatusCode = HttpStatusCode.OK;
+            _response.Message = "Parking Lot returned successfully";
+            return _response;
+        }
+
+        public ParkingLotResponse DeactivateParkingLot(int id)
+        {
+            ParkingLot parkingLot = _parkingLotRepository.GetById(id)
+;
+            if (parkingLot == null)
+            {
+                _response.StatusCode = HttpStatusCode.NotFound;
+                _response.Message = "Parking lot not found";
+                return _response;
+            }
+
+            if (parkingLot.IsDeactivated == true)
+            {
+                _response.StatusCode = HttpStatusCode.NotModified;
+                _response.Message = "Parking lot is already deactivated";
+                _response.ParkingLot = parkingLot;
+                return _response;
+            }
+
+            parkingLot.IsDeactivated = true;
+            _parkingLotRepository.Update(parkingLot);
+            _unitOfWork.Save();
+
+            _response.ParkingLot = parkingLot;
+            _response.StatusCode = HttpStatusCode.OK;
+            _response.Message = "Parking lot deactivated successfully";
+
+            return _response;
         }
 
     }
