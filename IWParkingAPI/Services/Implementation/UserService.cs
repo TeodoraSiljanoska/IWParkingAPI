@@ -105,11 +105,19 @@ public class UserService : IUserService
 
     public UserResponse DeactivateUser(int id)
     {
-        ApplicationUser user = _userRepository.GetById(id);
+        ApplicationUser user = _userRepository.GetById(id)
+;
         if (user == null)
         {
             _response.StatusCode = HttpStatusCode.NotFound;
             _response.Message = "User not found";
+            return _response;
+        }
+
+        if (user.IsDeactivated == true)
+        {
+            _response.StatusCode = HttpStatusCode.NotModified;
+            _response.Message = "User is already deactivated";
             return _response;
         }
 
@@ -124,6 +132,6 @@ public class UserService : IUserService
         return _response;
     }
 
-    
+
 }
 

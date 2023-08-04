@@ -79,6 +79,19 @@ public partial class ParkingDbContext : DbContext
             entity.Property(e => e.TimeModified).HasColumnType("datetime");
             entity.Property(e => e.UserName).HasMaxLength(256);
 
+            entity.HasMany(d => d.ParkingLotsNavigation).WithMany(p => p.Users)
+                .UsingEntity<Dictionary<string, object>>(
+                    "UsersFavouriteParkingLot",
+                    r => r.HasOne<ParkingLot>().WithMany()
+                        .HasForeignKey("ParkingLotId")
+                        .HasConstraintName("FK_UsersFavouriteParkingLots_ParkingLot_ParkingLotId"),
+                    l => l.HasOne<AspNetUser>().WithMany().HasForeignKey("UserId"),
+                    j =>
+                    {
+                        j.HasKey("UserId", "ParkingLotId");
+                        j.ToTable("UsersFavouriteParkingLots");
+                    });
+
             entity.HasMany(d => d.Roles).WithMany(p => p.Users)
                 .UsingEntity<Dictionary<string, object>>(
                     "AspNetUserRole",
@@ -132,9 +145,6 @@ public partial class ParkingDbContext : DbContext
             entity.Property(e => e.CapacityCar).HasColumnName("Capacity_Car");
             entity.Property(e => e.City).HasMaxLength(20);
             entity.Property(e => e.IsDeactivated)
-                .IsRequired()
-                .HasDefaultValueSql("('False')");
-            entity.Property(e => e.IsFavourite)
                 .IsRequired()
                 .HasDefaultValueSql("('False')");
             entity.Property(e => e.Name).HasMaxLength(20);

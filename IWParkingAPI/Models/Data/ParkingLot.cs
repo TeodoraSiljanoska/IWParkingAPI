@@ -33,11 +33,11 @@ public partial class ParkingLot
 
     public DateTime? TimeModified { get; set; }
 
-    public bool? IsFavourite { get; set; }
-
     public virtual ICollection<Request> Requests { get; set; } = new List<Request>();
 
     public virtual ICollection<Reservation> Reservations { get; set; } = new List<Reservation>();
 
     public virtual AspNetUser User { get; set; } = null!;
+
+    public virtual ICollection<AspNetUser> Users { get; set; } = new List<AspNetUser>();
 }
