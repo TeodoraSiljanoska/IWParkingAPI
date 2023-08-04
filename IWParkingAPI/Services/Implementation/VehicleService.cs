@@ -135,20 +135,14 @@ namespace IWParkingAPI.Services.Implementation
                 _response.Message = "PlateNumber and Type are required.";
                 return _response;
             }
-
-           /* if (_vehicleRepository.FindByPredicate(u => u.PlateNumber == request.PlateNumber))
-                {
-                    _response.StatusCode = HttpStatusCode.BadRequest;
-                    _response.Message = "Vehicle with that plate number already exists.";
-                    return _response;
-                } */
-
+            
                 if(request.Type != "Car" && request.Type != "Adapted Car")
             {
                 _response.StatusCode = HttpStatusCode.BadRequest;
                 _response.Message = "Vehicle Type must be Car or Adapted Car.";
                 return _response;
             }
+
                 if(vehicle.PlateNumber == request.PlateNumber && vehicle.Type == request.Type)
             {
                 _response.Vehicle = vehicle;
@@ -157,11 +151,21 @@ namespace IWParkingAPI.Services.Implementation
                 return _response;
             }
 
+            if (request.PlateNumber != vehicle.PlateNumber)
+            {
+                if (_vehicleRepository.FindByPredicate(u => u.PlateNumber == request.PlateNumber))
+                {
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.Message = "Vehicle with that plate number already exists.";
+                    return _response;
+                }
+            }
+
             /*  vehicle.PlateNumber = string.IsNullOrEmpty(request.PlateNumber) ? vehicle.PlateNumber : request.PlateNumber;
               vehicle.Type = string.IsNullOrEmpty(request.Type) ? vehicle.Type : request.Type; */
 
 
-          vehicle.PlateNumber =  (vehicle.PlateNumber == request.PlateNumber) ? vehicle.PlateNumber : request.PlateNumber;
+            vehicle.PlateNumber =  (vehicle.PlateNumber == request.PlateNumber) ? vehicle.PlateNumber : request.PlateNumber;
           vehicle.Type =  (vehicle.Type == request.Type) ? vehicle.Type : request.Type;
             vehicle.TimeModified = DateTime.Now;
 
