@@ -24,7 +24,7 @@ namespace IWParkingAPI.Controllers
 
         [AuthorizeCustom(UserRoles.SuperAdmin)]
         [HttpGet("GetAll")]
-        public IEnumerable<ApplicationUser> GetUsers()
+        public GetUsersResponse GetUsers()
         {
             return _userService.GetAllUsers();
         }
@@ -38,7 +38,7 @@ namespace IWParkingAPI.Controllers
 
         [AuthorizeCustom(UserRoles.User)]
         [HttpPut("Update/{id}")]
-        public Task<UserResponse> Update(int id, UserRequest changes)
+        public Task<UserResponse> Update(int id, UpdateUserRequest changes)
         {
             return _userService.UpdateUser(id, changes);
         }

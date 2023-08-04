@@ -6,9 +6,9 @@ namespace IWParkingAPI.Services.Interfaces
 {
     public interface IUserService
     {
-        IEnumerable<ApplicationUser> GetAllUsers();
-        UserResponse GetUserById(int id);
-        Task<UserResponse> UpdateUser(int id, UserRequest changes);
-        UserResponse DeactivateUser(int id);
+         public GetUsersResponse GetAllUsers();
+        public UserResponse GetUserById(int id);
+        public Task<UserResponse> UpdateUser(int id, UpdateUserRequest changes);
+        public UserResponse DeactivateUser(int id);
     }
 }
