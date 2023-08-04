@@ -36,7 +36,7 @@ namespace IWParkingAPI.Services.Implementation
         {
             try
             {
-                var user = await _userManager.FindByNameAsync(request.Username);
+                var user = await _userManager.FindByNameAsync(request.Email);
                 if (user != null)
                 {
                     _response.Message = "User already exists.";
@@ -89,11 +89,11 @@ namespace IWParkingAPI.Services.Implementation
 
         public async Task<UserLoginResponse> LoginUser(UserLoginRequest model)
         {
-            var user = await _userManager.FindByNameAsync(model.Username);
+            var user = await _userManager.FindByNameAsync(model.Email);
 
             if (user == null)
             {
-                _loginResponse.Message = "User with that username doesn't exist";
+                _loginResponse.Message = "User with that email doesn't exist";
                 _loginResponse.StatusCode = HttpStatusCode.BadRequest;
                 return _loginResponse;
             }
@@ -115,18 +115,18 @@ namespace IWParkingAPI.Services.Implementation
             return await _jwtUtils.GenerateToken(user);
         }
 
-        public async Task<UserResponse> ResetPassword(UserResetPasswordRequest model)
+        public async Task<UserResponse> ChangePassword(UserResetPasswordRequest model)
         {
-            var user = await _userManager.FindByNameAsync(model.Username);
+            var user = await _userManager.FindByNameAsync(model.Email);
 
             if (user == null)
             {
-                _response.Message = "User with that username doesn't exist";
+                _response.Message = "User with that email doesn't exist";
                 _response.StatusCode = HttpStatusCode.BadRequest;
                 return _response;
             }
 
-            var checkOldPass = await _signInManager.PasswordSignInAsync(user.UserName, model.OldPassword, false, false);
+            var checkOldPass = await _signInManager.PasswordSignInAsync(user.Email, model.OldPassword, false, false);
             if (!checkOldPass.Succeeded)
             {
                 _response.Message = "The old password isn't correct";
@@ -163,58 +163,62 @@ namespace IWParkingAPI.Services.Implementation
                 _response.StatusCode = HttpStatusCode.BadRequest;
                 return _response;
             }
-
-
-
         }
 
-        public async Task<UserResponse> ChangeUsername(UserChangeEmailRequest model)
+        public async Task<UserResponse> ChangeEmail(UserChangeEmailRequest model)
         {
-            var user = await _userManager.FindByNameAsync(model.OldUsername);
+            var user = await _userManager.FindByNameAsync(model.OldEmail);
 
             if (user == null)
             {
-                _response.Message = "User with that username doesn't exist";
+                _response.Message = "User with that email doesn't exist";
                 _response.StatusCode = HttpStatusCode.BadRequest;
                 return _response;
             }
 
-            var userwiththatusername = await _userManager.FindByNameAsync(model.NewUsername);
+            if(user.Email != model.OldEmail)
+            {
+                _response.Message = "Incorrect old email";
+                _response.StatusCode = HttpStatusCode.BadRequest;
+                return _response;
+            }
+
+            if (model.OldEmail == model.NewEmail)
+            {
+                _response.StatusCode = HttpStatusCode.BadRequest;
+                _response.Message = "No updates were entered. Please enter the updates";
+                return _response;
+            }    
+
+            var userwiththatusername = await _userManager.FindByNameAsync(model.NewEmail);
             if (userwiththatusername != null)
             {
-                _response.Message = "Username is already taken";
+                _response.Message = "Email is already taken";
                 _response.StatusCode = HttpStatusCode.BadRequest;
                 return _response;
             }
 
-
-
-            user.UserName = model.NewUsername;
-            user.NormalizedUserName = model.NewUsername.ToUpper();
+            user.Email = model.NewEmail;
+            user.NormalizedEmail = model.NewEmail.ToUpper();
+            user.UserName = model.NewEmail;
+            user.NormalizedUserName = model.NewEmail.ToUpper();
             user.TimeModified = DateTime.Now;
             // user.SecurityStamp = await _userManager.UpdateSecurityStampAsync(user);
             var result = await _userManager.UpdateAsync(user);
             if (result.Succeeded)
             {
-                _response.Message = "Username changed successfully!";
+                _response.Message = "Email changed successfully!";
                 _response.StatusCode = HttpStatusCode.OK;
                 return _response;
             }
             else
             {
-                _response.Message = "There was a problem updating the username!";
+                _response.Message = "There was a problem changing the email!";
                 _response.StatusCode = HttpStatusCode.BadRequest;
                 return _response;
             }
 
-
-
         }
-
-
-
-
-
 
     }
 }
