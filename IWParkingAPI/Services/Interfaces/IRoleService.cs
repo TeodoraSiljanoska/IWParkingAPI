@@ -6,10 +6,10 @@ namespace IWParkingAPI.Services.Interfaces
 {
     public interface IRoleService
     {
-        IEnumerable<ApplicationRole> GetAllRoles();
-        RoleResponse GetRoleById(int id);
-        RoleResponse CreateRole(RoleRequest request);
-        RoleResponse UpdateRole(int id, RoleRequest changes);
-        RoleResponse DeleteRole(int id);
+      public  GetRolesResponse GetAllRoles();
+      public  RoleResponse GetRoleById(int id);
+      public  RoleResponse CreateRole(RoleRequest request);
+      public  RoleResponse UpdateRole(int id, RoleRequest changes);
+      public  RoleResponse DeleteRole(int id);
     }
 }
