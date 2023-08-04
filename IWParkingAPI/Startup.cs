@@ -35,6 +35,7 @@ namespace IWParkingAPI
             services.AddScoped<IJwtUtils, JwtUtils>();
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<IVehicleService, VehicleService>();
+            services.AddScoped<IParkingLotService, ParkingLotService>();
             services.AddAutoMapper(typeof(Startup));
             services.AddControllers();
 

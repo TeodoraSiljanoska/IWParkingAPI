@@ -4,6 +4,6 @@
     {
         public const string Login = "/api/Auth/Login";
         public const string Register = "/api/Auth/Register";
-        public const string PasswordReset = "/api/Auth/Reset-Password";
+        public const string ParkingLots = "/api/ParkingLot/GetAll";
     }
 }
