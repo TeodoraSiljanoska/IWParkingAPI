@@ -81,22 +81,30 @@ namespace IWParkingAPI.Services.Implementation
         public RoleResponse UpdateRole(int id, RoleRequest changes)
         {
             ApplicationRole role = _roleRepository.GetById(id);
+            if(changes.Name == role.Name)
+            {
+                _response.StatusCode = HttpStatusCode.BadRequest;
+                _response.Message = "No updates were entered. Please enter the updates";
+                return _response;
+            }
             if (role == null)
             {
                 _response.StatusCode = HttpStatusCode.NotFound;
                 _response.Message = "Role not found";
                 return _response;
             }
-
-            if (_roleRepository.FindByPredicate(u => u.Name == changes.Name))
+            if (changes.Name != role.Name)
             {
-                _response.StatusCode = HttpStatusCode.BadRequest;
-                _response.Message = "Role with that name already exists.";
-                return _response;
+                if (_roleRepository.FindByPredicate(u => u.Name == changes.Name))
+                {
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.Message = "Role with that name already exists.";
+                    return _response;
+                }
             }
 
-            role.Name = changes.Name;
-            role.NormalizedName = role.Name.ToUpper();
+            role.Name = (role.Name == changes.Name) ? role.Name : changes.Name;
+            role.NormalizedName = (role.NormalizedName == changes.Name.ToUpper()) ? role.NormalizedName : changes.Name.ToUpper();
             role.TimeModified = DateTime.Now;
 
             _roleRepository.Update(role);

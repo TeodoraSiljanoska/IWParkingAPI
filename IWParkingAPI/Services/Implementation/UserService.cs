@@ -74,21 +74,24 @@ public class UserService : IUserService
             return _response;
         }
 
-        var userByUsername = await _userManager.FindByEmailAsync(changes.Email);
-        if (userByUsername != null)
+        if (changes.Email != user.Email)
         {
-            _response.StatusCode = HttpStatusCode.BadRequest;
-            _response.Message = "User with that email already exists.";
-            return _response;
+            var userByUsername = await _userManager.FindByEmailAsync(changes.Email);
+            if (userByUsername != null)
+            {
+                _response.StatusCode = HttpStatusCode.BadRequest;
+                _response.Message = "User with that email already exists.";
+                return _response;
+            }
         }
 
-        user.Name = changes.Name;
-        user.Surname = changes.Surname;
-        user.UserName = changes.Email;
-        user.NormalizedUserName = changes.Email.ToUpper();
-        user.PhoneNumber = changes.PhoneNumber;
-        user.Email = changes.Email;
-        user.NormalizedEmail = changes.Email.ToUpper();
+        user.Name = (user.Name == changes.Name) ? user.Name : changes.Name;
+        user.Surname = (user.Surname == changes.Surname) ? user.Surname : changes.Surname;
+        user.UserName = (user.UserName == changes.Email) ? user.UserName : changes.Email;
+        user.NormalizedUserName = (user.NormalizedUserName == changes.Email.ToUpper()) ? user.NormalizedUserName : changes.Email.ToUpper();
+        user.PhoneNumber = (user.PhoneNumber == changes.PhoneNumber) ? user.PhoneNumber : changes.PhoneNumber;
+        user.Email = (user.Email == changes.Email) ? user.Email : changes.Email;
+        user.NormalizedEmail = (user.NormalizedEmail == changes.Email.ToUpper()) ? user.NormalizedEmail : changes.Email.ToUpper();
         user.TimeModified = DateTime.Now;
         _userRepository.Update(user);
         _unitOfWork.Save();
