@@ -89,6 +89,13 @@ namespace IWParkingAPI
                 options.IncludeErrorDetails = true;
             });
 
+            services.AddCors(o => o.AddDefaultPolicy(builder =>
+            {
+                builder.AllowAnyOrigin()
+                       .AllowAnyMethod()
+                       .AllowAnyHeader();
+            }));
+
             var connectionString = Configuration.GetConnectionString("DefaultConnection");
             services.AddDbContext<ParkingDbContext>(o => o.UseSqlServer(connectionString));
             services.AddDbContext<ParkingDbContextCustom>(options => options.UseSqlServer(connectionString));
@@ -115,6 +122,7 @@ namespace IWParkingAPI
                 endpoints.MapControllers();
             });
             app.UseStaticFiles();
+            app.UseCors();
         }
     }
 }
