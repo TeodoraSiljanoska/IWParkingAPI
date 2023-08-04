@@ -53,6 +53,7 @@ namespace IWParkingAPI.Utilities
             userLoginResponse.StatusCode = HttpStatusCode.OK;
             userLoginResponse.Message = "User logged in successfully";
             userLoginResponse.Token = usertoken;
+            userLoginResponse.Role = userRoles.FirstOrDefault();
             return userLoginResponse;
 
         }
