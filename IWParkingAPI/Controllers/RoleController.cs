@@ -22,7 +22,7 @@ namespace IWParkingAPI.Controllers
         }
 
         [HttpGet("GetAll")]
-        public IEnumerable<ApplicationRole> GetAll()
+        public GetRolesResponse GetAll()
         {
             return _roleService.GetAllRoles();
         }

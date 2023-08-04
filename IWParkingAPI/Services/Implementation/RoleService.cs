@@ -17,6 +17,7 @@ namespace IWParkingAPI.Services.Implementation
         private readonly IUnitOfWork<ParkingDbContextCustom> _unitOfWork;
         private readonly IGenericRepository<ApplicationRole> _roleRepository;
         private readonly RoleResponse _response;
+        private readonly GetRolesResponse _getResponse;
 
         public RoleService(IUnitOfWork<ParkingDbContextCustom> unitOfWork)
         {
@@ -24,18 +25,22 @@ namespace IWParkingAPI.Services.Implementation
             _roleRepository = _unitOfWork.GetGenericRepository<ApplicationRole>();
             _mapper = MapperConfig.InitializeAutomapper();
             _response = new RoleResponse();
+            _getResponse = new GetRolesResponse();
         }
-        public IEnumerable<ApplicationRole> GetAllRoles()
+        public GetRolesResponse GetAllRoles()
         {
             var roles = _roleRepository.GetAll();
             if (roles.Count() == 0)
             {
-                _response.StatusCode = HttpStatusCode.NoContent;
-                _response.Message = "There aren't any roles.";
+                _getResponse.StatusCode = HttpStatusCode.NoContent;
+                _getResponse.Message = "There aren't any roles.";
+                _getResponse.Roles = Enumerable.Empty<ApplicationRole>();
+                return _getResponse;
             }
-            _response.StatusCode = HttpStatusCode.OK;
-            _response.Message = "Roles returned successfully";
-            return roles;
+            _getResponse.Roles = roles;
+            _getResponse.StatusCode = HttpStatusCode.OK;
+            _getResponse.Message = "Roles returned successfully";
+            return _getResponse;
         }
         public RoleResponse GetRoleById(int id)
         {
