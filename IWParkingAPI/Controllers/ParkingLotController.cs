@@ -1,5 +1,8 @@
-﻿using IWParkingAPI.Models.Responses;
+﻿using IWParkingAPI.Models;
+using IWParkingAPI.Models.Requests;
+using IWParkingAPI.Models.Responses;
 using IWParkingAPI.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace IWParkingAPI.Controllers
@@ -33,6 +36,13 @@ namespace IWParkingAPI.Controllers
         {
             return _parkingLotsService.DeactivateParkingLot(id)
 ;
+        }
+
+        [Authorize(Roles = UserRoles.Owner)]
+        [HttpPost("Create")]
+        public ParkingLotResponse CreateParkingLot(ParkingLotReq request)
+        {
+            return _parkingLotsService.CreateParkingLot(request);
         }
     }
 }

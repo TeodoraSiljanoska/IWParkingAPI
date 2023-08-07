@@ -56,6 +56,18 @@ namespace IWParkingAPI.Mappers
                 .ForMember(dest => dest.NormalizedEmail, opt => opt.MapFrom(src => src.Email.ToUpper()))
                 .ForMember(dest => dest.PhoneNumber, opt => opt.MapFrom(src => src.PhoneNumber));
 
+                cfg.CreateMap<ParkingLotReq, ParkingLot>()
+              .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name))
+              .ForMember(dest => dest.City, opt => opt.MapFrom(src => src.City))
+              .ForMember(dest => dest.Zone, opt => opt.MapFrom(src => src.Zone))
+              .ForMember(dest => dest.Address, opt => opt.MapFrom(src => src.Address))
+              .ForMember(dest => dest.WorkingHourFrom, opt => opt.MapFrom(src => src.WorkingHourFrom))
+              .ForMember(dest => dest.WorkingHourTo, opt => opt.MapFrom(src => src.WorkingHourTo))
+              .ForMember(dest => dest.CapacityCar, opt => opt.MapFrom(src => src.CapacityCar))
+              .ForMember(dest => dest.CapacityAdaptedCar, opt => opt.MapFrom(src => src.CapacityAdaptedCar))
+              .ForMember(dest => dest.Price, opt => opt.MapFrom(src => src.Price))
+              .ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.UserId));
+     
             }
             );
             var mapper = new Mapper(config);
