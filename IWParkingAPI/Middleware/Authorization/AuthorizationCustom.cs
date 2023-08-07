@@ -9,7 +9,7 @@ namespace IWParkingAPI.Middleware.Authorization
     public class AuthorizeCustomAttribute : Attribute, IAuthorizationFilter
     {
         private readonly string[] _claimValues;
-        private const string ROLE = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role";
+        private const string ROLE = "Role";
 
         public AuthorizeCustomAttribute(params string[] claimValues)
         {

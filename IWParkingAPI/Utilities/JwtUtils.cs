@@ -30,13 +30,18 @@ namespace IWParkingAPI.Utilities
 
             var authClaims = new List<Claim>
             {
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new Claim(ClaimTypes.Name, user.UserName),
+                //new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                //new Claim(ClaimTypes.Name, user.UserName),
+                new Claim("Id", user.Id.ToString()),
+                new Claim("Name", user.Name),
+                new Claim("Surname", user.Surname),
+                new Claim("Email", user.Email)
             };
 
             foreach (var userRole in userRoles)
             {
-                authClaims.Add(new Claim(ClaimTypes.Role, userRole));
+                //authClaims.Add(new Claim(ClaimTypes.Role, userRole));
+                authClaims.Add(new Claim("Role", userRole));
             }
 
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
