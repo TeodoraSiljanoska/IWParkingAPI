@@ -5,6 +5,7 @@ using IWParkingAPI.Models.Data;
 using IWParkingAPI.Models.Responses;
 using IWParkingAPI.Services.Interfaces;
 using System.Net;
+using static IWParkingAPI.Models.Data.EnumClass;
 
 namespace IWParkingAPI.Services.Implementation
 {
@@ -24,7 +25,7 @@ namespace IWParkingAPI.Services.Implementation
         }
         public GetParkingLotsResponse GetAllParkingLots()
         {
-            var parkingLots = _parkingLotRepository.GetAll();
+            var parkingLots = _parkingLotRepository.GetAsQueryable(x => x.Status == ((int)StatusEnum.Approved)).ToList();
             if (parkingLots.Count() == 0)
             {
                 _getResponse.StatusCode = HttpStatusCode.NoContent;
