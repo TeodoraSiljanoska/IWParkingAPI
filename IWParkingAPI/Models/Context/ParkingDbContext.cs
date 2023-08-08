@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using IWParkingAPI.Models.Data;
 using Microsoft.EntityFrameworkCore;
 
-namespace IWParkingAPI.Models;
+namespace IWParkingAPI.Models.Context;
 
 public partial class ParkingDbContext : DbContext
 {
@@ -29,9 +30,9 @@ public partial class ParkingDbContext : DbContext
 
     public virtual DbSet<ParkingLot> ParkingLots { get; set; }
 
-    public virtual DbSet<Payment> Payments { get; set; }
+    public virtual DbSet<ParkingLotRequest> ParkingLotRequests { get; set; }
 
-    public virtual DbSet<Request> Requests { get; set; }
+    public virtual DbSet<Payment> Payments { get; set; }
 
     public virtual DbSet<Reservation> Reservations { get; set; }
 
@@ -82,9 +83,7 @@ public partial class ParkingDbContext : DbContext
             entity.HasMany(d => d.ParkingLotsNavigation).WithMany(p => p.Users)
                 .UsingEntity<Dictionary<string, object>>(
                     "UsersFavouriteParkingLot",
-                    r => r.HasOne<ParkingLot>().WithMany()
-                        .HasForeignKey("ParkingLotId")
-                        .HasConstraintName("FK_UsersFavouriteParkingLots_ParkingLot_ParkingLotId"),
+                    r => r.HasOne<ParkingLot>().WithMany().HasForeignKey("ParkingLotId"),
                     l => l.HasOne<AspNetUser>().WithMany().HasForeignKey("UserId"),
                     j =>
                     {
@@ -136,9 +135,9 @@ public partial class ParkingDbContext : DbContext
 
         modelBuilder.Entity<ParkingLot>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Parking __3214EC07B58A9194");
+            entity.HasKey(e => e.Id).HasName("PK__Parking __3214EC071BD0950E");
 
-            entity.ToTable("Parking Lot");
+            entity.ToTable("ParkingLot");
 
             entity.Property(e => e.Address).HasMaxLength(20);
             entity.Property(e => e.CapacityAdaptedCar).HasColumnName("Capacity_Adapted_Car");
@@ -148,12 +147,11 @@ public partial class ParkingDbContext : DbContext
                 .IsRequired()
                 .HasDefaultValueSql("('False')");
             entity.Property(e => e.Name).HasMaxLength(20);
+            entity.Property(e => e.Status).HasDefaultValueSql("((1))");
             entity.Property(e => e.TimeCreated).HasColumnType("datetime");
             entity.Property(e => e.TimeModified).HasColumnType("datetime");
             entity.Property(e => e.UserId).HasColumnName("User_Id");
-            entity.Property(e => e.WorkingHourFrom)
-                .HasColumnType("datetime")
-                .HasColumnName("Working_Hour_From");
+            entity.Property(e => e.WorkingHourFrom).HasColumnName("Working_Hour_From");
             entity.Property(e => e.WorkingHourTo).HasColumnName("Working_Hour_To");
             entity.Property(e => e.Zone).HasMaxLength(20);
 
@@ -163,9 +161,30 @@ public partial class ParkingDbContext : DbContext
                 .HasConstraintName("FK_Parking Lot.User_Id");
         });
 
+        modelBuilder.Entity<ParkingLotRequest>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__Request__3214EC07DC5C8037");
+
+            entity.ToTable("ParkingLotRequest");
+
+            entity.Property(e => e.ParkingLotId).HasColumnName("Parking_Lot_Id");
+            entity.Property(e => e.TimeCreated).HasColumnType("datetime");
+            entity.Property(e => e.UserId).HasColumnName("User_Id");
+
+            entity.HasOne(d => d.ParkingLot).WithMany(p => p.ParkingLotRequests)
+                .HasForeignKey(d => d.ParkingLotId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Request.Parking_Lot_Id");
+
+            entity.HasOne(d => d.User).WithMany(p => p.ParkingLotRequests)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Request.User_Id");
+        });
+
         modelBuilder.Entity<Payment>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Payment__3214EC07B044856B");
+            entity.HasKey(e => e.Id).HasName("PK__Payment__3214EC07A67200A6");
 
             entity.ToTable("Payment");
 
@@ -181,30 +200,9 @@ public partial class ParkingDbContext : DbContext
                 .HasConstraintName("FK_Payment.Reservation_Id");
         });
 
-        modelBuilder.Entity<Request>(entity =>
-        {
-            entity.HasKey(e => e.Id).HasName("PK__Request__3214EC071844DB1C");
-
-            entity.ToTable("Request");
-
-            entity.Property(e => e.ParkingLotId).HasColumnName("Parking_Lot_Id");
-            entity.Property(e => e.Status).HasMaxLength(20);
-            entity.Property(e => e.UserId).HasColumnName("User_Id");
-
-            entity.HasOne(d => d.ParkingLot).WithMany(p => p.Requests)
-                .HasForeignKey(d => d.ParkingLotId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Request.Parking_Lot_Id");
-
-            entity.HasOne(d => d.User).WithMany(p => p.Requests)
-                .HasForeignKey(d => d.UserId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Request.User_Id");
-        });
-
         modelBuilder.Entity<Reservation>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Reservat__3214EC07333DC35F");
+            entity.HasKey(e => e.Id).HasName("PK__Reservat__3214EC07E6E4DA8B");
 
             entity.ToTable("Reservation");
 
@@ -236,7 +234,7 @@ public partial class ParkingDbContext : DbContext
 
         modelBuilder.Entity<Vehicle>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Vehicle__3214EC07E1039730");
+            entity.HasKey(e => e.Id).HasName("PK__Vehicle__3214EC07CE7B2E42");
 
             entity.ToTable("Vehicle");
 

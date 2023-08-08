@@ -1,4 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Query;
+using System.Linq.Expressions;
+using System.Linq;
 
 namespace IWParkingAPI.Infrastructure.Repository
 {
@@ -46,6 +49,34 @@ namespace IWParkingAPI.Infrastructure.Repository
         public bool FindByPredicate(Func<TEntity, bool> predicate)
         {
             return _db.Any(predicate);
+        }
+
+        public virtual IQueryable<TEntity> GetAsQueryable(
+           Expression<Func<TEntity, bool>>? filter = null,
+           Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
+           Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object>>? include = null)
+        {
+            IQueryable<TEntity> query = _db;
+
+            if (filter != null)
+            {
+                query = query.Where(filter);
+            }
+
+            if (include != null)
+            {
+                query = include(query);
+            }
+
+            if (orderBy != null)
+            {
+                return orderBy(query);
+            }
+
+            else
+            {
+                return query;
+            }
         }
     }
 }

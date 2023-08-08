@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace IWParkingAPI.Models;
+namespace IWParkingAPI.Models.Data;
 
 public partial class ParkingLot
 {
@@ -15,9 +15,9 @@ public partial class ParkingLot
 
     public string Address { get; set; } = null!;
 
-    public DateTime WorkingHourFrom { get; set; }
+    public TimeSpan? WorkingHourFrom { get; set; }
 
-    public TimeSpan WorkingHourTo { get; set; }
+    public TimeSpan? WorkingHourTo { get; set; }
 
     public int CapacityCar { get; set; }
 
@@ -33,7 +33,9 @@ public partial class ParkingLot
 
     public DateTime? TimeModified { get; set; }
 
-    public virtual ICollection<Request> Requests { get; set; } = new List<Request>();
+    public int Status { get; set; }
+
+    public virtual ICollection<ParkingLotRequest> ParkingLotRequests { get; set; } = new List<ParkingLotRequest>();
 
     public virtual ICollection<Reservation> Reservations { get; set; } = new List<Reservation>();
 

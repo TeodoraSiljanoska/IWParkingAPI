@@ -10,7 +10,6 @@ namespace IWParkingAPI.Controllers
     {
         private readonly IParkingLotService _parkingLotsService;
 
-
         public ParkingLotController(IParkingLotService parkingLotsService)
         {
             _parkingLotsService = parkingLotsService;

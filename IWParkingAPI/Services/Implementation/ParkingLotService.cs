@@ -1,7 +1,7 @@
 ﻿using IWParkingAPI.Infrastructure.Repository;
 using IWParkingAPI.Infrastructure.UnitOfWork;
-using IWParkingAPI.Models;
 using IWParkingAPI.Models.Context;
+using IWParkingAPI.Models.Data;
 using IWParkingAPI.Models.Responses;
 using IWParkingAPI.Services.Interfaces;
 using System.Net;

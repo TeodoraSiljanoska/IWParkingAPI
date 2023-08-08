@@ -50,7 +50,7 @@ namespace IWParkingAPI.Utilities
                 _config["Jwt:Issuer"],
                 _config["Jwt:Audience"],
                 authClaims,
-                expires: DateTime.Now.AddHours(1),
+                expires: DateTime.Now.AddDays(1),
                 signingCredentials: credentials);
 
             var usertoken = new JwtSecurityTokenHandler().WriteToken(token);
