@@ -1,0 +1,3 @@
+ALTER TABLE [Request]
+ADD [TimeCreated] DATETIME NOT NULL
+

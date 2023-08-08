@@ -1,0 +1,2 @@
+ALTER TABLE [Parking Lot]
+ADD [Status] NVARCHAR(256) NOT NULL DEFAULT 'Pending'

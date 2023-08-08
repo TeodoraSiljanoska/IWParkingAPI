@@ -51,9 +51,9 @@ public partial class AspNetUser
 
     public virtual ICollection<AspNetUserToken> AspNetUserTokens { get; set; } = new List<AspNetUserToken>();
 
-    public virtual ICollection<ParkingLot> ParkingLots { get; set; } = new List<ParkingLot>();
+    public virtual ICollection<ParkingLotRequest> ParkingLotRequests { get; set; } = new List<ParkingLotRequest>();
 
-    public virtual ICollection<Request> Requests { get; set; } = new List<Request>();
+    public virtual ICollection<ParkingLot> ParkingLots { get; set; } = new List<ParkingLot>();
 
     public virtual ICollection<Reservation> Reservations { get; set; } = new List<Reservation>();
 
