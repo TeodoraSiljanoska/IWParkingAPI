@@ -15,9 +15,9 @@ public partial class ParkingLot
 
     public string Address { get; set; } = null!;
 
-    public TimeSpan? WorkingHourFrom { get; set; }
+    public TimeSpan WorkingHourFrom { get; set; }
 
-    public TimeSpan? WorkingHourTo { get; set; }
+    public TimeSpan WorkingHourTo { get; set; }
 
     public int CapacityCar { get; set; }
 
