@@ -2,6 +2,6 @@
 {
     public class ParkingLotResponse : ResponseBase
     {
-        public ParkingLot ParkingLot { get; set; } = new ParkingLot();
+        public ParkingLotDTO ParkingLot { get; set; } = new ParkingLotDTO();
     }
 }
