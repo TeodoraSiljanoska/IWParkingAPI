@@ -9,7 +9,6 @@ namespace IWParkingAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [AuthorizeCustom(UserRoles.User)]
     public class RequestController : ControllerBase
     {
         private readonly IRequestService _requestService;
