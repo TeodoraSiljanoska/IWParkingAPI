@@ -85,11 +85,6 @@ namespace IWParkingAPI.Mappers
              .ForMember(dest => dest.TimeModified, opt => opt.MapFrom(src => src.TimeModified))
              .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status));
 
-
-                cfg.CreateMap<PLRequest, ParkingLotRequest>()
-                .ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.UserId))
-                .ForMember(dest => dest.ParkingLotId, opt => opt.MapFrom(src => src.ParkingLotId));
-
             }
             );
             var mapper = new Mapper(config);
