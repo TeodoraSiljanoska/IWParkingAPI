@@ -1,5 +1,6 @@
 ﻿using IWParkingAPI.Infrastructure.Repository;
 using IWParkingAPI.Infrastructure.UnitOfWork;
+using IWParkingAPI.Models;
 using IWParkingAPI.Models.Context;
 using IWParkingAPI.Models.Data;
 using IWParkingAPI.Models.Requests;
@@ -10,19 +11,17 @@ using System.Net;
 
 public class UserService : IUserService
 {
-    private readonly IUnitOfWork<ParkingDbContextCustom> _unitOfWork;
-    private readonly IGenericRepository<ApplicationUser> _userRepository;
+    private readonly IUnitOfWork<ParkingDbContext> _unitOfWork;
+    private readonly IGenericRepository<AspNetUser> _userRepository;
     private readonly UserResponse _response;
     private readonly GetUsersResponse _getResponse;
-    private readonly UserManager<ApplicationUser> _userManager;
 
-    public UserService(IUnitOfWork<ParkingDbContextCustom> unitOfWork, UserManager<ApplicationUser> userManager)
+    public UserService(IUnitOfWork<ParkingDbContext> unitOfWork)
     {
         _unitOfWork = unitOfWork;
-        _userRepository = _unitOfWork.GetGenericRepository<ApplicationUser>();
+        _userRepository = _unitOfWork.GetGenericRepository<AspNetUser>();
         _response = new UserResponse();
         _getResponse = new GetUsersResponse();
-        _userManager = userManager;
     }
 
     public GetUsersResponse GetAllUsers()
@@ -32,7 +31,7 @@ public class UserService : IUserService
         {
             _getResponse.StatusCode = HttpStatusCode.NoContent;
             _getResponse.Message = "There aren't any users.";
-            _getResponse.Users = Enumerable.Empty<ApplicationUser>();
+            _getResponse.Users = Enumerable.Empty<AspNetUser>();
             return _getResponse;
         }
         _getResponse.StatusCode = HttpStatusCode.OK;
@@ -43,7 +42,7 @@ public class UserService : IUserService
 
     public UserResponse GetUserById(int id)
     {
-        ApplicationUser user = _userRepository.GetById(id);
+        AspNetUser user = _userRepository.GetById(id);
         if (user == null)
         {
             _response.StatusCode = HttpStatusCode.NotFound;
@@ -58,7 +57,7 @@ public class UserService : IUserService
 
     public async Task<UserResponse> UpdateUser(int id, UpdateUserRequest changes)
     {
-        ApplicationUser user = _userRepository.GetById(id);
+        AspNetUser user = _userRepository.GetById(id);
         if (user == null || user.IsDeactivated == true)
         {
             _response.StatusCode = HttpStatusCode.NotFound;
@@ -76,7 +75,7 @@ public class UserService : IUserService
 
         if (changes.Email != user.Email)
         {
-            var userByUsername = await _userManager.FindByEmailAsync(changes.Email);
+            var userByUsername = _userRepository.GetAsQueryable(p => p.Email == changes.Email, null, null).FirstOrDefault(); ;
             if (userByUsername != null)
             {
                 _response.StatusCode = HttpStatusCode.BadRequest;
@@ -105,7 +104,7 @@ public class UserService : IUserService
 
     public UserResponse DeactivateUser(int id)
     {
-        ApplicationUser user = _userRepository.GetById(id)
+        AspNetUser user = _userRepository.GetById(id)
 ;
         if (user == null)
         {
@@ -131,7 +130,5 @@ public class UserService : IUserService
 
         return _response;
     }
-
-
 }
 

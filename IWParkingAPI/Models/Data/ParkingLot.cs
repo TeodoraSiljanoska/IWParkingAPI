@@ -1,5 +1,7 @@
-﻿using System;
+﻿using IWParkingAPI.Models.Data;
+using System;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace IWParkingAPI.Models.Data;
 
@@ -15,9 +17,9 @@ public partial class ParkingLot
 
     public string Address { get; set; } = null!;
 
-    public TimeSpan? WorkingHourFrom { get; set; }
+    public TimeSpan WorkingHourFrom { get; set; }
 
-    public TimeSpan? WorkingHourTo { get; set; }
+    public TimeSpan WorkingHourTo { get; set; }
 
     public int CapacityCar { get; set; }
 
@@ -42,4 +44,5 @@ public partial class ParkingLot
     public virtual AspNetUser User { get; set; } = null!;
 
     public virtual ICollection<AspNetUser> Users { get; set; } = new List<AspNetUser>();
+ 
 }

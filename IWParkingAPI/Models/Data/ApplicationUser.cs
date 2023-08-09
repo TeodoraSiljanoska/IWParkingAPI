@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 
@@ -21,6 +22,7 @@ namespace IWParkingAPI.Models.Data
             public DateTime TimeCreated { get; set; }
             [JsonIgnore]
             public DateTime? TimeModified { get; set; }
-        }
+
+    }
 }
 

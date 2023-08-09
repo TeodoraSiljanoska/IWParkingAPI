@@ -16,6 +16,7 @@ namespace IWParkingAPI.Services.Implementation
         private readonly IMapper _mapper;
         private readonly UserResponse _response;
         private readonly UserLoginResponse _loginResponse;
+        private readonly UserRegisterResponse _registerResponse;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly RoleManager<ApplicationRole> _roleManager;
@@ -25,6 +26,7 @@ namespace IWParkingAPI.Services.Implementation
         {
             _mapper = MapperConfig.InitializeAutomapper();
             _response = new UserResponse();
+            _registerResponse = new UserRegisterResponse();
             _loginResponse = new UserLoginResponse();
             _userManager = userManager;
             _signInManager = signInManager;
@@ -32,31 +34,31 @@ namespace IWParkingAPI.Services.Implementation
             _jwtUtils = jwtUtils;
         }
 
-        public async Task<UserResponse> RegisterUser(UserRegisterRequest request)
+        public async Task<UserRegisterResponse> RegisterUser(UserRegisterRequest request)
         {
             try
             {
                 var user = await _userManager.FindByNameAsync(request.Email);
                 if (user != null)
                 {
-                    _response.Message = "User already exists.";
-                    _response.StatusCode = HttpStatusCode.BadRequest;
-                    return _response;
+                    _registerResponse.Message = "User already exists.";
+                    _registerResponse.StatusCode = HttpStatusCode.BadRequest;
+                    return _registerResponse;
                 }
 
                 if (request.Password != request.ConfirmPassword)
                 {
-                    _response.Message = "Passwords do not match";
-                    _response.StatusCode = HttpStatusCode.BadRequest;
-                    return _response;
+                    _registerResponse.Message = "Passwords do not match";
+                    _registerResponse.StatusCode = HttpStatusCode.BadRequest;
+                    return _registerResponse;
                 }
 
                 var role = await _roleManager.FindByNameAsync(request.Role);
                 if (role == null)
                 {
-                    _response.StatusCode = HttpStatusCode.BadRequest;
-                    _response.Message = "Role with that name doesn't exists.";
-                    return _response;
+                    _registerResponse.StatusCode = HttpStatusCode.BadRequest;
+                    _registerResponse.Message = "Role with that name doesn't exists.";
+                    return _registerResponse;
                 }
 
                 var newUser = _mapper.Map<ApplicationUser>(request);
@@ -68,22 +70,22 @@ namespace IWParkingAPI.Services.Implementation
                 if (result.Succeeded)
                 {
                     await _userManager.AddToRoleAsync(newUser, request.Role);
-                    _response.StatusCode = HttpStatusCode.OK;
-                    _response.Message = "User created successfully";
-                    _response.User = newUser;
+                    _registerResponse.StatusCode = HttpStatusCode.OK;
+                    _registerResponse.Message = "User created successfully";
+                    _registerResponse.User = newUser;
                 }
                 else
                 {
-                    _response.StatusCode = HttpStatusCode.BadRequest;
-                    _response.Message = "User creation failed! Please check user details and try again.";
+                    _registerResponse.StatusCode = HttpStatusCode.BadRequest;
+                    _registerResponse.Message = "User creation failed! Please check user details and try again.";
                 }
-                return _response;
+                return _registerResponse;
             }
             catch (Exception ex)
             {
-                _response.StatusCode = HttpStatusCode.BadRequest;
-                _response.Message = "An error occurred during user registration.";
-                return _response;
+                _registerResponse.StatusCode = HttpStatusCode.BadRequest;
+                _registerResponse.Message = "An error occurred during user registration.";
+                return _registerResponse;
             }
         }
 
