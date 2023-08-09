@@ -11,7 +11,9 @@ using IWParkingAPI.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using System.Configuration;
 using System.Net;
+using static IWParkingAPI.Models.Data.EnumClass;
 using static IWParkingAPI.Models.Enums.Enums;
+using ParkingLotRequest = IWParkingAPI.Models.Data.ParkingLotRequest;
 
 namespace IWParkingAPI.Services.Implementation
 {
@@ -38,7 +40,7 @@ namespace IWParkingAPI.Services.Implementation
         }
         public GetParkingLotsResponse GetAllParkingLots()
         {
-            var parkingLots = _parkingLotRepository.GetAll();
+            var parkingLots = _parkingLotRepository.GetAsQueryable(x => x.Status == ((int)StatusEnum.Approved)).ToList();
             if (parkingLots.Count() == 0)
             {
                 _getResponse.StatusCode = HttpStatusCode.NoContent;

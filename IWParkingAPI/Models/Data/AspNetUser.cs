@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
-namespace IWParkingAPI.Models;
+namespace IWParkingAPI.Models.Data;
 
 public partial class AspNetUser
 {

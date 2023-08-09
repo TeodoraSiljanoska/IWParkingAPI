@@ -35,7 +35,8 @@ namespace IWParkingAPI.Utilities
                 new Claim("Id", user.Id.ToString()),
                 new Claim("Name", user.Name),
                 new Claim("Surname", user.Surname),
-                new Claim("Email", user.Email)
+                new Claim("Email", user.Email),
+                new Claim("Phone", user.PhoneNumber)
             };
 
             foreach (var userRole in userRoles)
@@ -50,7 +51,7 @@ namespace IWParkingAPI.Utilities
                 _config["Jwt:Issuer"],
                 _config["Jwt:Audience"],
                 authClaims,
-                expires: DateTime.Now.AddHours(1),
+                expires: DateTime.Now.AddDays(1),
                 signingCredentials: credentials);
 
             var usertoken = new JwtSecurityTokenHandler().WriteToken(token);
