@@ -10,6 +10,7 @@ using AutoMapper;
 using ParkingLotRequest = IWParkingAPI.Models.Data.ParkingLotRequest;
 using IWParkingAPI.Models.Context;
 using static IWParkingAPI.Models.Data.EnumClass;
+using IWParkingAPI.Models.Data;
 
 namespace IWParkingAPI.Services.Implementation
 {
@@ -17,6 +18,7 @@ namespace IWParkingAPI.Services.Implementation
     {
         private readonly IUnitOfWork<ParkingDbContext> _unitOfWork;
         private readonly IGenericRepository<ParkingLotRequest> _requestRepository;
+        private readonly IGenericRepository<ParkingLot> _parkingLotRepository;
         private readonly RequestResponse _response;
         private readonly IMapper _mapper;
 
@@ -24,12 +26,13 @@ namespace IWParkingAPI.Services.Implementation
         {
             _unitOfWork = unitOfWork;
             _requestRepository = _unitOfWork.GetGenericRepository<ParkingLotRequest>();
+            _parkingLotRepository = _unitOfWork.GetGenericRepository<ParkingLot>();
             _response = new RequestResponse();
             _mapper = MapperConfig.InitializeAutomapper();
         }
         public RequestResponse ModifyRequest(int id, RequestRequest request)
         {
-            var req = _requestRepository.GetAsQueryable(x => x.Id == id, null, x => x.Include(y => y.User)).FirstOrDefault();
+            var req = _requestRepository.GetAsQueryable(x => x.Id == id, null, x => x.Include(y => y.User).Include(y => y.ParkingLot)).FirstOrDefault();
 
             if (req == null)
             {
@@ -49,7 +52,19 @@ namespace IWParkingAPI.Services.Implementation
             req.Status = (int)enumValue;
             req.TimeCreated = DateTime.Now;
 
+            var parkingLot = req.ParkingLot;
+            if (parkingLot == null)
+            {
+                _response.Message = "Parking Lot is invalid";
+                _response.StatusCode = HttpStatusCode.BadRequest;
+                return _response;
+            }
+
+            parkingLot.Status = (int)enumValue;
+            parkingLot.TimeModified = DateTime.Now;
+
             _requestRepository.Update(req);
+            _parkingLotRepository.Update(parkingLot);
             _unitOfWork.Save();
 
             _response.StatusCode = HttpStatusCode.OK;

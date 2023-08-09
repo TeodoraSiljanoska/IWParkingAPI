@@ -5,12 +5,14 @@ using IWParkingAPI.Mappers;
 using IWParkingAPI.Models;
 using IWParkingAPI.Models.Context;
 using IWParkingAPI.Models.Data;
+using IWParkingAPI.Models.Requests;
 using IWParkingAPI.Models.Responses;
 using IWParkingAPI.Services.Interfaces;
 using System.Configuration;
 using System.Net;
 using static IWParkingAPI.Models.Data.EnumClass;
 using static IWParkingAPI.Models.Enums.Enums;
+using ParkingLotRequest = IWParkingAPI.Models.Data.ParkingLotRequest;
 
 namespace IWParkingAPI.Services.Implementation
 {

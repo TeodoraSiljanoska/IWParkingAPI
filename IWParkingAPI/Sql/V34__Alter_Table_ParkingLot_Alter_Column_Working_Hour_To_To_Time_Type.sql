@@ -1,2 +1,2 @@
 ALTER TABLE [Parking Lot]
-ALTER COLUMN [Working_Hour_To] TIME;
+ALTER COLUMN [Working_Hour_To] TIME NOT NULL;
