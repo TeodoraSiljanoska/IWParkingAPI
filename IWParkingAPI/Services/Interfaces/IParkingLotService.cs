@@ -10,5 +10,7 @@ namespace IWParkingAPI.Services.Interfaces
         public ParkingLotResponse DeactivateParkingLot(int id);
         public ParkingLotResponse CreateParkingLot(ParkingLotReq request);
 
+        public ParkingLotResponse RemoveFromFavourites(ParkingLotFavouritesReq parkingLotFavouritesReq);
+
     }
 }

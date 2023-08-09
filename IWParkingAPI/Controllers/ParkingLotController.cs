@@ -42,11 +42,16 @@ namespace IWParkingAPI.Controllers
 
         [AuthorizeCustom(UserRoles.SuperAdmin)]
 
-        [HttpPost("Deactivate/{id}")]
+        [HttpDelete("Deactivate/{id}")]
         public ParkingLotResponse DeactivateParkingLot(int id)
         {
-            return _parkingLotService.DeactivateParkingLot(id)
-;
+            return _parkingLotService.DeactivateParkingLot(id);
+        }
+
+        [HttpDelete("RemoveFromFavourites")]
+        public ParkingLotResponse RemoveFromFavourites(ParkingLotFavouritesReq parkingLotFavouritesReq)
+        {
+            return _parkingLotService.RemoveFromFavourites(parkingLotFavouritesReq);
         }
     }
 }
