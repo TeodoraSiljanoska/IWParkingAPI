@@ -53,7 +53,7 @@ namespace IWParkingAPI.Controllers
 
         [AuthorizeCustom(UserRoles.User)]
 
-        [HttpPost("Get/{id}")]
+        [HttpGet("Get/{id}")]
         public VehicleResponse GetVehicleById(int id)
         {
             return _vehicleService.GetVehicleById(id);
