@@ -7,6 +7,7 @@ using IWParkingAPI.Models.Data;
 using IWParkingAPI.Models.Requests;
 using IWParkingAPI.Models.Responses;
 using IWParkingAPI.Services.Interfaces;
+using System.Linq;
 using System.Net;
 using static IWParkingAPI.Models.Enums.Enums;
 using ParkingLotRequest = IWParkingAPI.Models.Data.ParkingLotRequest;
@@ -190,6 +191,7 @@ namespace IWParkingAPI.Services.Implementation
         { 
            var user = _userRepository.GetById(userId);
            var parkingLot = _parkingLotRepository.GetById(parkingLotId);
+           //var favourite = user.ParkingLotsNavigation.FirstOrDefault(p => p.Id == parkingLotId);
 
             if (user == null || user.IsDeactivated == true)
             {
@@ -204,6 +206,16 @@ namespace IWParkingAPI.Services.Implementation
                 _response.Message = "Parking Lot not found";
                 return _response;
             }
+
+           
+       /*     if (favourite != null)
+            {
+                _response.StatusCode = HttpStatusCode.Conflict;
+                _response.Message = "Parking Lot is already a favorite";
+                return _response;
+            }
+       */
+
 
             var parkingLotDTO = _mapper.Map<ParkingLotDTO>(parkingLot);
             user.ParkingLotsNavigation.Add(parkingLot);
