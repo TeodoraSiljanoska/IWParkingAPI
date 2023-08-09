@@ -49,9 +49,6 @@ namespace IWParkingAPI.Services.Implementation
             }
             StatusEnum enumValue = (StatusEnum)Enum.Parse(typeof(StatusEnum), request.Status);
 
-            req.Status = (int)enumValue;
-            req.TimeCreated = DateTime.Now;
-
             var parkingLot = req.ParkingLot;
             if (parkingLot == null)
             {
@@ -59,6 +56,9 @@ namespace IWParkingAPI.Services.Implementation
                 _response.StatusCode = HttpStatusCode.BadRequest;
                 return _response;
             }
+
+            req.Status = (int)enumValue;
+            req.TimeCreated = DateTime.Now;
 
             parkingLot.Status = (int)enumValue;
             parkingLot.TimeModified = DateTime.Now;
