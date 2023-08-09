@@ -163,7 +163,7 @@ public partial class ParkingDbContext : DbContext
 
         modelBuilder.Entity<ParkingLotRequest>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Request__3214EC07DC5C8037");
+            entity.HasKey(e => e.Id).HasName("PK__Request__3214EC071844DB1C");
 
             entity.ToTable("ParkingLotRequest");
 

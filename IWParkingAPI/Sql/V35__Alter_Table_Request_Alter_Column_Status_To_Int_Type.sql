@@ -1,0 +1,2 @@
+ALTER TABLE [Request]
+ALTER COLUMN [Status] INT NOT NULL;

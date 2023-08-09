@@ -12,7 +12,8 @@ namespace IWParkingAPI.Infrastructure.Repository
         void Delete(TEntity id);
         void Save();
         bool FindByPredicate(Func<TEntity, bool> predicate);
-        IQueryable<TEntity> GetAsQueryable(
+
+       IQueryable<TEntity> GetAsQueryable(
            Expression<Func<TEntity, bool>>? filter = null,
            Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
            Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object>>? include = null);

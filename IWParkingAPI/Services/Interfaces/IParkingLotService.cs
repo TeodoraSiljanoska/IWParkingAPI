@@ -1,4 +1,5 @@
-﻿using IWParkingAPI.Models.Responses;
+﻿using IWParkingAPI.Models.Requests;
+using IWParkingAPI.Models.Responses;
 
 namespace IWParkingAPI.Services.Interfaces
 {
@@ -7,6 +8,7 @@ namespace IWParkingAPI.Services.Interfaces
         public GetParkingLotsResponse GetAllParkingLots();
         public ParkingLotResponse GetParkingLotById(int id);
         public ParkingLotResponse DeactivateParkingLot(int id);
+        public ParkingLotResponse CreateParkingLot(ParkingLotReq request);
 
     }
 }
