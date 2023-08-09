@@ -17,7 +17,7 @@ namespace IWParkingAPI.Controllers
         }
 
         [HttpPost("Register")]
-        public Task<UserResponse> Register([FromBody] UserRegisterRequest request)
+        public Task<UserRegisterResponse> Register([FromBody] UserRegisterRequest request)
         {
             return _authService.RegisterUser(request);
         }

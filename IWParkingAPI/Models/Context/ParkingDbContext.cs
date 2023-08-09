@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using IWParkingAPI.Models.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace IWParkingAPI.Models;
@@ -79,7 +80,7 @@ public partial class ParkingDbContext : DbContext
             entity.Property(e => e.TimeModified).HasColumnType("datetime");
             entity.Property(e => e.UserName).HasMaxLength(256);
 
-            entity.HasMany(d => d.ParkingLotsNavigation).WithMany(p => p.Users)
+      entity.HasMany(d => d.ParkingLotsNavigation).WithMany(p => p.Users)
                 .UsingEntity<Dictionary<string, object>>(
                     "UsersFavouriteParkingLot",
                     r => r.HasOne<ParkingLot>().WithMany().HasForeignKey("ParkingLotId"),
@@ -253,6 +254,7 @@ public partial class ParkingDbContext : DbContext
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Vehicle.User_Id");
         });
+
 
         OnModelCreatingPartial(modelBuilder);
     }

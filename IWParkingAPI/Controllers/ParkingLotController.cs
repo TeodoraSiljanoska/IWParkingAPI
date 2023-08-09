@@ -48,5 +48,12 @@ namespace IWParkingAPI.Controllers
             return _parkingLotService.DeactivateParkingLot(id)
 ;
         }
+
+        [HttpPost("MakeParkingLotFavourite/{userId,parkingLotId}")]
+        [AuthorizeCustom(UserRoles.Owner,UserRoles.User)]
+        public Task <ParkingLotResponse> MakeParkingLotFavoriteAsync(int userId, int parkingLotId)
+        {
+            return _parkingLotService.MakeParkingLotFavoriteAsync(userId, parkingLotId);
+        }
     }
 }
