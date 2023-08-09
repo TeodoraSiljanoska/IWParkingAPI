@@ -9,7 +9,8 @@ using System.Net;
 using AutoMapper;
 using ParkingLotRequest = IWParkingAPI.Models.Data.ParkingLotRequest;
 using IWParkingAPI.Models.Context;
-using static IWParkingAPI.Models.Data.EnumClass;
+//using static IWParkingAPI.Models.Data.EnumClass;
+using static IWParkingAPI.Models.Enums.Enums;
 using IWParkingAPI.Models.Data;
 
 namespace IWParkingAPI.Services.Implementation
@@ -41,13 +42,13 @@ namespace IWParkingAPI.Services.Implementation
                 return _response;
             }
 
-            if (!Enum.IsDefined(typeof(StatusEnum), request.Status))
+            if (!Enum.IsDefined(typeof(Status), request.Status))
             {
                 _response.Message = "Status is invalid";
                 _response.StatusCode = HttpStatusCode.BadRequest;
                 return _response;
             }
-            StatusEnum enumValue = (StatusEnum)Enum.Parse(typeof(StatusEnum), request.Status);
+            Status enumValue = (Status)Enum.Parse(typeof(Status), request.Status);
 
             var parkingLot = req.ParkingLot;
             if (parkingLot == null)
