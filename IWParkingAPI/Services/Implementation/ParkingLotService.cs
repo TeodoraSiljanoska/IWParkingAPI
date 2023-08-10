@@ -7,7 +7,7 @@ using IWParkingAPI.Models.Data;
 using IWParkingAPI.Models.Requests;
 using IWParkingAPI.Models.Responses;
 using IWParkingAPI.Services.Interfaces;
-using System.Linq;
+using Microsoft.EntityFrameworkCore;
 using System.Net;
 using static IWParkingAPI.Models.Enums.Enums;
 using ParkingLotRequest = IWParkingAPI.Models.Data.ParkingLotRequest;
@@ -187,12 +187,11 @@ namespace IWParkingAPI.Services.Implementation
             return _response;
         }
 
-        public async Task <ParkingLotResponse> MakeParkingLotFavoriteAsync(int userId, int parkingLotId)
-        { 
-           var user = _userRepository.GetById(userId);
-           var parkingLot = _parkingLotRepository.GetById(parkingLotId);
-           //var favourite = user.ParkingLotsNavigation.FirstOrDefault(p => p.Id == parkingLotId);
-
+        public ParkingLotResponse MakeParkingLotFavorite(int userId, int parkingLotId)
+        {
+            var user = _userRepository.GetAsQueryable(x => x.Id == userId, null, x => x.Include(y => y.ParkingLotsNavigation)).FirstOrDefault();
+            var parkingLot = _parkingLotRepository.GetById(parkingLotId);
+           
             if (user == null || user.IsDeactivated == true)
             {
                 _response.StatusCode = HttpStatusCode.NotFound;
@@ -207,14 +206,13 @@ namespace IWParkingAPI.Services.Implementation
                 return _response;
             }
 
-           
-       /*     if (favourite != null)
+            if (user.ParkingLotsNavigation.Contains(parkingLot))
             {
-                _response.StatusCode = HttpStatusCode.Conflict;
-                _response.Message = "Parking Lot is already a favorite";
-                return _response;
+               _response.StatusCode = HttpStatusCode.Conflict;
+               _response.Message = "Parking Lot is already a favorite";
+               return _response;
             }
-       */
+            
 
 
             var parkingLotDTO = _mapper.Map<ParkingLotDTO>(parkingLot);
