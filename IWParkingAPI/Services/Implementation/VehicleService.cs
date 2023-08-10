@@ -7,6 +7,7 @@ using IWParkingAPI.Models.Data;
 using IWParkingAPI.Models.Requests;
 using IWParkingAPI.Models.Responses;
 using IWParkingAPI.Services.Interfaces;
+using System.Data.Entity;
 using System.Net;
 
 namespace IWParkingAPI.Services.Implementation
@@ -288,6 +289,23 @@ namespace IWParkingAPI.Services.Implementation
             _response.Vehicle = vehicle;
             return _response;
 
+        }
+
+        public GetVehiclesResponse GetUserVehicles(int userId)
+        {
+            var vehicles = _vehicleRepository.GetAsQueryable(x => x.UserId == userId).ToList();
+
+            if (vehicles.Count() == 0)
+            {
+                _getresponse.Message = "User doesn't have any vehicles.";
+                _getresponse.StatusCode = HttpStatusCode.NoContent;
+                _getresponse.Vehicles = Enumerable.Empty<Vehicle>();
+            }
+
+            _getresponse.StatusCode = HttpStatusCode.OK;
+            _getresponse.Message = "Vehicles returned successfully";
+            _getresponse.Vehicles = vehicles;
+            return _getresponse;
         }
     }
 }

@@ -64,6 +64,13 @@ namespace IWParkingAPI.Controllers
         {
             return _vehicleService.MakeVehiclePrimary(userId, vehicleId);
         }
+
+        [HttpGet("UserVehicles/{userId}")]
+        [AuthorizeCustom(UserRoles.User)]
+        public GetVehiclesResponse GetUserVehicles(int userId)
+        {
+            return _vehicleService.GetUserVehicles(userId);
+        }
     }
 }
 
