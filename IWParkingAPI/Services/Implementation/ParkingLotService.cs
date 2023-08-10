@@ -2,15 +2,14 @@
 using IWParkingAPI.Infrastructure.Repository;
 using IWParkingAPI.Infrastructure.UnitOfWork;
 using IWParkingAPI.Mappers;
-using IWParkingAPI.Models;
 using IWParkingAPI.Models.Context;
 using IWParkingAPI.Models.Data;
 using IWParkingAPI.Models.Requests;
 using IWParkingAPI.Models.Responses;
 using IWParkingAPI.Services.Interfaces;
-using System.Configuration;
 using System.Net;
 using static IWParkingAPI.Models.Enums.Enums;
+using ParkingLotRequest = IWParkingAPI.Models.Data.ParkingLotRequest;
 
 namespace IWParkingAPI.Services.Implementation
 {
@@ -21,16 +20,14 @@ namespace IWParkingAPI.Services.Implementation
         private readonly IGenericRepository<ParkingLot> _parkingLotRepository;
         private readonly IGenericRepository<ParkingLotRequest> _parkingLotRequestRepository;
         private readonly IGenericRepository<AspNetUser> _userRepository;
-        private readonly IUnitOfWork<ParkingDbContextCustom> _custom;
         private readonly GetParkingLotsResponse _getResponse;
         private readonly ParkingLotResponse _response;
 
 
-        public ParkingLotService(IUnitOfWork<ParkingDbContext> unitOfWork, IUnitOfWork<ParkingDbContextCustom> custom)
+        public ParkingLotService(IUnitOfWork<ParkingDbContext> unitOfWork)
         {
             _mapper = MapperConfig.InitializeAutomapper();
             _unitOfWork = unitOfWork;
-            _custom = custom;
             _parkingLotRepository = _unitOfWork.GetGenericRepository<ParkingLot>();
             _parkingLotRequestRepository = _unitOfWork.GetGenericRepository<ParkingLotRequest>();
             _userRepository = _unitOfWork.GetGenericRepository<AspNetUser>();
@@ -39,7 +36,7 @@ namespace IWParkingAPI.Services.Implementation
         }
         public GetParkingLotsResponse GetAllParkingLots()
         {
-            var parkingLots = _parkingLotRepository.GetAll();
+            var parkingLots = _parkingLotRepository.GetAsQueryable(x => x.Status == ((int)Status.Approved)).ToList();
             if (parkingLots.Count() == 0)
             {
                 _getResponse.StatusCode = HttpStatusCode.NoContent;
@@ -111,34 +108,11 @@ namespace IWParkingAPI.Services.Implementation
                 return _response;
             }
 
-            var from = TimeSpan.TryParse(request.WorkingHourFrom, out var WorkingHourFrom);
-            var to = TimeSpan.TryParse(request.WorkingHourTo, out var WorkingHourTo);
-
-            if (!from || WorkingHourFrom.Equals("24:00:00.0000000") || WorkingHourFrom.Equals("00:00:00.0000000"))
-            {
-                _response.Message = "Working hours From are invalid";
-                _response.StatusCode = HttpStatusCode.BadRequest;
-                return _response;
-            }
-
-            if (!to || WorkingHourTo.Equals("24:00:00.0000000") || WorkingHourTo.Equals("00:00:00.0000000"))
-            {
-                _response.Message = "Working hours To are invalid";
-                _response.StatusCode = HttpStatusCode.BadRequest;
-                return _response;
-            }
-
-
-            //   TimeSpan minValue = new TimeSpan(0, 0, 0);
-            //  TimeSpan maxValue = new TimeSpan(23, 59, 59);
-            //  TimeSpanValidator timeSpanValidator = new TimeSpanValidator(minValue, maxValue);
-            //  timeSpanValidator.Validate(request.WorkingHourFrom);
-
-            if (WorkingHourFrom.Hours < 0 || WorkingHourFrom.Hours > 24 ||
-                WorkingHourFrom.Minutes < 0 || WorkingHourFrom.Minutes > 59 || WorkingHourFrom.Seconds < 0
-                || WorkingHourFrom.Seconds > 59 || WorkingHourTo.Hours < 0 || WorkingHourTo.Hours > 24
-                || WorkingHourTo.Minutes < 0 || WorkingHourTo.Minutes > 59
-                || WorkingHourTo.Seconds < 0 || WorkingHourTo.Seconds > 59)
+            if (request.WorkingHourFrom.Hours < 0 || request.WorkingHourFrom.Hours > 24 ||
+                request.WorkingHourFrom.Minutes < 0 || request.WorkingHourFrom.Minutes > 59 || request.WorkingHourFrom.Seconds < 0 
+                || request.WorkingHourFrom.Seconds >59 || request.WorkingHourTo.Hours <0 || request.WorkingHourTo.Hours > 24 
+                || request.WorkingHourTo.Minutes <0 || request.WorkingHourTo.Minutes>59 
+                ||request.WorkingHourTo.Seconds <0 || request.WorkingHourTo.Seconds >59)
             {
                 _response.StatusCode = HttpStatusCode.BadRequest;
                 _response.Message = "Invalid working hours.";
@@ -148,9 +122,7 @@ namespace IWParkingAPI.Services.Implementation
             var parkingLot = _mapper.Map<ParkingLot>(request);
             parkingLot.UserId = request.UserId;
             parkingLot.TimeCreated = DateTime.Now;
-            parkingLot.Status = (int)Status.Pending;
-            parkingLot.WorkingHourFrom = WorkingHourFrom;
-            parkingLot.WorkingHourTo = WorkingHourTo;
+           parkingLot.Status = (int)Status.Pending;
             _parkingLotRepository.Insert(parkingLot);
             _unitOfWork.Save();
 
@@ -247,21 +219,35 @@ namespace IWParkingAPI.Services.Implementation
             return _response;
         }
 
-        /*  bool CreateParkingLotRequest(PLRequest request)
-          {
-              if(request.ParkingLotId == null)
-              {
-                  return false;
-              }
+        public async Task <ParkingLotResponse> MakeParkingLotFavoriteAsync(int userId, int parkingLotId)
+        { 
+           var user = _userRepository.GetById(userId);
+           var parkingLot = _parkingLotRepository.GetById(parkingLotId);
 
-              var plrequest = _mapper.Map<ParkingLotRequest>(request);
-             plrequest.UserId = request.UserId;
-              plrequest.TimeCreated = DateTime.Now;
-              plrequest.Status = (int)Status.Pending;
-              _parkingLotRequestRepository.Insert(plrequest);
-              _unitOfWork.Save();
-              return true;
-          }
-         */
+            if (user == null || user.IsDeactivated == true)
+            {
+                _response.StatusCode = HttpStatusCode.NotFound;
+                _response.Message = "User not found";
+                return _response;
+            }
+
+            if(parkingLot == null || parkingLot.IsDeactivated == true)
+            {
+                _response.StatusCode = HttpStatusCode.NotFound;
+                _response.Message = "Parking Lot not found";
+                return _response;
+            }
+
+            var parkingLotDTO = _mapper.Map<ParkingLotDTO>(parkingLot);
+            user.ParkingLotsNavigation.Add(parkingLot);
+            _userRepository.Update(user);
+            _unitOfWork.Save();
+
+            _response.ParkingLot = parkingLotDTO;
+            _response.StatusCode = HttpStatusCode.OK;
+            _response.Message = "Parking Lot added to Favorites";
+            return _response;
+        }
+
     }
 }
