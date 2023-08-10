@@ -234,8 +234,9 @@ namespace IWParkingAPI.Services.Implementation
 
         public ParkingLotResponse MakeParkingLotFavorite(int userId, int parkingLotId)
         {
-            var user = _userRepository.GetById(userId);
+            var user = _userRepository.GetAsQueryable(x => x.Id == userId, null, x => x.Include(y => y.ParkingLotsNavigation)).FirstOrDefault();
             var parkingLot = _parkingLotRepository.GetById(parkingLotId);
+            var parkingLotDTO = _mapper.Map<ParkingLotDTO>(parkingLot);
 
             if (user == null || user.IsDeactivated == true)
             {
@@ -251,7 +252,14 @@ namespace IWParkingAPI.Services.Implementation
                 return _response;
             }
 
-            var parkingLotDTO = _mapper.Map<ParkingLotDTO>(parkingLot);
+            if (user.ParkingLotsNavigation.Contains(parkingLot))
+            {
+               _response.ParkingLot = parkingLotDTO;
+               _response.StatusCode = HttpStatusCode.Conflict;
+               _response.Message = "Parking Lot is already favorite";
+               return _response;
+            }
+
             user.ParkingLotsNavigation.Add(parkingLot);
             _userRepository.Update(user);
             _unitOfWork.Save();
