@@ -11,7 +11,7 @@ namespace IWParkingAPI.Services.Interfaces
         public VehicleResponse UpdateVehicle(int id, UpdateVehicleRequest request);
         public VehicleResponse DeleteVehicle(int id);
         public VehicleResponse GetVehicleById(int id);
-        public VehicleResponse MakeVehiclePrimary(PrimaryVehicleRequest request);
+        public VehicleResponse MakeVehiclePrimary(int userId, int vehicleId);
         public GetVehiclesResponse GetVehiclesByUserId(int userid);
     }
 }

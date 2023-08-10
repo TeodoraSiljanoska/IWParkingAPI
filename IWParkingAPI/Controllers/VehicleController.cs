@@ -59,10 +59,10 @@ namespace IWParkingAPI.Controllers
             return _vehicleService.GetVehicleById(id);
         }
 
-        [HttpPost("MakePrimary")]
-        public VehicleResponse MakePrimary(PrimaryVehicleRequest request)
+        [HttpPost("MakePrimary/{userId},{vehicleId}")]
+        public VehicleResponse MakePrimary(int userId, int vehicleId)
         {
-            return _vehicleService.MakeVehiclePrimary(request);
+            return _vehicleService.MakeVehiclePrimary(userId, vehicleId);
         }
     }
 }

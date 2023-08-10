@@ -79,7 +79,7 @@ namespace IWParkingAPI.Services.Implementation
                 _response.Message = "Vehicle Type must be Car or Adapted Car.";
                 return _response;
             }
-            
+
             var vehicle = _mapper.Map<Vehicle>(request);
 
             var vehiclesOfTheUser = _vehicleRepository.GetAll().Where(v => v.UserId == request.UserId);
@@ -87,7 +87,7 @@ namespace IWParkingAPI.Services.Implementation
             {
                 vehicle.IsPrimary = true;
             }
-            
+
             vehicle.TimeCreated = DateTime.Now;
             _vehicleRepository.Insert(vehicle);
             _unitOfWork.Save();
@@ -122,7 +122,7 @@ namespace IWParkingAPI.Services.Implementation
 
 
         public VehicleResponse UpdateVehicle(int id, UpdateVehicleRequest request)
-        {   
+        {
 
             Vehicle vehicle = _vehicleRepository.GetById(id);
             if (vehicle == null)
@@ -132,21 +132,21 @@ namespace IWParkingAPI.Services.Implementation
                 return _response;
             }
 
-            if(request.PlateNumber == null || request.Type == null)
+            if (request.PlateNumber == null || request.Type == null)
             {
                 _response.StatusCode = HttpStatusCode.BadRequest;
                 _response.Message = "PlateNumber and Type are required.";
                 return _response;
             }
-            
-                if(request.Type != "Car" && request.Type != "Adapted Car")
+
+            if (request.Type != "Car" && request.Type != "Adapted Car")
             {
                 _response.StatusCode = HttpStatusCode.BadRequest;
                 _response.Message = "Vehicle Type must be Car or Adapted Car.";
                 return _response;
             }
 
-                if(vehicle.PlateNumber == request.PlateNumber && vehicle.Type == request.Type)
+            if (vehicle.PlateNumber == request.PlateNumber && vehicle.Type == request.Type)
             {
                 _response.Vehicle = vehicle;
                 _response.StatusCode = HttpStatusCode.BadRequest;
@@ -168,8 +168,8 @@ namespace IWParkingAPI.Services.Implementation
               vehicle.Type = string.IsNullOrEmpty(request.Type) ? vehicle.Type : request.Type; */
 
 
-            vehicle.PlateNumber =  (vehicle.PlateNumber == request.PlateNumber) ? vehicle.PlateNumber : request.PlateNumber;
-          vehicle.Type =  (vehicle.Type == request.Type) ? vehicle.Type : request.Type;
+            vehicle.PlateNumber = (vehicle.PlateNumber == request.PlateNumber) ? vehicle.PlateNumber : request.PlateNumber;
+            vehicle.Type = (vehicle.Type == request.Type) ? vehicle.Type : request.Type;
             vehicle.TimeModified = DateTime.Now;
 
             _vehicleRepository.Update(vehicle);
@@ -243,17 +243,10 @@ namespace IWParkingAPI.Services.Implementation
             return _getresponse;
         }
 
-        public VehicleResponse MakeVehiclePrimary(PrimaryVehicleRequest request)
+        public VehicleResponse MakeVehiclePrimary(int userId, int vehicleId)
         {
-            if (request.VehicleId == 0)
-            {
-                _response.StatusCode = HttpStatusCode.BadRequest;
-                _response.Message = "VehicleId is required.";
-                return _response;
 
-            }
-
-            Vehicle vehicle = _vehicleRepository.GetById(request.VehicleId);
+            Vehicle vehicle = _vehicleRepository.GetById(vehicleId);
             if (vehicle == null)
             {
                 _response.StatusCode = HttpStatusCode.NotFound;
@@ -261,7 +254,7 @@ namespace IWParkingAPI.Services.Implementation
                 return _response;
             }
 
-            var user = _userRepository.GetById(request.UserId);
+            var user = _userRepository.GetById(userId);
 
             if (user == null)
             {
@@ -269,7 +262,16 @@ namespace IWParkingAPI.Services.Implementation
                 _response.Message = "User not found";
                 return _response;
             }
-            var vehiclesOfTheUser = _vehicleRepository.GetAll().Where(v => v.UserId == request.UserId);
+
+            if (vehicle.IsPrimary == true)
+            {
+                _response.Message = "Vehicle is already primary";
+                _response.StatusCode = HttpStatusCode.NotModified;
+                _response.Vehicle = vehicle;
+                return _response;
+            }
+
+            var vehiclesOfTheUser = _vehicleRepository.GetAll().Where(v => v.UserId == userId);
 
             foreach (Vehicle veh in vehiclesOfTheUser)
             {
