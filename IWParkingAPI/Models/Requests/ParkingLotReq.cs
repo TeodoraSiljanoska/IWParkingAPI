@@ -12,9 +12,9 @@ namespace IWParkingAPI.Models.Requests
 
         public string Address { get; set; } = null!;
 
-        public string WorkingHourFrom { get; set; }
+        public TimeSpan WorkingHourFrom { get; set; }
 
-        public string WorkingHourTo { get; set; }
+        public TimeSpan WorkingHourTo { get; set; }
 
         public int CapacityCar { get; set; }
 

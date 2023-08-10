@@ -7,6 +7,7 @@ using IWParkingAPI.Models.Data;
 using IWParkingAPI.Models.Requests;
 using IWParkingAPI.Models.Responses;
 using IWParkingAPI.Services.Interfaces;
+using Microsoft.EntityFrameworkCore;
 using System.Net;
 using static IWParkingAPI.Models.Enums.Enums;
 using ParkingLotRequest = IWParkingAPI.Models.Data.ParkingLotRequest;
@@ -109,10 +110,10 @@ namespace IWParkingAPI.Services.Implementation
             }
 
             if (request.WorkingHourFrom.Hours < 0 || request.WorkingHourFrom.Hours > 24 ||
-                request.WorkingHourFrom.Minutes < 0 || request.WorkingHourFrom.Minutes > 59 || request.WorkingHourFrom.Seconds < 0 
-                || request.WorkingHourFrom.Seconds >59 || request.WorkingHourTo.Hours <0 || request.WorkingHourTo.Hours > 24 
-                || request.WorkingHourTo.Minutes <0 || request.WorkingHourTo.Minutes>59 
-                ||request.WorkingHourTo.Seconds <0 || request.WorkingHourTo.Seconds >59)
+                request.WorkingHourFrom.Minutes < 0 || request.WorkingHourFrom.Minutes > 59 || request.WorkingHourFrom.Seconds < 0
+                || request.WorkingHourFrom.Seconds > 59 || request.WorkingHourTo.Hours < 0 || request.WorkingHourTo.Hours > 24
+                || request.WorkingHourTo.Minutes < 0 || request.WorkingHourTo.Minutes > 59
+                || request.WorkingHourTo.Seconds < 0 || request.WorkingHourTo.Seconds > 59)
             {
                 _response.StatusCode = HttpStatusCode.BadRequest;
                 _response.Message = "Invalid working hours.";
@@ -122,7 +123,7 @@ namespace IWParkingAPI.Services.Implementation
             var parkingLot = _mapper.Map<ParkingLot>(request);
             parkingLot.UserId = request.UserId;
             parkingLot.TimeCreated = DateTime.Now;
-           parkingLot.Status = (int)Status.Pending;
+            parkingLot.Status = (int)Status.Pending;
             _parkingLotRepository.Insert(parkingLot);
             _unitOfWork.Save();
 
@@ -186,43 +187,55 @@ namespace IWParkingAPI.Services.Implementation
             return _response;
         }
 
-        public ParkingLotResponse RemoveFromFavourites(ParkingLotFavouritesReq parkingLotFavouritesReq)
+        public ParkingLotResponse RemoveParkingLotFavourite(int userId, int parkingLotId)
         {
-            var user = _userRepository.GetById(parkingLotFavouritesReq.UserId);
-            /*if (user == null)
+            var user = _userRepository.GetAsQueryable(x => x.Id == userId, null, x => x.Include(y => y.ParkingLotsNavigation)).FirstOrDefault();
+
+            if (user == null || user.IsDeactivated == true)
             {
                 _response.Message = "User not found";
                 _response.StatusCode = HttpStatusCode.NotFound;
                 return _response;
-            }*/
+            }
 
-            var parkingLot = _parkingLotRepository.GetById(parkingLotFavouritesReq.ParkingLotId);
-            /*if (parkingLot == null)
+            if (user.ParkingLotsNavigation.Count() == 0)
+            {
+                _response.Message = "User doesn't have favourite parking lots";
+                _response.StatusCode = HttpStatusCode.NotFound;
+                return _response;
+            }
+
+            var parkingLot = _parkingLotRepository.GetById(parkingLotId);
+
+            if (parkingLot == null || parkingLot.IsDeactivated == true)
             {
                 _response.Message = "Parking Lot not found";
                 _response.StatusCode = HttpStatusCode.NotFound;
                 return _response;
-            }*/
+            }
 
             if (!user.ParkingLotsNavigation.Contains(parkingLot))
             {
                 _response.Message = "Parking Lot isn't in your favourites";
                 _response.StatusCode = HttpStatusCode.BadRequest;
                 return _response;
-
             }
+
             user.ParkingLotsNavigation.Remove(parkingLot);
+            _userRepository.Update(user);
             _unitOfWork.Save();
 
+            var parkingLotDTO = _mapper.Map<ParkingLotDTO>(parkingLot);
             _response.Message = "Parking Lot successfully removed from favourites.";
             _response.StatusCode = HttpStatusCode.OK;
+            _response.ParkingLot = parkingLotDTO;
             return _response;
         }
 
-        public async Task <ParkingLotResponse> MakeParkingLotFavoriteAsync(int userId, int parkingLotId)
-        { 
-           var user = _userRepository.GetById(userId);
-           var parkingLot = _parkingLotRepository.GetById(parkingLotId);
+        public ParkingLotResponse MakeParkingLotFavorite(int userId, int parkingLotId)
+        {
+            var user = _userRepository.GetById(userId);
+            var parkingLot = _parkingLotRepository.GetById(parkingLotId);
 
             if (user == null || user.IsDeactivated == true)
             {
@@ -231,7 +244,7 @@ namespace IWParkingAPI.Services.Implementation
                 return _response;
             }
 
-            if(parkingLot == null || parkingLot.IsDeactivated == true)
+            if (parkingLot == null || parkingLot.IsDeactivated == true)
             {
                 _response.StatusCode = HttpStatusCode.NotFound;
                 _response.Message = "Parking Lot not found";
