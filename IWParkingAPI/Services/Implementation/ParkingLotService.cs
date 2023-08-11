@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using IWParkingAPI.CustomExceptions;
 using IWParkingAPI.Infrastructure.Repository;
 using IWParkingAPI.Infrastructure.UnitOfWork;
 using IWParkingAPI.Mappers;
@@ -37,44 +38,61 @@ namespace IWParkingAPI.Services.Implementation
         }
         public GetParkingLotsResponse GetAllParkingLots()
         {
-            var parkingLots = _parkingLotRepository.GetAsQueryable(x => x.Status == ((int)Status.Approved)).ToList();
-            if (parkingLots.Count() == 0)
+            try
             {
-                _getResponse.StatusCode = HttpStatusCode.NoContent;
-                _getResponse.Message = "There aren't any parking lots.";
-                _getResponse.ParkingLots = Enumerable.Empty<ParkingLot>();
+                var parkingLots = _parkingLotRepository.GetAsQueryable(x => x.Status == ((int)Status.Approved)).ToList();
+                if (parkingLots.Count() == 0)
+                {
+                    _getResponse.StatusCode = HttpStatusCode.OK;
+                    _getResponse.Message = "There aren't any parking lots.";
+                    _getResponse.ParkingLots = Enumerable.Empty<ParkingLot>();
+                    return _getResponse;
+                }
+                _getResponse.StatusCode = HttpStatusCode.OK;
+                _getResponse.Message = "Parking lots returned successfully";
+                _getResponse.ParkingLots = parkingLots;
                 return _getResponse;
             }
-            _getResponse.StatusCode = HttpStatusCode.OK;
-            _getResponse.Message = "Parking lots returned successfully";
-            _getResponse.ParkingLots = parkingLots;
-            return _getResponse;
+            catch (Exception ex)
+            {
+                throw new InternalErrorException("Unexpected error while getting all Parking Lots");
+            }
         }
 
         public ParkingLotResponse GetParkingLotById(int id)
         {
-            if (id == 0)
+            try
             {
-                _response.StatusCode = HttpStatusCode.BadRequest;
-                _response.Message = "Parking Lot Id is required.";
+                if (id <= 0)
+                {
+                    throw new BadRequestException("Parking Lot Id is required");
+                }
+
+                ParkingLot parkingLot = _parkingLotRepository.GetById(id);
+
+                if (parkingLot == null || parkingLot.IsDeactivated == true)
+                {
+                    throw new NotFoundException("Parking Lot not found");
+                }
+
+                var parkingLotDTO = _mapper.Map<ParkingLotDTO>(parkingLot);
+                _response.ParkingLot = parkingLotDTO;
+                _response.StatusCode = HttpStatusCode.OK;
+                _response.Message = "Parking Lot returned successfully";
                 return _response;
-
             }
-
-            ParkingLot parkingLot = _parkingLotRepository.GetById(id);
-
-            if (parkingLot == null)
+            catch(BadRequestException ex)
             {
-                _response.StatusCode = HttpStatusCode.NotFound;
-                _response.Message = "Parking Lot not found";
-                return _response;
+                throw;
             }
-
-            var parkingLotDTO = _mapper.Map<ParkingLotDTO>(parkingLot);
-            _response.ParkingLot = parkingLotDTO;
-            _response.StatusCode = HttpStatusCode.OK;
-            _response.Message = "Parking Lot returned successfully";
-            return _response;
+            catch(NotFoundException ex)
+            {
+                throw;
+            }
+            catch(Exception ex)
+            {
+                throw new InternalErrorException("Unexpected error while deactivating the Parking Lot");
+            }
         }
 
         public ParkingLotResponse CreateParkingLot(ParkingLotReq request)
@@ -156,118 +174,142 @@ namespace IWParkingAPI.Services.Implementation
 
         public ParkingLotResponse DeactivateParkingLot(int id)
         {
-            ParkingLot parkingLot = _parkingLotRepository.GetById(id)
+            try
+            {
+                ParkingLot parkingLot = _parkingLotRepository.GetById(id)
 ;
-            if (parkingLot == null)
-            {
-                _response.StatusCode = HttpStatusCode.NotFound;
-                _response.Message = "Parking lot not found";
-                return _response;
-            }
+                if (parkingLot == null)
+                {
+                    throw new NotFoundException("Parking Lot not found");
+                }
 
-            var parkingLotDTO = _mapper.Map<ParkingLotDTO>(parkingLot);
+                var parkingLotDTO = _mapper.Map<ParkingLotDTO>(parkingLot);
 
-            if (parkingLot.IsDeactivated == true)
-            {
+                if (parkingLot.IsDeactivated == true)
+                {
+                    throw new BadRequestException("Parking Lot is already deactivated");
+                }
 
-                _response.StatusCode = HttpStatusCode.NotModified;
-                _response.Message = "Parking lot is already deactivated";
+                parkingLot.IsDeactivated = true;
+                _parkingLotRepository.Update(parkingLot);
+                _unitOfWork.Save();
+
                 _response.ParkingLot = parkingLotDTO;
+                _response.StatusCode = HttpStatusCode.OK;
+                _response.Message = "Parking lot deactivated successfully";
+
                 return _response;
             }
-
-            parkingLot.IsDeactivated = true;
-            _parkingLotRepository.Update(parkingLot);
-            _unitOfWork.Save();
-
-            _response.ParkingLot = parkingLotDTO;
-            _response.StatusCode = HttpStatusCode.OK;
-            _response.Message = "Parking lot deactivated successfully";
-
-            return _response;
+            catch (BadRequestException ex)
+            {
+                throw;
+            }
+            catch(NotFoundException ex)
+            {
+                throw;
+            }
+            catch(Exception ex)
+            {
+                throw new InternalErrorException("Unexpected error while deactivating the Parking Lot");
+            }
         }
 
         public ParkingLotResponse RemoveParkingLotFavourite(int userId, int parkingLotId)
         {
-            var user = _userRepository.GetAsQueryable(x => x.Id == userId, null, x => x.Include(y => y.ParkingLotsNavigation)).FirstOrDefault();
-
-            if (user == null || user.IsDeactivated == true)
+            try
             {
-                _response.Message = "User not found";
-                _response.StatusCode = HttpStatusCode.NotFound;
+                var user = _userRepository.GetAsQueryable(x => x.Id == userId, null, x => x.Include(y => y.ParkingLotsNavigation)).FirstOrDefault();
+
+                if (user == null || user.IsDeactivated == true)
+                {
+                    throw new NotFoundException("User not found");
+                }
+
+                if (user.ParkingLotsNavigation.Count() == 0)
+                {
+                    throw new NotFoundException("User doesn't have favourite parking lots");
+                }
+
+                var parkingLot = _parkingLotRepository.GetById(parkingLotId);
+
+                if (parkingLot == null || parkingLot.IsDeactivated == true)
+                {
+                    throw new NotFoundException("Parking Lot not found");
+                }
+
+                if (!user.ParkingLotsNavigation.Contains(parkingLot))
+                {
+                    throw new BadRequestException("Parking Lot isn't in your favourites");
+                }
+
+                user.ParkingLotsNavigation.Remove(parkingLot);
+                _userRepository.Update(user);
+                _unitOfWork.Save();
+
+                var parkingLotDTO = _mapper.Map<ParkingLotDTO>(parkingLot);
+                _response.Message = "Parking Lot successfully removed from favourites.";
+                _response.StatusCode = HttpStatusCode.OK;
+                _response.ParkingLot = parkingLotDTO;
                 return _response;
             }
-
-            if (user.ParkingLotsNavigation.Count() == 0)
+            catch(NotFoundException ex)
             {
-                _response.Message = "User doesn't have favourite parking lots";
-                _response.StatusCode = HttpStatusCode.NotFound;
-                return _response;
+                throw;
             }
-
-            var parkingLot = _parkingLotRepository.GetById(parkingLotId);
-
-            if (parkingLot == null || parkingLot.IsDeactivated == true)
+            catch(BadRequestException ex)
             {
-                _response.Message = "Parking Lot not found";
-                _response.StatusCode = HttpStatusCode.NotFound;
-                return _response;
+                throw;
             }
-
-            if (!user.ParkingLotsNavigation.Contains(parkingLot))
+            catch (Exception ex)
             {
-                _response.Message = "Parking Lot isn't in your favourites";
-                _response.StatusCode = HttpStatusCode.BadRequest;
-                return _response;
+                throw new InternalErrorException("Unexpected error while removing the Parking Lot from Favourites");
             }
-
-            user.ParkingLotsNavigation.Remove(parkingLot);
-            _userRepository.Update(user);
-            _unitOfWork.Save();
-
-            var parkingLotDTO = _mapper.Map<ParkingLotDTO>(parkingLot);
-            _response.Message = "Parking Lot successfully removed from favourites.";
-            _response.StatusCode = HttpStatusCode.OK;
-            _response.ParkingLot = parkingLotDTO;
-            return _response;
         }
 
         public ParkingLotResponse MakeParkingLotFavorite(int userId, int parkingLotId)
         {
-            var user = _userRepository.GetAsQueryable(x => x.Id == userId, null, x => x.Include(y => y.ParkingLotsNavigation)).FirstOrDefault();
-            var parkingLot = _parkingLotRepository.GetById(parkingLotId);
-            var parkingLotDTO = _mapper.Map<ParkingLotDTO>(parkingLot);
-
-            if (user == null || user.IsDeactivated == true)
+            try
             {
-                _response.StatusCode = HttpStatusCode.NotFound;
-                _response.Message = "User not found";
+                var user = _userRepository.GetAsQueryable(x => x.Id == userId, null, x => x.Include(y => y.ParkingLotsNavigation)).FirstOrDefault();
+                var parkingLot = _parkingLotRepository.GetById(parkingLotId);
+                var parkingLotDTO = _mapper.Map<ParkingLotDTO>(parkingLot);
+
+                if (user == null || user.IsDeactivated == true)
+                {
+                    throw new NotFoundException("User not found");
+                }
+
+                if (parkingLot == null || parkingLot.IsDeactivated == true)
+                {
+                    throw new NotFoundException("Parking Lot not found");
+                }
+
+                if (user.ParkingLotsNavigation.Contains(parkingLot))
+                {
+                    throw new BadRequestException("Parking Lot is already favourite");
+                }
+
+                user.ParkingLotsNavigation.Add(parkingLot);
+                _userRepository.Update(user);
+                _unitOfWork.Save();
+
+                _response.ParkingLot = parkingLotDTO;
+                _response.StatusCode = HttpStatusCode.OK;
+                _response.Message = "Parking Lot added to Favorites";
                 return _response;
             }
-
-            if (parkingLot == null || parkingLot.IsDeactivated == true)
+            catch (NotFoundException ex)
             {
-                _response.StatusCode = HttpStatusCode.NotFound;
-                _response.Message = "Parking Lot not found";
-                return _response;
+                throw;
             }
-
-            if (user.ParkingLotsNavigation.Contains(parkingLot))
+            catch (BadRequestException ex)
             {
-               _response.ParkingLot = parkingLotDTO;
-               _response.StatusCode = HttpStatusCode.Conflict;
-               _response.Message = "Parking Lot is already favorite";
-               return _response;
+                throw;
             }
-
-            user.ParkingLotsNavigation.Add(parkingLot);
-            _userRepository.Update(user);
-            _unitOfWork.Save();
-
-            _response.ParkingLot = parkingLotDTO;
-            _response.StatusCode = HttpStatusCode.OK;
-            _response.Message = "Parking Lot added to Favorites";
-            return _response;
+            catch (Exception ex)
+            {
+                throw new InternalErrorException("Unexpected error while adding the Parking Lot Favourites");
+            }
         }
 
     }
