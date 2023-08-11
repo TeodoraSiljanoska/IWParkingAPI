@@ -43,6 +43,7 @@ namespace IWParkingAPI.Services.Implementation
                 _getresponse.StatusCode = HttpStatusCode.NoContent;
                 _getresponse.Message = "There aren't any vehicles.";
                 _getresponse.Vehicles = Enumerable.Empty<Vehicle>();
+                return _getresponse;
 
             }
             _getresponse.StatusCode = HttpStatusCode.OK;
@@ -293,6 +294,15 @@ namespace IWParkingAPI.Services.Implementation
 
         public GetVehiclesResponse GetUserVehicles(int userId)
         {
+            var user = _userRepository.GetById(userId);
+            if (user == null)
+            {
+                _getresponse.Message = "User not found";
+                _getresponse.StatusCode = HttpStatusCode.NotFound;
+                _getresponse.Vehicles = Enumerable.Empty<Vehicle>();
+                return _getresponse;
+            }
+
             var vehicles = _vehicleRepository.GetAsQueryable(x => x.UserId == userId).ToList();
 
             if (vehicles.Count() == 0)
@@ -300,10 +310,11 @@ namespace IWParkingAPI.Services.Implementation
                 _getresponse.Message = "User doesn't have any vehicles.";
                 _getresponse.StatusCode = HttpStatusCode.NoContent;
                 _getresponse.Vehicles = Enumerable.Empty<Vehicle>();
+                return _getresponse;
             }
 
-            _getresponse.StatusCode = HttpStatusCode.OK;
             _getresponse.Message = "Vehicles returned successfully";
+            _getresponse.StatusCode = HttpStatusCode.OK;
             _getresponse.Vehicles = vehicles;
             return _getresponse;
         }
