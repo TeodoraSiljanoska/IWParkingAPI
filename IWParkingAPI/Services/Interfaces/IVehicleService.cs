@@ -7,7 +7,6 @@ namespace IWParkingAPI.Services.Interfaces
     public interface IVehicleService
     {
         public GetVehiclesResponse GetAllVehicles();
-        public GetVehiclesResponse GetUserVehicles(int userId);
         public VehicleResponse AddNewVehicle(VehicleRequest request);
         public VehicleResponse UpdateVehicle(int id, UpdateVehicleRequest request);
         public VehicleResponse DeleteVehicle(int id);
