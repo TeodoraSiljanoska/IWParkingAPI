@@ -97,79 +97,94 @@ namespace IWParkingAPI.Services.Implementation
 
         public ParkingLotResponse CreateParkingLot(ParkingLotReq request)
         {
-            var existinguser = _userRepository.GetById(request.UserId);
-            if (existinguser == null || existinguser.IsDeactivated == true)
+            try
             {
-                _response.StatusCode = HttpStatusCode.NotFound;
-                _response.Message = "User does not exists.";
-                return _response;
-            }
+                var existinguser = _userRepository.GetById(request.UserId);
+                if (existinguser == null || existinguser.IsDeactivated == true)
+                {
+                    throw new NotFoundException("User doesn't exist");
+                }
 
-            var existingpl = _parkingLotRepository.GetAsQueryable(p => p.Name == request.Name && p.City == request.City, null, null).FirstOrDefault();
-            if (existingpl != null)
-            {
-                _response.StatusCode = HttpStatusCode.BadRequest;
-                _response.Message = "The Parking Lot with that name already exists.";
-                return _response;
-            }
+                var existingpl = _parkingLotRepository.GetAsQueryable(p => p.Name == request.Name && p.City == request.City, null, null).FirstOrDefault();
+                if (existingpl != null)
+                {
+                    throw new BadRequestException("Parking Lot with that name already exists");
+                }
+                var existingplfromuser = _parkingLotRepository.GetAsQueryable(p => p.City == request.City && p.Address == request.Address
+                && p.Zone == request.Zone && p.WorkingHourFrom == request.WorkingHourFrom && p.WorkingHourTo == request.WorkingHourTo &&
+                p.Price == request.Price && p.CapacityCar == request.CapacityCar && p.CapacityAdaptedCar == request.CapacityAdaptedCar
+                && (p.UserId == request.UserId || p.UserId != request.UserId) && p.IsDeactivated == false && p.Name != request.Name, null, null).FirstOrDefault();
+                if (existingplfromuser != null)
+                {
+                    throw new BadRequestException("Parking Lot with that specifications already exists");
+                }
 
-            if (request.Price <= 0)
-            {
-                _response.StatusCode = HttpStatusCode.BadRequest;
-                _response.Message = "Price should be greater than 0.";
-                return _response;
-            }
+                if (request.Price <= 0)
+                {
+                    throw new BadRequestException("Price should be greater than 0");
+                }
 
-            if (request.CapacityCar <= 0 || request.CapacityAdaptedCar <= 0)
-            {
-                _response.StatusCode = HttpStatusCode.BadRequest;
-                _response.Message = "Capacity should be greater than 0.";
-                return _response;
-            }
+                if (request.CapacityCar <= 0 || request.CapacityAdaptedCar <= 0)
+                {
+                    throw new BadRequestException("Capacity should be greater than 0");
+                }
 
-            if (request.WorkingHourFrom.Hours < 0 || request.WorkingHourFrom.Hours > 24 ||
+                if (request.WorkingHourFrom.Hours < 0 || request.WorkingHourFrom.Hours > 24 ||
                 request.WorkingHourFrom.Minutes < 0 || request.WorkingHourFrom.Minutes > 59 || request.WorkingHourFrom.Seconds < 0
                 || request.WorkingHourFrom.Seconds > 59 || request.WorkingHourTo.Hours < 0 || request.WorkingHourTo.Hours > 24
                 || request.WorkingHourTo.Minutes < 0 || request.WorkingHourTo.Minutes > 59
                 || request.WorkingHourTo.Seconds < 0 || request.WorkingHourTo.Seconds > 59)
-            {
-                _response.StatusCode = HttpStatusCode.BadRequest;
-                _response.Message = "Invalid working hours.";
+                {
+                    throw new BadRequestException("Invalid working hours");
+                }
+
+                var parkingLot = _mapper.Map<ParkingLot>(request);
+                parkingLot.UserId = request.UserId;
+                parkingLot.TimeCreated = DateTime.Now;
+                parkingLot.Status = (int)Status.Pending;
+                _parkingLotRepository.Insert(parkingLot);
+                _unitOfWork.Save();
+
+                var parkingLotDTO = _mapper.Map<ParkingLotDTO>(parkingLot);
+
+                var createdParkingLot = _parkingLotRepository.GetAsQueryable(p => p.Id == parkingLot.Id, null, null).FirstOrDefault();
+                if (createdParkingLot == null)
+                {
+                    throw new InternalErrorException("An error while creating the Parking Lot occurred");
+                }
+
+                ParkingLotRequest plrequest = new ParkingLotRequest();
+
+                plrequest.ParkingLotId = parkingLot.Id;
+                plrequest.UserId = parkingLot.UserId;
+                plrequest.TimeCreated = DateTime.Now;
+                plrequest.Status = (int)Status.Pending;
+                plrequest.ParkingLot = parkingLot;
+                _parkingLotRequestRepository.Insert(plrequest);
+                _unitOfWork.Save();
+
+
+                _response.ParkingLot = parkingLotDTO;
+                _response.StatusCode = HttpStatusCode.OK;
+                _response.Message = "Parking Lot created successfully";
                 return _response;
             }
-
-            var parkingLot = _mapper.Map<ParkingLot>(request);
-            parkingLot.UserId = request.UserId;
-            parkingLot.TimeCreated = DateTime.Now;
-            parkingLot.Status = (int)Status.Pending;
-            _parkingLotRepository.Insert(parkingLot);
-            _unitOfWork.Save();
-
-            var parkingLotDTO = _mapper.Map<ParkingLotDTO>(parkingLot);
-
-            var createdParkingLot = _parkingLotRepository.GetAsQueryable(p => p.Id == parkingLot.Id, null, null).FirstOrDefault();
-            if (createdParkingLot == null)
+            catch(NotFoundException ex)
             {
-                _response.StatusCode = HttpStatusCode.BadRequest;
-                _response.Message = "An error occured.";
-                return _response;
+                throw;
             }
-
-            ParkingLotRequest plrequest = new ParkingLotRequest();
-
-            plrequest.ParkingLotId = parkingLot.Id;
-            plrequest.UserId = parkingLot.UserId;
-            plrequest.TimeCreated = DateTime.Now;
-            plrequest.Status = (int)Status.Pending;
-            plrequest.ParkingLot = parkingLot;
-            _parkingLotRequestRepository.Insert(plrequest);
-            _unitOfWork.Save();
-
-
-            _response.ParkingLot = parkingLotDTO;
-            _response.StatusCode = HttpStatusCode.OK;
-            _response.Message = "Parking Lot created successfully";
-            return _response;
+            catch(BadRequestException ex)
+            {
+                throw;
+            }
+            catch(InternalErrorException ex)
+            {
+                throw;
+            }
+            catch(Exception ex)
+            {
+                throw new InternalErrorException("Unexpected error while creating the Parking Lot");
+            }
         }
 
         public ParkingLotResponse DeactivateParkingLot(int id)
