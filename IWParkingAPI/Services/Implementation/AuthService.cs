@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using IWParkingAPI.CustomExceptions;
 using IWParkingAPI.Mappers;
 using IWParkingAPI.Models.Data;
 using IWParkingAPI.Models.Requests;
@@ -41,24 +42,18 @@ namespace IWParkingAPI.Services.Implementation
                 var user = await _userManager.FindByNameAsync(request.Email);
                 if (user != null)
                 {
-                    _registerResponse.Message = "User already exists.";
-                    _registerResponse.StatusCode = HttpStatusCode.BadRequest;
-                    return _registerResponse;
+                    throw new BadRequestException("User already exists");
                 }
 
                 if (request.Password != request.ConfirmPassword)
                 {
-                    _registerResponse.Message = "Passwords do not match";
-                    _registerResponse.StatusCode = HttpStatusCode.BadRequest;
-                    return _registerResponse;
+                    throw new BadRequestException("Passwords do not match");
                 }
 
                 var role = await _roleManager.FindByNameAsync(request.Role);
                 if (role == null)
                 {
-                    _registerResponse.StatusCode = HttpStatusCode.BadRequest;
-                    _registerResponse.Message = "Role with that name doesn't exists.";
-                    return _registerResponse;
+                    throw new BadRequestException("Role with that name doesn't exist");
                 }
 
                 var newUser = _mapper.Map<ApplicationUser>(request);

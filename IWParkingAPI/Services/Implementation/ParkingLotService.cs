@@ -91,7 +91,7 @@ namespace IWParkingAPI.Services.Implementation
             }
             catch(Exception ex)
             {
-                throw new InternalErrorException("Unexpected error while deactivating the Parking Lot");
+                throw new InternalErrorException("Unexpected error while getting the Parking Lot by Id");
             }
         }
 
