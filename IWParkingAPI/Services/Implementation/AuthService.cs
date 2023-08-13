@@ -71,148 +71,169 @@ namespace IWParkingAPI.Services.Implementation
                 }
                 else
                 {
-                    _registerResponse.StatusCode = HttpStatusCode.BadRequest;
-                    _registerResponse.Message = "User creation failed! Please check user details and try again.";
+                    throw new BadRequestException("User creation failed! Please check User details and try again");
                 }
                 return _registerResponse;
             }
+            catch(BadRequestException ex)
+            {
+                throw;
+            }
             catch (Exception ex)
             {
-                _registerResponse.StatusCode = HttpStatusCode.BadRequest;
-                _registerResponse.Message = "An error occurred during user registration.";
-                return _registerResponse;
+                throw new InternalErrorException("Unexpected error while User registration");
             }
         }
 
         public async Task<UserLoginResponse> LoginUser(UserLoginRequest model)
         {
-            var user = await _userManager.FindByNameAsync(model.Email);
-
-            if (user == null)
+            try
             {
-                _loginResponse.Message = "User with that email doesn't exist";
-                _loginResponse.StatusCode = HttpStatusCode.BadRequest;
-                return _loginResponse;
-            }
-            if(user.IsDeactivated == true)
-            {
-                _loginResponse.Message = "User is deactivated.";
-                _loginResponse.StatusCode = HttpStatusCode.BadRequest;
-                return _loginResponse;
-            }
+                var user = await _userManager.FindByNameAsync(model.Email);
 
-            if (!await _userManager.CheckPasswordAsync(user, model.Password))
-            {
-                _loginResponse.Message = "Password isn't correct";
-                _loginResponse.StatusCode = HttpStatusCode.Unauthorized;
-                return _loginResponse;
-            }
+                if (user == null)
+                {
+                    throw new BadRequestException("User with that email doesn't exist");
+                }
 
-            // authentication successful so generate jwt token
-            return await _jwtUtils.GenerateToken(user);
+                if (user.IsDeactivated == true)
+                {
+                    throw new BadRequestException("User is deactivated");
+                }
+
+                if (!await _userManager.CheckPasswordAsync(user, model.Password))
+                {
+                    throw new UnauthorizedException("Password isn't correct");
+                }
+
+                // authentication successful so generate jwt token
+                return await _jwtUtils.GenerateToken(user);
+            }
+            catch(BadRequestException ex)
+            {
+                throw;
+            }
+            catch(UnauthorizedException ex)
+            {
+                throw;
+            }
+            catch(Exception ex)
+            {
+                throw new InternalErrorException("Unexpected error while User login");
+            }
         }
 
         public async Task<UserResponse> ChangePassword(UserResetPasswordRequest model)
         {
-            var user = await _userManager.FindByNameAsync(model.Email);
-
-            if (user == null)
+            try
             {
-                _response.Message = "User with that email doesn't exist";
-                _response.StatusCode = HttpStatusCode.BadRequest;
-                return _response;
+                var user = await _userManager.FindByNameAsync(model.Email);
+
+                if (user == null)
+                {
+                    throw new BadRequestException("User with that email doesn't exist");
+                }
+
+                var checkOldPass = await _signInManager.PasswordSignInAsync(user.Email, model.OldPassword, false, false);
+                if (!checkOldPass.Succeeded)
+                {
+                    throw new BadRequestException("The old password isn't correct");
+                }
+
+                string resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
+                if (string.IsNullOrEmpty(resetToken))
+                {
+                    throw new InternalErrorException("Unexpected error while generating reset token");
+                }
+
+                if (model.NewPassword != model.ConfirmNewPassword)
+                {
+                    throw new BadRequestException("New passwords don't match");
+                }
+
+                var result = await _userManager.ResetPasswordAsync(user, resetToken, model.NewPassword);
+
+                if (result.Succeeded)
+                {
+                    _response.Message = "User reset password successfully";
+                    _response.StatusCode = HttpStatusCode.OK;
+                    return _response;
+                }
+                else
+                {
+                    throw new InternalErrorException("Unexpected error while password reset");
+                }
             }
-
-            var checkOldPass = await _signInManager.PasswordSignInAsync(user.Email, model.OldPassword, false, false);
-            if (!checkOldPass.Succeeded)
+            catch(BadRequestException ex)
             {
-                _response.Message = "The old password isn't correct";
-                _response.StatusCode = HttpStatusCode.BadRequest;
-                return _response;
+                throw;
             }
-
-            string resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
-            if (string.IsNullOrEmpty(resetToken))
+            catch(InternalErrorException ex)
             {
-                _response.Message = "Error while generating reset token";
-                _response.StatusCode = HttpStatusCode.BadRequest;
-                return _response;
+                throw;
             }
-
-            if (model.NewPassword != model.ConfirmNewPassword)
+            catch (Exception ex)
             {
-                _response.Message = "The new passwords don't match";
-                _response.StatusCode = HttpStatusCode.BadRequest;
-                return _response;
-            }
-
-            var result = await _userManager.ResetPasswordAsync(user, resetToken, model.NewPassword);
-
-            if (result.Succeeded)
-            {
-                _response.Message = "User reset password successfully";
-                _response.StatusCode = HttpStatusCode.OK;
-                return _response;
-            }
-            else
-            {
-                _response.Message = "User didn't reset password successfully";
-                _response.StatusCode = HttpStatusCode.BadRequest;
-                return _response;
+                throw new InternalErrorException("Unexpected error while password reset");
             }
         }
 
         public async Task<UserResponse> ChangeEmail(UserChangeEmailRequest model)
         {
-            var user = await _userManager.FindByNameAsync(model.OldEmail);
-
-            if (user == null)
+            try
             {
-                _response.Message = "User with that email doesn't exist";
-                _response.StatusCode = HttpStatusCode.BadRequest;
-                return _response;
+                var user = await _userManager.FindByNameAsync(model.OldEmail);
+
+                if (user == null)
+                {
+                    throw new BadRequestException("User with that email doesn't exist");
+                }
+
+                if (user.Email != model.OldEmail)
+                {
+                    throw new BadRequestException("The old email is incorrect");
+                }
+
+                if (model.OldEmail == model.NewEmail)
+                {
+                    throw new BadRequestException("No updates were entered. Please enter the updates");
+                }
+
+                var userwiththatusername = await _userManager.FindByNameAsync(model.NewEmail);
+                if (userwiththatusername != null)
+                {
+                    throw new BadRequestException("Email is already taken");
+                }
+
+                user.Email = model.NewEmail;
+                user.NormalizedEmail = model.NewEmail.ToUpper();
+                user.UserName = model.NewEmail;
+                user.NormalizedUserName = model.NewEmail.ToUpper();
+                user.TimeModified = DateTime.Now;
+                // user.SecurityStamp = await _userManager.UpdateSecurityStampAsync(user);
+                var result = await _userManager.UpdateAsync(user);
+                if (result.Succeeded)
+                {
+                    _response.Message = "Email changed successfully!";
+                    _response.StatusCode = HttpStatusCode.OK;
+                    return _response;
+                }
+                else
+                {
+                    throw new InternalErrorException("Unexpected error while changing the email");
+                }
             }
-
-            if(user.Email != model.OldEmail)
+            catch(BadRequestException ex)
             {
-                _response.Message = "Incorrect old email";
-                _response.StatusCode = HttpStatusCode.BadRequest;
-                return _response;
+                throw;
             }
-
-            if (model.OldEmail == model.NewEmail)
+            catch(InternalErrorException ex)
             {
-                _response.StatusCode = HttpStatusCode.BadRequest;
-                _response.Message = "No updates were entered. Please enter the updates";
-                return _response;
-            }    
-
-            var userwiththatusername = await _userManager.FindByNameAsync(model.NewEmail);
-            if (userwiththatusername != null)
-            {
-                _response.Message = "Email is already taken";
-                _response.StatusCode = HttpStatusCode.BadRequest;
-                return _response;
+                throw;
             }
-
-            user.Email = model.NewEmail;
-            user.NormalizedEmail = model.NewEmail.ToUpper();
-            user.UserName = model.NewEmail;
-            user.NormalizedUserName = model.NewEmail.ToUpper();
-            user.TimeModified = DateTime.Now;
-            // user.SecurityStamp = await _userManager.UpdateSecurityStampAsync(user);
-            var result = await _userManager.UpdateAsync(user);
-            if (result.Succeeded)
+            catch(Exception ex)
             {
-                _response.Message = "Email changed successfully!";
-                _response.StatusCode = HttpStatusCode.OK;
-                return _response;
-            }
-            else
-            {
-                _response.Message = "There was a problem changing the email!";
-                _response.StatusCode = HttpStatusCode.BadRequest;
-                return _response;
+                throw new InternalErrorException("Unexpected error while changing the email");
             }
 
         }
