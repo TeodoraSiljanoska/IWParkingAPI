@@ -164,6 +164,11 @@ namespace IWParkingAPI.Services.Implementation
                     throw new BadRequestException("New passwords don't match");
                 }
 
+                if (model.NewPassword == model.OldPassword || model.ConfirmNewPassword == model.OldPassword)
+                {
+                    throw new BadRequestException("No updates were entered. Please enter the updates");
+                }
+
                 var result = await _userManager.ResetPasswordAsync(user, resetToken, model.NewPassword);
 
                 if (result.Succeeded)
