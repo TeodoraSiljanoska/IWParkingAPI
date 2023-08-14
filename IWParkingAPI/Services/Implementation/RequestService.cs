@@ -9,9 +9,9 @@ using System.Net;
 using AutoMapper;
 using ParkingLotRequest = IWParkingAPI.Models.Data.ParkingLotRequest;
 using IWParkingAPI.Models.Context;
-//using static IWParkingAPI.Models.Data.EnumClass;
 using static IWParkingAPI.Models.Enums.Enums;
 using IWParkingAPI.Models.Data;
+using IWParkingAPI.CustomExceptions;
 
 namespace IWParkingAPI.Services.Implementation
 {
@@ -33,48 +33,74 @@ namespace IWParkingAPI.Services.Implementation
         }
         public RequestResponse ModifyRequest(int id, RequestRequest request)
         {
-            var req = _requestRepository.GetAsQueryable(x => x.Id == id, null, x => x.Include(y => y.User).Include(y => y.ParkingLot)).FirstOrDefault();
-
-            if (req == null)
+            try
             {
-                _response.StatusCode = HttpStatusCode.NotFound;
-                _response.Message = "Request not found";
+                if (id <= 0)
+                {
+                    throw new BadRequestException("Request Id is required");
+                }
+
+                if (request.Status == null || request.Status.Length == 0)
+                {
+                    throw new BadRequestException("Status is required");
+                }
+
+                var req = _requestRepository.GetAsQueryable(x => x.Id == id, null, x => x.Include(y => y.User).Include(y => y.ParkingLot)).FirstOrDefault();
+
+                if (req == null)
+                {
+                    throw new NotFoundException("Request not found");
+                }
+
+                if (!Enum.IsDefined(typeof(Status), request.Status))
+                {
+                    throw new NotFoundException("Status not found");
+                }
+
+                Status enumValue = (Status)Enum.Parse(typeof(Status), request.Status);
+
+                if (req.Status != (int)Status.Pending)
+                {
+                    throw new BadRequestException("Request is already approved or declined");
+                }
+
+                var parkingLot = req.ParkingLot;
+
+                if (parkingLot == null)
+                {
+                    throw new NotFoundException("Parking lot not found");
+                }
+
+                req.Status = (int)enumValue;
+                req.TimeCreated = DateTime.Now;
+
+                parkingLot.Status = (int)enumValue;
+                parkingLot.TimeModified = DateTime.Now;
+
+                _requestRepository.Update(req);
+                _parkingLotRepository.Update(parkingLot);
+                _unitOfWork.Save();
+
+                _response.StatusCode = HttpStatusCode.OK;
+                _response.Message = "Request modified successfully";
+
+                var reqDTO = _mapper.Map<RequestDTO>(req);
+                _response.Request = reqDTO;
+
                 return _response;
             }
-
-            if (!Enum.IsDefined(typeof(Status), request.Status))
+            catch (BadRequestException)
             {
-                _response.Message = "Status is invalid";
-                _response.StatusCode = HttpStatusCode.BadRequest;
-                return _response;
+                throw;
             }
-            Status enumValue = (Status)Enum.Parse(typeof(Status), request.Status);
-
-            var parkingLot = req.ParkingLot;
-            if (parkingLot == null)
+            catch (NotFoundException)
             {
-                _response.Message = "Parking Lot is invalid";
-                _response.StatusCode = HttpStatusCode.BadRequest;
-                return _response;
+                throw;
             }
-
-            req.Status = (int)enumValue;
-            req.TimeCreated = DateTime.Now;
-
-            parkingLot.Status = (int)enumValue;
-            parkingLot.TimeModified = DateTime.Now;
-
-            _requestRepository.Update(req);
-            _parkingLotRepository.Update(parkingLot);
-            _unitOfWork.Save();
-
-            _response.StatusCode = HttpStatusCode.OK;
-            _response.Message = "Request modified successfully";
-
-            var reqDTO = _mapper.Map<RequestDTO>(req);
-            _response.Request = reqDTO;
-
-            return _response;
+            catch (Exception)
+            {
+                throw new InternalErrorException("Unexpected error while modifying the Parking lot Request");
+            }
         }
     }
 }
