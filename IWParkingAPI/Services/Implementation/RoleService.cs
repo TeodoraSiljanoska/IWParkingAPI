@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using IWParkingAPI.CustomExceptions;
 using IWParkingAPI.Infrastructure.Repository;
 using IWParkingAPI.Infrastructure.UnitOfWork;
 using IWParkingAPI.Mappers;
@@ -29,112 +30,192 @@ namespace IWParkingAPI.Services.Implementation
         }
         public GetRolesResponse GetAllRoles()
         {
-            var roles = _roleRepository.GetAll();
-            if (roles.Count() == 0)
+            try
             {
-                _getResponse.StatusCode = HttpStatusCode.NoContent;
-                _getResponse.Message = "There aren't any roles.";
-                _getResponse.Roles = Enumerable.Empty<ApplicationRole>();
+                var roles = _roleRepository.GetAll();
+                if (roles.Count() == 0)
+                {
+                    _getResponse.StatusCode = HttpStatusCode.NoContent;
+                    _getResponse.Message = "There aren't any roles.";
+                    _getResponse.Roles = Enumerable.Empty<ApplicationRole>();
+                    return _getResponse;
+                }
+
+                _getResponse.Roles = roles;
+                _getResponse.StatusCode = HttpStatusCode.OK;
+                _getResponse.Message = "Roles returned successfully";
                 return _getResponse;
             }
-            _getResponse.Roles = roles;
-            _getResponse.StatusCode = HttpStatusCode.OK;
-            _getResponse.Message = "Roles returned successfully";
-            return _getResponse;
+            catch (Exception ex)
+            {
+                throw new InternalErrorException("Unexpected error while getting all Roles");
+
+            }
         }
         public RoleResponse GetRoleById(int id)
         {
-            ApplicationRole role = _roleRepository.GetById(id);
-            if (role == null)
+            try
             {
-                _response.StatusCode = HttpStatusCode.NotFound;
-                _response.Message = "Role not found";
+                if (id <= 0)
+                {
+                    throw new BadRequestException("Role Id is required");
+                }
+
+                ApplicationRole role = _roleRepository.GetById(id);
+                if (role == null)
+                {
+                    throw new NotFoundException("Role not found");
+                }
+
+                _response.Role = role;
+                _response.StatusCode = HttpStatusCode.OK;
+                _response.Message = "Role returned successfully";
                 return _response;
             }
-            _response.Role = role;
-            _response.StatusCode = HttpStatusCode.OK;
-            _response.Message = "Role returned successfully";
-            return _response;
+            catch(NotFoundException ex)
+            {
+                throw;
+            }
+            catch(BadRequestException ex)
+            {
+                throw;
+            }
+            catch(Exception ex)
+            {
+                throw new InternalErrorException("Unexpected error while getting the Role by Id");
+            }
         }
 
         public RoleResponse CreateRole(RoleRequest request)
         {
-            if (_roleRepository.FindByPredicate(u => u.Name == request.Name))
+            try
             {
-                _response.StatusCode = HttpStatusCode.BadRequest;
-                _response.Message = "Role already exists.";
+                if (request == null || request.Name.Length == 0)
+                {
+                    throw new BadRequestException("Role name is required");
+                }
+                if (_roleRepository.FindByPredicate(u => u.Name == request.Name))
+                {
+                    throw new BadRequestException("Role already exists");
+                }
+
+                var role = _mapper.Map<ApplicationRole>(request);
+                role.TimeCreated = DateTime.Now;
+
+                _roleRepository.Insert(role);
+                _unitOfWork.Save();
+
+                _response.Role = role;
+                _response.StatusCode = HttpStatusCode.OK;
+                _response.Message = "Role created successfully";
+
                 return _response;
             }
-
-            var role = _mapper.Map<ApplicationRole>(request);
-            role.TimeCreated = DateTime.Now;
-
-            _roleRepository.Insert(role);
-            _unitOfWork.Save();
-
-            _response.Role = role;
-            _response.StatusCode = HttpStatusCode.OK;
-            _response.Message = "Role created successfully";
-
-            return _response;
+            catch(BadRequestException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+              throw  new InternalErrorException("Unexpected error while creating the Role");
+            }
         }
         public RoleResponse UpdateRole(int id, RoleRequest changes)
         {
-            ApplicationRole role = _roleRepository.GetById(id);
-            if(changes.Name == role.Name)
+            try
             {
-                _response.StatusCode = HttpStatusCode.BadRequest;
-                _response.Message = "No updates were entered. Please enter the updates";
-                return _response;
-            }
-            if (role == null)
-            {
-                _response.StatusCode = HttpStatusCode.NotFound;
-                _response.Message = "Role not found";
-                return _response;
-            }
-            if (changes.Name != role.Name)
-            {
-                if (_roleRepository.FindByPredicate(u => u.Name == changes.Name))
+                if (id <= 0)
                 {
-                    _response.StatusCode = HttpStatusCode.BadRequest;
-                    _response.Message = "Role with that name already exists.";
-                    return _response;
+                    throw new BadRequestException("Role Id is required");
                 }
+
+                if (changes == null || changes.Name.Length == 0)
+                {
+                    throw new BadRequestException("Role Name is required");
+                }
+
+                ApplicationRole role = _roleRepository.GetById(id);
+                
+                if (role == null)
+                {
+                    throw new NotFoundException("Role not found");
+                }
+                if (changes.Name == role.Name)
+                {
+                    throw new BadRequestException("No updates were entered. Please enter the updates");
+                }
+
+                if (changes.Name != role.Name)
+                {
+                    if (_roleRepository.FindByPredicate(u => u.Name == changes.Name))
+                    {
+                        throw new BadRequestException("Role with that name already exists");
+                    }
+                }
+
+                role.Name = (role.Name == changes.Name) ? role.Name : changes.Name;
+                role.NormalizedName = (role.NormalizedName == changes.Name.ToUpper()) ? role.NormalizedName : changes.Name.ToUpper();
+                role.TimeModified = DateTime.Now;
+
+                _roleRepository.Update(role);
+                _unitOfWork.Save();
+
+                _response.Role = role;
+                _response.StatusCode = HttpStatusCode.OK;
+                _response.Message = "Role updated successfully";
+
+                return _response;
             }
-
-            role.Name = (role.Name == changes.Name) ? role.Name : changes.Name;
-            role.NormalizedName = (role.NormalizedName == changes.Name.ToUpper()) ? role.NormalizedName : changes.Name.ToUpper();
-            role.TimeModified = DateTime.Now;
-
-            _roleRepository.Update(role);
-            _unitOfWork.Save();
-
-            _response.Role = role;
-            _response.StatusCode = HttpStatusCode.OK;
-            _response.Message = "Role updated successfully";
-
-            return _response;
+            catch(BadRequestException ex)
+            {
+                throw;
+            }
+            catch(NotFoundException ex)
+            {
+                throw;
+            }
+            catch(Exception ex)
+            {
+                throw new InternalErrorException("Unexpected error while updating the Role");
+            }
         }
 
         public RoleResponse DeleteRole(int id)
         {
-            ApplicationRole role = _roleRepository.GetById(id);
-            if (role == null)
+            try
             {
-                _response.StatusCode = HttpStatusCode.NotFound;
-                _response.Message = "Role not found";
+                if (id <= 0)
+                {
+                    throw new BadRequestException("Role Id is required");
+                }
+
+                ApplicationRole role = _roleRepository.GetById(id);
+                if (role == null)
+                {
+                    throw new NotFoundException("Role not found");
+                }
+
+                _roleRepository.Delete(role);
+                _unitOfWork.Save();
+
+                _response.Role = role;
+                _response.StatusCode = HttpStatusCode.OK;
+                _response.Message = "Role deleted successfully";
+
                 return _response;
             }
-
-            _roleRepository.Delete(role);
-            _unitOfWork.Save();
-
-            _response.Role = role;
-            _response.StatusCode = HttpStatusCode.OK;
-            _response.Message = "Role deleted successfully";
-
-            return _response;
+            catch(BadRequestException ex)
+            {
+                throw;
+            }
+            catch(NotFoundException ex)
+            {
+                throw;
+            }
+            catch(Exception ex)
+            {
+                throw new InternalErrorException("Unexpected error while deleting the Role");
+            }
         }
     }
 }
