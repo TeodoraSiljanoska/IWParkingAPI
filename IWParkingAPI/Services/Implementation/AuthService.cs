@@ -39,6 +39,11 @@ namespace IWParkingAPI.Services.Implementation
         {
             try
             {
+                if (request == null || request.Name.Length == 0 || request.Surname.Length == 0 || request.Email.Length == 0 || request.Password.Length ==0
+                    || request.ConfirmPassword.Length == 0 || request.Phone.Length == 0 || request.Role.Length == 0 )
+                {
+                    throw new BadRequestException("Name, Surname, Email, Password, Confirm Password, Phone and Role are required");
+                }
                 var user = await _userManager.FindByNameAsync(request.Email);
                 if (user != null)
                 {
@@ -89,6 +94,10 @@ namespace IWParkingAPI.Services.Implementation
         {
             try
             {
+                if (model == null || model.Email.Length == 0 || model.Password.Length == 0)
+                {
+                    throw new BadRequestException("Email and Password are required");
+                }
                 var user = await _userManager.FindByNameAsync(model.Email);
 
                 if (user == null)
@@ -127,6 +136,10 @@ namespace IWParkingAPI.Services.Implementation
         {
             try
             {
+                if (model == null || model.Email.Length == 0 || model.OldPassword.Length == 0 || model.NewPassword.Length == 0 || model.ConfirmNewPassword.Length == 0 )
+                {
+                    throw new BadRequestException("Email, Old Password, New Password and Confirm New Password are required");
+                }
                 var user = await _userManager.FindByNameAsync(model.Email);
 
                 if (user == null)
@@ -182,6 +195,11 @@ namespace IWParkingAPI.Services.Implementation
         {
             try
             {
+                if (model == null || model.OldEmail.Length == 0 || model.NewEmail.Length == 0)
+                {
+                    throw new BadRequestException("Old Email and New Email are required");
+                }
+
                 var user = await _userManager.FindByNameAsync(model.OldEmail);
 
                 if (user == null)
