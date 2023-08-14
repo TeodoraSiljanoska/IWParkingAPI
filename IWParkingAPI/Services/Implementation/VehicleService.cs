@@ -46,6 +46,7 @@ namespace IWParkingAPI.Services.Implementation
                 {
                     _getResponse.StatusCode = HttpStatusCode.OK;
                     _getResponse.Message = "There aren't any vehicles";
+                    _getResponse.Vehicles = Enumerable.Empty<Vehicle>();
                     return _getResponse;
                 }
 
@@ -120,8 +121,6 @@ namespace IWParkingAPI.Services.Implementation
             {
                 throw new InternalErrorException("Unexpected error while creating the Vehicle");
             }
-
-
         }
 
         public VehicleResponse DeleteVehicle(int id)
@@ -179,8 +178,6 @@ namespace IWParkingAPI.Services.Implementation
             {
                 throw new InternalErrorException("Unexpected error while deleting the Vehicle");
             }
-
-
         }
 
         public VehicleResponse UpdateVehicle(int id, UpdateVehicleRequest request)
@@ -394,7 +391,6 @@ namespace IWParkingAPI.Services.Implementation
             {
                 throw new InternalErrorException("Unexpected error while making Vehicle primary");
             }
-
         }
     }
 }
