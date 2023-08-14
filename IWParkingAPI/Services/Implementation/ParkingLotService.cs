@@ -25,6 +25,7 @@ namespace IWParkingAPI.Services.Implementation
         private readonly IGenericRepository<AspNetUser> _userRepository;
         private readonly IGenericRepository<ParkingLotRequest> _requestRepository;
         private readonly GetParkingLotsResponse _getResponse;
+        private readonly GetParkingLotsDTOResponse _getDTOResponse;
         private readonly ParkingLotResponse _response;
         private readonly IHttpContextAccessor _httpContextAccessor;
 
@@ -40,6 +41,7 @@ namespace IWParkingAPI.Services.Implementation
             _getResponse = new GetParkingLotsResponse();
             _response = new ParkingLotResponse();
             _httpContextAccessor = httpContextAccessor;
+            _getDTOResponse = new GetParkingLotsDTOResponse();
         }
         public GetParkingLotsResponse GetAllParkingLots()
         {
@@ -86,15 +88,15 @@ namespace IWParkingAPI.Services.Implementation
                 _response.Message = "Parking Lot returned successfully";
                 return _response;
             }
-            catch(BadRequestException ex)
+            catch (BadRequestException ex)
             {
                 throw;
             }
-            catch(NotFoundException ex)
+            catch (NotFoundException ex)
             {
                 throw;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 throw new InternalErrorException("Unexpected error while getting the Parking Lot by Id");
             }
@@ -104,7 +106,7 @@ namespace IWParkingAPI.Services.Implementation
         {
             try
             {
-                if(request == null || request.Name.Length == 0 || request.City.Length == 0 || request.Address.Length == 0 || request.Zone.Length == 0 ||
+                if (request == null || request.Name.Length == 0 || request.City.Length == 0 || request.Address.Length == 0 || request.Zone.Length == 0 ||
                     request.WorkingHourFrom == null || request.WorkingHourTo == null || request.CapacityCar == null || request.CapacityAdaptedCar == null ||
                     request.Price == null || request.UserId == null)
                 {
@@ -356,11 +358,11 @@ namespace IWParkingAPI.Services.Implementation
             {
                 throw;
             }
-            catch(NotFoundException ex)
+            catch (NotFoundException ex)
             {
                 throw;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 throw new InternalErrorException("Unexpected error while deactivating the Parking Lot");
             }
@@ -404,11 +406,11 @@ namespace IWParkingAPI.Services.Implementation
                 _response.ParkingLot = parkingLotDTO;
                 return _response;
             }
-            catch(NotFoundException ex)
+            catch (NotFoundException ex)
             {
                 throw;
             }
-            catch(BadRequestException ex)
+            catch (BadRequestException ex)
             {
                 throw;
             }
@@ -464,5 +466,66 @@ namespace IWParkingAPI.Services.Implementation
             }
         }
 
+        public GetParkingLotsDTOResponse GetUserFavouriteParkingLots(int userId)
+        {
+            try
+            {
+                if (userId <= 0)
+                {
+                    throw new BadRequestException("User Id is required");
+                }
+
+                var user = _userRepository.GetById(userId);
+                if (user == null || user.IsDeactivated == true)
+                {
+                    throw new NotFoundException("User not found");
+                }
+
+                var userWithParkingLots = _userRepository.GetAsQueryable(x => x.Id == userId, null, x => x.Include(y => y.ParkingLotsNavigation)).FirstOrDefault();
+
+                if (!userWithParkingLots.ParkingLotsNavigation.Any())
+                {
+                    _getDTOResponse.StatusCode = HttpStatusCode.OK;
+                    _getDTOResponse.Message = "User doesn't have any favourite parking lots";
+                    _getDTOResponse.ParkingLots = Enumerable.Empty<ParkingLotDTO>();
+                    return _getDTOResponse;
+                }
+
+                var favouritesList = userWithParkingLots.ParkingLotsNavigation.ToList();
+
+                var approvedFromFavourites = favouritesList.Where(a => a.Status == (int)Status.Approved).ToList();
+
+                if (!approvedFromFavourites.Any())
+                {
+                    _getDTOResponse.StatusCode = HttpStatusCode.OK;
+                    _getDTOResponse.Message = "User doesn't have any favourite parking lots";
+                    _getDTOResponse.ParkingLots = Enumerable.Empty<ParkingLotDTO>();
+                    return _getDTOResponse;
+                }
+
+                var ParkingLotDTOList = new List<ParkingLotDTO>();
+                foreach (var p in approvedFromFavourites)
+                {
+                    ParkingLotDTOList.Add(_mapper.Map<ParkingLotDTO>(p));
+                }
+
+                _getDTOResponse.StatusCode = HttpStatusCode.OK;
+                _getDTOResponse.Message = "Favourite parking lots returned successfully";
+                _getDTOResponse.ParkingLots = ParkingLotDTOList;
+                return _getDTOResponse;
+            }
+            catch (BadRequestException ex)
+            {
+                throw;
+            }
+            catch (NotFoundException ex)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                throw new InternalErrorException("Unexpected error while getting all favourite Parking Lots");
+            }
+        }
     }
 }

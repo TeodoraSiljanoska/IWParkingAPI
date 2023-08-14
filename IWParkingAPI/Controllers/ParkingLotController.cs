@@ -67,5 +67,12 @@ namespace IWParkingAPI.Controllers
         {
             return _parkingLotService.MakeParkingLotFavorite(userId, parkingLotId);
         }
+
+        [HttpGet("GetUserFavouriteParkingLots/{userId}")]
+        [AuthorizeCustom(UserRoles.User)]
+        public GetParkingLotsDTOResponse GetUsereFavouriteParkingLots(int userId)
+        {
+            return _parkingLotService.GetUserFavouriteParkingLots(userId);
+        }
     }
 }
