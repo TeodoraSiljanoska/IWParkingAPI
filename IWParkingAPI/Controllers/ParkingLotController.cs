@@ -40,6 +40,12 @@ namespace IWParkingAPI.Controllers
             return _parkingLotService.CreateParkingLot(request);
         }
 
+        [AuthorizeCustom(UserRoles.Owner)]
+        [HttpPut("Update/{id}")]
+        public ParkingLotResponse UpdateParkingLot(int id, UpdateParkingLotRequest request)
+        {
+            return _parkingLotService.UpdateParkingLot(id,request);
+        }
         [AuthorizeCustom(UserRoles.SuperAdmin)]
 
         [HttpDelete("Deactivate/{id}")]
