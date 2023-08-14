@@ -96,7 +96,7 @@ namespace IWParkingAPI.Services.Implementation
             }
             catch(Exception ex)
             {
-                throw new InternalErrorException("Unexpected error while deactivating the Parking Lot");
+                throw new InternalErrorException("Unexpected error while getting the Parking Lot by Id");
             }
         }
 
@@ -104,6 +104,12 @@ namespace IWParkingAPI.Services.Implementation
         {
             try
             {
+                if(request == null || request.Name.Length == 0 || request.City.Length == 0 || request.Address.Length == 0 || request.Zone.Length == 0 ||
+                    request.WorkingHourFrom == null || request.WorkingHourTo == null || request.CapacityCar == null || request.CapacityAdaptedCar == null ||
+                    request.Price == null || request.UserId == null)
+                {
+                    throw new BadRequestException("Name, City, Address, Zone, WorkingHourFrom, WorkingHourTo, CapacityCar, CapacityAdaptedCar, Price and UserId are required");
+                }
                 var existinguser = _userRepository.GetById(request.UserId);
                 if (existinguser == null || existinguser.IsDeactivated == true)
                 {
