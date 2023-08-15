@@ -19,6 +19,13 @@ namespace IWParkingAPI.Controllers
         }
 
         [AuthorizeCustom(UserRoles.SuperAdmin)]
+        [HttpGet("GetAll")]
+        public GetAllParkingLotRequestsResponse GetRequests()
+        {
+            return _requestService.GetAllRequests();
+        }
+
+        [AuthorizeCustom(UserRoles.SuperAdmin)]
         [HttpPut("Modify/{id}")]
         public RequestResponse ModifyRequest(int id, RequestRequest request)
         {

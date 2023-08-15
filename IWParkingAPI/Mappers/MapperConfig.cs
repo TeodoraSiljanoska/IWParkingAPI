@@ -91,6 +91,23 @@ namespace IWParkingAPI.Mappers
                 .ForMember(dest => dest.ParkingLotId, opt => opt.MapFrom(src => src.ParkingLotId))
                 .ForMember(dest => dest.TimeCreated, opt => opt.MapFrom(src => src.TimeCreated));
 
+              cfg.CreateMap<AspNetUser, UserDTO>()
+             .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
+             .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.UserName))
+             .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name))
+             .ForMember(dest => dest.Surname, opt => opt.MapFrom(src => src.Surname))
+             .ForMember(dest => dest.PhoneNumber, opt => opt.MapFrom(src => src.PhoneNumber))
+             .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Email));
+
+                cfg.CreateMap<ParkingLotRequest, GetAllRequestsDTO>()
+               .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
+               .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status))
+               .ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.UserId))
+               .ForMember(dest => dest.ParkingLotId, opt => opt.MapFrom(src => src.ParkingLotId))
+               .ForMember(dest => dest.TimeCreated, opt => opt.MapFrom(src => src.TimeCreated))
+               .ForMember(dest => dest.ParkingLot, opt => opt.MapFrom(src => src.ParkingLot))
+               .ForMember(dest => dest.User, opt => opt.MapFrom(src => src.User));
+
             }
             );
             var mapper = new Mapper(config);
