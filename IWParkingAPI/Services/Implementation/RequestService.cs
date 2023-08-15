@@ -12,6 +12,7 @@ using IWParkingAPI.Models.Context;
 using static IWParkingAPI.Models.Enums.Enums;
 using IWParkingAPI.Models.Data;
 using IWParkingAPI.CustomExceptions;
+using NLog;
 
 namespace IWParkingAPI.Services.Implementation
 {
@@ -23,6 +24,8 @@ namespace IWParkingAPI.Services.Implementation
         private readonly RequestResponse _response;
         private readonly GetAllParkingLotRequestsResponse _allRequestsResponse;
         private readonly IMapper _mapper;
+        private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
+
 
         public RequestService(IUnitOfWork<ParkingDbContext> unitOfWork)
         {
@@ -61,6 +64,7 @@ namespace IWParkingAPI.Services.Implementation
             }
             catch (Exception ex)
             {
+                _logger.Error($"Unexpected error while getting all Requests {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
                 throw new InternalErrorException("Unexpected error while getting all Requests");
             }
         }
@@ -122,17 +126,20 @@ namespace IWParkingAPI.Services.Implementation
 
                 return _response;
             }
-            catch (BadRequestException)
+            catch (BadRequestException ex)
             {
+                _logger.Error($"Bad Request for ModifyRequest {Environment.NewLine}ErrorMessage: {ex.Message}");
                 throw;
             }
-            catch (NotFoundException)
+            catch (NotFoundException ex)
             {
+                _logger.Error($"Not Found for ModifyRequest {Environment.NewLine}ErrorMessage: {ex.Message}");
                 throw;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                throw new InternalErrorException("Unexpected error while modifying the Parking lot Request");
+                _logger.Error($"Unexpected error while modifying the Parking Lot Request {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
+                throw new InternalErrorException("Unexpected error while modifying the Parking Lot Request");
             }
         }
     }

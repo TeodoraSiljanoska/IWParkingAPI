@@ -7,6 +7,7 @@ using IWParkingAPI.Models.Responses;
 using IWParkingAPI.Services.Interfaces;
 using IWParkingAPI.Utilities;
 using Microsoft.AspNetCore.Identity;
+using NLog;
 using System.Net;
 
 namespace IWParkingAPI.Services.Implementation
@@ -22,6 +23,8 @@ namespace IWParkingAPI.Services.Implementation
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly RoleManager<ApplicationRole> _roleManager;
         private readonly IJwtUtils _jwtUtils;
+        private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
+
         public AuthService(RoleManager<ApplicationRole> roleManager, UserManager<ApplicationUser> userManager,
             IJwtUtils jwtUtils, SignInManager<ApplicationUser> signInManager)
         {
@@ -82,10 +85,12 @@ namespace IWParkingAPI.Services.Implementation
             }
             catch(BadRequestException ex)
             {
+                _logger.Error($"Bad Request for RegisterUser {Environment.NewLine}ErrorMessage: {ex.Message}");
                 throw;
             }
             catch (Exception ex)
             {
+                _logger.Error($"Unexpected error while User registration {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
                 throw new InternalErrorException("Unexpected error while User registration");
             }
         }
@@ -120,14 +125,17 @@ namespace IWParkingAPI.Services.Implementation
             }
             catch(BadRequestException ex)
             {
+                _logger.Error($"Bad Request for LoginUser {Environment.NewLine}ErrorMessage: {ex.Message}");
                 throw;
             }
             catch(UnauthorizedException ex)
             {
+                _logger.Error($"Unauthorized for LoginUser {Environment.NewLine}ErrorMessage: {ex.Message}");
                 throw;
             }
             catch(Exception ex)
             {
+                _logger.Error($"Unexpected error while User login {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
                 throw new InternalErrorException("Unexpected error while User login");
             }
         }
@@ -184,14 +192,17 @@ namespace IWParkingAPI.Services.Implementation
             }
             catch(BadRequestException ex)
             {
+                _logger.Error($"Bad Request for ChangePassword {Environment.NewLine}ErrorMessage: {ex.Message}");
                 throw;
             }
             catch(InternalErrorException ex)
             {
+                _logger.Error($"Internal Error for ChangePassword {Environment.NewLine}ErrorMessage: {ex.Message}");
                 throw;
             }
             catch (Exception ex)
             {
+                _logger.Error($"Unexpected error while password reset {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
                 throw new InternalErrorException("Unexpected error while password reset");
             }
         }
@@ -248,14 +259,17 @@ namespace IWParkingAPI.Services.Implementation
             }
             catch(BadRequestException ex)
             {
+                _logger.Error($"Bad Request for ChangeEmail {Environment.NewLine}ErrorMessage: {ex.Message}");
                 throw;
             }
             catch(InternalErrorException ex)
             {
+                _logger.Error($"Internal Error for ChangeEmail {Environment.NewLine}ErrorMessage: {ex.Message}");
                 throw;
             }
             catch(Exception ex)
             {
+                _logger.Error($"Unexpected error while changing the email {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
                 throw new InternalErrorException("Unexpected error while changing the email");
             }
 
