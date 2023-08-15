@@ -7,6 +7,7 @@ using IWParkingAPI.Models.Responses;
 using IWParkingAPI.Services.Interfaces;
 using System.Net;
 using IWParkingAPI.CustomExceptions;
+using NLog;
 
 public class UserService : IUserService
 {
@@ -14,6 +15,7 @@ public class UserService : IUserService
     private readonly IGenericRepository<AspNetUser> _userRepository;
     private readonly UserResponse _response;
     private readonly GetUsersResponse _getResponse;
+    private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
 
     public UserService(IUnitOfWork<ParkingDbContext> unitOfWork)
     {
@@ -42,8 +44,9 @@ public class UserService : IUserService
             _getResponse.Users = users;
             return _getResponse;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _logger.Error($"Unexpected error while getting all Users {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
             throw new InternalErrorException("Unexpected error while getting all Users");
         }
 
@@ -70,16 +73,19 @@ public class UserService : IUserService
             _response.Message = "User returned successfully";
             return _response;
         }
-        catch (BadRequestException)
+        catch (BadRequestException ex)
         {
+            _logger.Error($"Bad Request for GetUserById {Environment.NewLine}ErrorMessage: {ex.Message}");
             throw;
         }
-        catch (NotFoundException)
+        catch (NotFoundException ex)
         {
+            _logger.Error($"Not Found for GetUserById {Environment.NewLine}ErrorMessage: {ex.Message}");
             throw;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _logger.Error($"Unexpected error while getting the User by Id {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
             throw new InternalErrorException("Unexpected error while getting the User by Id");
         }
     }
@@ -131,20 +137,24 @@ public class UserService : IUserService
 
             return _response;
         }
-        catch (BadRequestException)
+        catch (BadRequestException ex)
         {
+            _logger.Error($"Bad Request for UpdateUser {Environment.NewLine}ErrorMessage: {ex.Message}");
             throw;
         }
-        catch (NotFoundException)
+        catch (NotFoundException ex)
         {
+            _logger.Error($"Not Found for UpdateUser {Environment.NewLine}ErrorMessage: {ex.Message}");
             throw;
         }
-        catch (InternalErrorException)
+        catch (InternalErrorException ex)
         {
+            _logger.Error($"Internal Error for UpdateUser {Environment.NewLine}ErrorMessage: {ex.Message}");
             throw;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _logger.Error($"Unexpected error while updating the User {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
             throw new InternalErrorException("Unexpected error while updating the User");
         }
 
@@ -176,16 +186,19 @@ public class UserService : IUserService
 
             return _response;
         }
-        catch (BadRequestException)
+        catch (BadRequestException ex)
         {
+            _logger.Error($"Bad Request for DeactivateUser {Environment.NewLine}ErrorMessage: {ex.Message}");
             throw;
         }
-        catch (NotFoundException)
+        catch (NotFoundException ex)
         {
+            _logger.Error($"Not Found for DeactivateUser {Environment.NewLine}ErrorMessage: {ex.Message}");
             throw;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _logger.Error($"Unexpected error while deactivating the User {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
             throw new InternalErrorException("Unexpected error while deactivating the User");
         }
     }

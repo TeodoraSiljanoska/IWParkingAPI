@@ -8,6 +8,7 @@ using IWParkingAPI.Models.Data;
 using IWParkingAPI.Models.Requests;
 using IWParkingAPI.Models.Responses;
 using IWParkingAPI.Services.Interfaces;
+using NLog;
 using System.Net;
 
 namespace IWParkingAPI.Services.Implementation
@@ -19,7 +20,7 @@ namespace IWParkingAPI.Services.Implementation
         private readonly IGenericRepository<ApplicationRole> _roleRepository;
         private readonly RoleResponse _response;
         private readonly GetRolesResponse _getResponse;
-
+        private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
         public RoleService(IUnitOfWork<ParkingDbContextCustom> unitOfWork)
         {
             _unitOfWork = unitOfWork;
@@ -48,6 +49,7 @@ namespace IWParkingAPI.Services.Implementation
             }
             catch (Exception ex)
             {
+                _logger.Error($"Unexpected error while getting all Roles {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
                 throw new InternalErrorException("Unexpected error while getting all Roles");
 
             }
@@ -74,14 +76,17 @@ namespace IWParkingAPI.Services.Implementation
             }
             catch(NotFoundException ex)
             {
+                _logger.Error($"Not Found for GetRoleById {Environment.NewLine}ErrorMessage: {ex.Message}");
                 throw;
             }
             catch(BadRequestException ex)
             {
+                _logger.Error($"Bad Request for GetRoleById {Environment.NewLine}ErrorMessage: {ex.Message}");
                 throw;
             }
             catch(Exception ex)
             {
+                _logger.Error($"Unexpected error while getting Role by Id {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
                 throw new InternalErrorException("Unexpected error while getting the Role by Id");
             }
         }
@@ -111,13 +116,15 @@ namespace IWParkingAPI.Services.Implementation
 
                 return _response;
             }
-            catch(BadRequestException)
+            catch(BadRequestException ex)
             {
+                _logger.Error($"Bad Request for CreateRole {Environment.NewLine}ErrorMessage: {ex.Message}");
                 throw;
             }
             catch (Exception ex)
             {
-              throw  new InternalErrorException("Unexpected error while creating the Role");
+                _logger.Error($"Unexpected error while creating the Role {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
+                throw new InternalErrorException("Unexpected error while creating the Role");
             }
         }
         public RoleResponse UpdateRole(int id, RoleRequest changes)
@@ -168,14 +175,17 @@ namespace IWParkingAPI.Services.Implementation
             }
             catch(BadRequestException ex)
             {
+                _logger.Error($"Bad Request for UpdateRole {Environment.NewLine}ErrorMessage: {ex.Message}");
                 throw;
             }
             catch(NotFoundException ex)
             {
+                _logger.Error($"Not Found for UpdateRole {Environment.NewLine}ErrorMessage: {ex.Message}");
                 throw;
             }
             catch(Exception ex)
             {
+                _logger.Error($"Unexpected error while updating the Role {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
                 throw new InternalErrorException("Unexpected error while updating the Role");
             }
         }
@@ -206,14 +216,17 @@ namespace IWParkingAPI.Services.Implementation
             }
             catch(BadRequestException ex)
             {
+                _logger.Error($"Bad Request for DeleteRole {Environment.NewLine}ErrorMessage: {ex.Message}");
                 throw;
             }
             catch(NotFoundException ex)
             {
+                _logger.Error($"Not Found for DeleteRole {Environment.NewLine}ErrorMessage: {ex.Message}");
                 throw;
             }
             catch(Exception ex)
             {
+                _logger.Error($"Unexpected error while deleting the Role {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
                 throw new InternalErrorException("Unexpected error while deleting the Role");
             }
         }

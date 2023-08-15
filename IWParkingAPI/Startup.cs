@@ -12,7 +12,10 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using NLog.Extensions.Logging;
+using NLog.Web;
 using Swashbuckle.AspNetCore.Filters;
+using System.Diagnostics;
 using System.Text;
 
 namespace IWParkingAPI
@@ -39,6 +42,11 @@ namespace IWParkingAPI
             services.AddScoped<IRequestService, RequestService>();
             services.AddAutoMapper(typeof(Startup));
             services.AddControllers();
+
+            
+           // var logger = NLog.Web.NLogBuilder.ConfigureNLog("nlog.config").GetCurrentClassLogger();
+
+            // var logger = NLogBuilder.ConfigureNLog("nlog.config");
 
             services.AddIdentity<ApplicationUser, ApplicationRole>()
             .AddEntityFrameworkStores<ParkingDbContextCustom>()
@@ -97,7 +105,13 @@ namespace IWParkingAPI
                        .AllowAnyMethod()
                        .AllowAnyHeader();
             }));
-
+            //configure logging
+          /*  services.AddLogging(loggingBuilder =>
+            {
+                loggingBuilder.ClearProviders();
+                loggingBuilder.AddNLog();
+            });
+          */
             var connectionString = Configuration.GetConnectionString("DefaultConnection");
             services.AddDbContext<ParkingDbContext>(o => o.UseSqlServer(connectionString));
             services.AddDbContext<ParkingDbContextCustom>(options => options.UseSqlServer(connectionString));
