@@ -205,7 +205,12 @@ namespace IWParkingAPI.Services.Implementation
             {
                 try
                 {
-                    ParkingLot parkingLot = _parkingLotRepository.GetAsQueryable(p => p.Id == id, null, x => x.Include(y => y.Users)).FirstOrDefault();
+                if (id <= 0 || request == null || request.Name.Length == 0 || request.City.Length == 0 || request.Zone.Length == 0
+                    || request.Address.Length == 0 || request.WorkingHourFrom == null || request.WorkingHourTo == null || request.CapacityCar == null || request.CapacityAdaptedCar == null)
+                    {
+                    throw new BadRequestException("All fields are required");
+                    }
+                ParkingLot parkingLot = _parkingLotRepository.GetAsQueryable(p => p.Id == id, null, x => x.Include(y => y.Users)).FirstOrDefault();
                 
                     if (parkingLot == null)
                     {
@@ -330,6 +335,10 @@ namespace IWParkingAPI.Services.Implementation
         {
             try
             {
+                if(id <= 0)
+                {
+                    throw new BadRequestException("ParkingLotId is required");
+                }
                 ParkingLot parkingLot = _parkingLotRepository.GetById(id)
 ;
                 if (parkingLot == null)
@@ -372,6 +381,10 @@ namespace IWParkingAPI.Services.Implementation
         {
             try
             {
+                if (userId <= 0 || parkingLotId <= 0)
+                {
+                    throw new BadRequestException("UserId and ParkingLotId are required");
+                }
                 var user = _userRepository.GetAsQueryable(x => x.Id == userId, null, x => x.Include(y => y.ParkingLotsNavigation)).FirstOrDefault();
 
                 if (user == null || user.IsDeactivated == true)
@@ -424,6 +437,11 @@ namespace IWParkingAPI.Services.Implementation
         {
             try
             {
+                if(userId <= 0 || parkingLotId <= 0)
+                {
+                    throw new BadRequestException("UserId and ParkingLotId are required");
+                }
+
                 var user = _userRepository.GetAsQueryable(x => x.Id == userId, null, x => x.Include(y => y.ParkingLotsNavigation)).FirstOrDefault();
                 var parkingLot = _parkingLotRepository.GetById(parkingLotId);
                 var parkingLotDTO = _mapper.Map<ParkingLotDTO>(parkingLot);
@@ -433,7 +451,7 @@ namespace IWParkingAPI.Services.Implementation
                     throw new NotFoundException("User not found");
                 }
 
-                if (parkingLot == null || parkingLot.IsDeactivated == true)
+                if (parkingLot == null || parkingLot.IsDeactivated == true || parkingLot.Status != (int)Status.Approved)
                 {
                     throw new NotFoundException("Parking Lot not found");
                 }
@@ -442,7 +460,7 @@ namespace IWParkingAPI.Services.Implementation
                 {
                     throw new BadRequestException("Parking Lot is already favourite");
                 }
-
+                
                 user.ParkingLotsNavigation.Add(parkingLot);
                 _userRepository.Update(user);
                 _unitOfWork.Save();
