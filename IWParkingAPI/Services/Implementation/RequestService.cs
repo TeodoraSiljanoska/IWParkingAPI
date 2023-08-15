@@ -21,6 +21,7 @@ namespace IWParkingAPI.Services.Implementation
         private readonly IGenericRepository<ParkingLotRequest> _requestRepository;
         private readonly IGenericRepository<ParkingLot> _parkingLotRepository;
         private readonly RequestResponse _response;
+        private readonly GetAllParkingLotRequestsResponse _allRequestsResponse;
         private readonly IMapper _mapper;
 
         public RequestService(IUnitOfWork<ParkingDbContext> unitOfWork)
@@ -29,7 +30,39 @@ namespace IWParkingAPI.Services.Implementation
             _requestRepository = _unitOfWork.GetGenericRepository<ParkingLotRequest>();
             _parkingLotRepository = _unitOfWork.GetGenericRepository<ParkingLot>();
             _response = new RequestResponse();
+            _allRequestsResponse = new GetAllParkingLotRequestsResponse();
             _mapper = MapperConfig.InitializeAutomapper();
+
+        }
+
+        public GetAllParkingLotRequestsResponse GetAllRequests()
+        {
+            try
+            {
+                var requests = _requestRepository.GetAsQueryable(x => x.Status == (int)Status.Pending, null, x => x.Include(y => y.User).Include(y => y.ParkingLot)).ToList();
+                  
+                if (requests.Count() == 0)
+                {
+                    _allRequestsResponse.StatusCode = HttpStatusCode.OK;
+                    _allRequestsResponse.Message = "There aren't any requests.";
+                    _allRequestsResponse.Requests = Enumerable.Empty<GetAllRequestsDTO>();
+                    return _allRequestsResponse;
+                }
+
+                var GetAllRequestsDTOList = new List<GetAllRequestsDTO>();
+                foreach (var p in requests)
+                {
+                    GetAllRequestsDTOList.Add(_mapper.Map<GetAllRequestsDTO>(p));
+                }
+                _allRequestsResponse.StatusCode = HttpStatusCode.OK;
+                _allRequestsResponse.Message = "Requests returned successfully";
+                _allRequestsResponse.Requests = GetAllRequestsDTOList;
+                return _allRequestsResponse;
+            }
+            catch (Exception ex)
+            {
+                throw new InternalErrorException("Unexpected error while getting all Requests");
+            }
         }
         public RequestResponse ModifyRequest(int id, RequestRequest request)
         {
