@@ -1,11 +1,16 @@
-﻿using FluentValidation.Results;
-using FluentValidation;
+﻿using FluentValidation;
+using IWParkingAPI.Fluent_Validations.Services.Implementation;
+using IWParkingAPI.Fluent_Validations.Services.Interfaces;
+using System.ComponentModel.DataAnnotations;
 
 namespace IWParkingAPI.Fluent_Validations
 {
     public static class ValidationExtensions
     {
-        public static ValidationModel RunValidation<T> (this T model)
+        /// <summary>
+        ///         Validate provided model property annotations.
+        /// </summary>
+        public static ValidationModel RunValidation<T>(this T model)
         {
             var errors = new List<ValidationResult>();
             var isValid = Validator.TryValidateObject(model, new ValidationContext(model, null, null), errors, true);
@@ -17,9 +22,11 @@ namespace IWParkingAPI.Fluent_Validations
             };
         }
 
+
         public static IServiceCollection AddValidator(this IServiceCollection services)
         {
             services.AddSingleton<IValidateService, ValidateService>();
+            
 
             return services;
         }
