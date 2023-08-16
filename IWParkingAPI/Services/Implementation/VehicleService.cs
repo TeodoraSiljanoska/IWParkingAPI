@@ -9,6 +9,7 @@ using IWParkingAPI.Models.Responses;
 using IWParkingAPI.Services.Interfaces;
 using System.Net;
 using IWParkingAPI.CustomExceptions;
+using NLog;
 
 namespace IWParkingAPI.Services.Implementation
 {
@@ -24,6 +25,8 @@ namespace IWParkingAPI.Services.Implementation
         private readonly GetVehiclesResponse _getResponse;
         private const string TypeCar = "Car";
         private const string TypeAdaptedCar = "Adapted Car";
+        private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
+
 
         public VehicleService(IUnitOfWork<ParkingDbContext> unitOfWork, IUnitOfWork<ParkingDbContextCustom> custom)
         {
@@ -55,8 +58,9 @@ namespace IWParkingAPI.Services.Implementation
                 _getResponse.Vehicles = vehicles;
                 return _getResponse;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.Error($"Unexpected error while getting all Vehicles {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
                 throw new InternalErrorException("Unexpected error while getting all Vehicles");
             }
         }
@@ -105,20 +109,24 @@ namespace IWParkingAPI.Services.Implementation
                 _response.Message = "Vehicle created successfully";
                 return _response;
             }
-            catch (NotFoundException)
+            catch (NotFoundException ex)
             {
+                _logger.Error($"Not Found for AddNewVehicle {Environment.NewLine}ErrorMessage: {ex.Message}");
                 throw;
             }
-            catch (BadRequestException)
+            catch (BadRequestException ex)
             {
+                _logger.Error($"Bad Request for AddNewVehicle {Environment.NewLine}ErrorMessage: {ex.Message}");
                 throw;
             }
-            catch (InternalErrorException)
+            catch (InternalErrorException ex) 
             {
+                _logger.Error($"Internal Error for AddNewVehicle {Environment.NewLine}ErrorMessage: {ex.Message}");
                 throw;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.Error($"Unexpected error while creating the Vehicle {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
                 throw new InternalErrorException("Unexpected error while creating the Vehicle");
             }
         }
@@ -162,20 +170,24 @@ namespace IWParkingAPI.Services.Implementation
                 _response.Message = "Vehicle deleted successfully";
                 return _response;
             }
-            catch (BadRequestException)
+            catch (BadRequestException ex)
             {
+                _logger.Error($"Bad Request for DeleteVehicle {Environment.NewLine}ErrorMessage: {ex.Message}");
                 throw;
             }
-            catch (NotFoundException)
+            catch (NotFoundException ex)
             {
+                _logger.Error($"Not Found for DeleteVehicle {Environment.NewLine}ErrorMessage: {ex.Message}");
                 throw;
             }
-            catch (InternalErrorException)
+            catch (InternalErrorException ex)
             {
+                _logger.Error($"Internal Error for DeleteVehicle {Environment.NewLine}ErrorMessage: {ex.Message}");
                 throw;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.Error($"Unexpected error while deleting the Vehicle {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
                 throw new InternalErrorException("Unexpected error while deleting the Vehicle");
             }
         }
@@ -232,20 +244,24 @@ namespace IWParkingAPI.Services.Implementation
 
                 return _response;
             }
-            catch (BadRequestException)
+            catch (BadRequestException ex)
             {
+                _logger.Error($"Bad Request for UpdateVehicle {Environment.NewLine}ErrorMessage: {ex.Message}");
                 throw;
             }
-            catch (NotFoundException)
+            catch (NotFoundException ex)
             {
+                _logger.Error($"Not Found for UpdateVehicle {Environment.NewLine}ErrorMessage: {ex.Message}");
                 throw;
             }
-            catch (InternalErrorException)
+            catch (InternalErrorException ex)
             {
+                _logger.Error($"Internal Error for UpdateVehicle {Environment.NewLine}ErrorMessage: {ex.Message}");
                 throw;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.Error($"Unexpected error while updating the Vehicle {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
                 throw new InternalErrorException("Unexpected error while updating the Vehicle");
             }
         }
@@ -271,16 +287,19 @@ namespace IWParkingAPI.Services.Implementation
                 _response.Message = "Vehicle returned successfully";
                 return _response;
             }
-            catch (BadRequestException)
+            catch (BadRequestException ex)
             {
+                _logger.Error($"Bad Request for GetVehicleById {Environment.NewLine}ErrorMessage: {ex.Message}");
                 throw;
             }
-            catch (NotFoundException)
+            catch (NotFoundException ex)
             {
+                _logger.Error($"Not Found for GetVehicleById {Environment.NewLine}ErrorMessage: {ex.Message}");
                 throw;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.Error($"Unexpected error while getting the Vehicle by Id {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
                 throw new InternalErrorException("Unexpected error while getting the Vehicle by Id");
             }
         }
@@ -315,16 +334,19 @@ namespace IWParkingAPI.Services.Implementation
                 _getResponse.Vehicles = vehicles;
                 return _getResponse;
             }
-            catch (BadRequestException)
+            catch (BadRequestException ex)
             {
+                _logger.Error($"Bad Request for GetVehicleByUserId {Environment.NewLine}ErrorMessage: {ex.Message}");
                 throw;
             }
-            catch (NotFoundException)
+            catch (NotFoundException ex)
             {
+                _logger.Error($"Not Found for GetVehicleByUserId {Environment.NewLine}ErrorMessage: {ex.Message}");
                 throw;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.Error($"Unexpected error while getting the Vehicles by User Id {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
                 throw new InternalErrorException("Unexpected error while getting the Vehicles by User Id");
             }
 
@@ -379,16 +401,19 @@ namespace IWParkingAPI.Services.Implementation
                 _response.Vehicle = vehicle;
                 return _response;
             }
-            catch (BadRequestException)
+            catch (BadRequestException ex)
             {
+                _logger.Error($"Bad Request for MakeVehiclePrimary {Environment.NewLine}ErrorMessage: {ex.Message}");
                 throw;
             }
-            catch (NotFoundException)
+            catch (NotFoundException ex)
             {
+                _logger.Error($"Not Found for MakeVehiclePrimary {Environment.NewLine}ErrorMessage: {ex.Message}");
                 throw;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.Error($"Unexpected error while making the Vehicle primary {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
                 throw new InternalErrorException("Unexpected error while making Vehicle primary");
             }
         }
