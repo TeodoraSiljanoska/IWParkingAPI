@@ -1,4 +1,5 @@
-﻿using IWParkingAPI.Middleware.Authorization;
+﻿using IWParkingAPI.Fluent_Validations;
+using IWParkingAPI.Middleware.Authorization;
 using IWParkingAPI.Models;
 using IWParkingAPI.Models.Data;
 using IWParkingAPI.Models.Requests;
@@ -34,6 +35,7 @@ namespace IWParkingAPI.Controllers
         }
 
         [AuthorizeCustom(UserRoles.Owner)]
+        [Validate]
         [HttpPost("Create")]
         public ParkingLotResponse CreateParkingLot(ParkingLotReq request)
         {

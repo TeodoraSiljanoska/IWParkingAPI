@@ -2,6 +2,7 @@
 using FluentValidation.Results;
 using IWParkingAPI.Fluent_Validations.Services.Interfaces;
 using IWParkingAPI.Middleware.Exceptions;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace IWParkingAPI.Fluent_Validations.Services.Implementation
 {

@@ -1,8 +1,9 @@
 ﻿using FluentValidation;
 using IWParkingAPI.Fluent_Validations.Services.Implementation;
 using IWParkingAPI.Fluent_Validations.Services.Interfaces;
+using IWParkingAPI.Fluent_Validations.Validators;
+using IWParkingAPI.Models.Requests;
 using System.ComponentModel.DataAnnotations;
-
 namespace IWParkingAPI.Fluent_Validations
 {
     public static class ValidationExtensions
@@ -26,7 +27,7 @@ namespace IWParkingAPI.Fluent_Validations
         public static IServiceCollection AddValidator(this IServiceCollection services)
         {
             services.AddSingleton<IValidateService, ValidateService>();
-            
+            services.AddSingleton <IValidator<ParkingLotReq>, ParkingLotReqValidator >();
 
             return services;
         }

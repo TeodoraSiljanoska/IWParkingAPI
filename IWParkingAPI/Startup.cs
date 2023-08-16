@@ -1,4 +1,5 @@
-﻿using IWParkingAPI.Fluent_Validations;
+﻿using FluentValidation.AspNetCore;
+using IWParkingAPI.Fluent_Validations;
 using IWParkingAPI.Infrastructure.Repository;
 using IWParkingAPI.Infrastructure.UnitOfWork;
 using IWParkingAPI.Middleware.Authentication;
@@ -103,6 +104,7 @@ namespace IWParkingAPI
                        .AllowAnyHeader();
             }));
 
+            services.AddFluentValidationAutoValidation();
             services.AddValidator();
           
             var connectionString = Configuration.GetConnectionString("DefaultConnection");

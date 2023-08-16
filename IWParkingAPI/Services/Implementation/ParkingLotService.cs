@@ -1,5 +1,7 @@
 ﻿using AutoMapper;
+using FluentValidation.Results;
 using IWParkingAPI.CustomExceptions;
+using IWParkingAPI.Fluent_Validations.Validators;
 using IWParkingAPI.Infrastructure.Repository;
 using IWParkingAPI.Infrastructure.UnitOfWork;
 using IWParkingAPI.Mappers;
@@ -123,33 +125,7 @@ namespace IWParkingAPI.Services.Implementation
                 {
                     throw new BadRequestException("Parking Lot with that name already exists");
                 }
-                var existingplfromuser = _parkingLotRepository.GetAsQueryable(p => p.City == request.City && p.Address == request.Address
-                && p.Zone == request.Zone && p.WorkingHourFrom == request.WorkingHourFrom && p.WorkingHourTo == request.WorkingHourTo &&
-                p.Price == request.Price && p.CapacityCar == request.CapacityCar && p.CapacityAdaptedCar == request.CapacityAdaptedCar
-                && (p.UserId == request.UserId || p.UserId != request.UserId) && p.IsDeactivated == false && p.Name != request.Name, null, null).FirstOrDefault();
-                if (existingplfromuser != null)
-                {
-                    throw new BadRequestException("Parking Lot with that specifications already exists");
-                }
-
-                if (request.Price <= 0)
-                {
-                    throw new BadRequestException("Price should be greater than 0");
-                }
-
-                if (request.CapacityCar <= 0 || request.CapacityAdaptedCar <= 0)
-                {
-                    throw new BadRequestException("Capacity should be greater than 0");
-                }
-
-                if (request.WorkingHourFrom.Hours < 0 || request.WorkingHourFrom.Hours > 24 ||
-                request.WorkingHourFrom.Minutes < 0 || request.WorkingHourFrom.Minutes > 59 || request.WorkingHourFrom.Seconds < 0
-                || request.WorkingHourFrom.Seconds > 59 || request.WorkingHourTo.Hours < 0 || request.WorkingHourTo.Hours > 24
-                || request.WorkingHourTo.Minutes < 0 || request.WorkingHourTo.Minutes > 59
-                || request.WorkingHourTo.Seconds < 0 || request.WorkingHourTo.Seconds > 59)
-                {
-                    throw new BadRequestException("Invalid working hours");
-                }
+             
 
                 var parkingLot = _mapper.Map<ParkingLot>(request);
                 parkingLot.UserId = request.UserId;
