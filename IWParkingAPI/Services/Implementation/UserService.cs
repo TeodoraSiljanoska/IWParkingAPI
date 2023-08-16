@@ -8,40 +8,51 @@ using IWParkingAPI.Services.Interfaces;
 using System.Net;
 using IWParkingAPI.CustomExceptions;
 using NLog;
+using Microsoft.EntityFrameworkCore;
+using IWParkingAPI.Mappers;
+using AutoMapper;
 
 public class UserService : IUserService
 {
     private readonly IUnitOfWork<ParkingDbContext> _unitOfWork;
     private readonly IGenericRepository<AspNetUser> _userRepository;
     private readonly UserResponse _response;
-    private readonly GetUsersResponse _getResponse;
+    private readonly GetUsersDTOResponse _getResponse;
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
+    private readonly IMapper _mapper;
 
     public UserService(IUnitOfWork<ParkingDbContext> unitOfWork)
     {
         _unitOfWork = unitOfWork;
         _userRepository = _unitOfWork.GetGenericRepository<AspNetUser>();
         _response = new UserResponse();
-        _getResponse = new GetUsersResponse();
+        _getResponse = new GetUsersDTOResponse();
+        _mapper = MapperConfig.InitializeAutomapper();
     }
 
-    public GetUsersResponse GetAllUsers()
+    public GetUsersDTOResponse GetAllUsers()
     {
         try
         {
-            var users = _userRepository.GetAll();
+            var users = _userRepository.GetAsQueryable(null, null, x => x.Include(y => y.Roles)).ToList();
 
             if (!users.Any())
             {
                 _getResponse.StatusCode = HttpStatusCode.OK;
                 _getResponse.Message = "There aren't any users";
-                _getResponse.Users = Enumerable.Empty<AspNetUser>();
+                _getResponse.Users = Enumerable.Empty<UserDTO>();
                 return _getResponse;
+            }
+
+            var UserDTOList = new List<UserDTO>();
+            foreach (var user in users)
+            {
+                UserDTOList.Add(_mapper.Map<UserDTO>(user));
             }
 
             _getResponse.StatusCode = HttpStatusCode.OK;
             _getResponse.Message = "Users returned successfully";
-            _getResponse.Users = users;
+            _getResponse.Users = UserDTOList;
             return _getResponse;
         }
         catch (Exception ex)
@@ -49,7 +60,6 @@ public class UserService : IUserService
             _logger.Error($"Unexpected error while getting all Users {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
             throw new InternalErrorException("Unexpected error while getting all Users");
         }
-
     }
 
     public UserResponse GetUserById(int id)

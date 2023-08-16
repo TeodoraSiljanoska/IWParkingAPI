@@ -1,6 +1,9 @@
 ﻿using AutoMapper;
 using IWParkingAPI.CustomExceptions;
+using IWParkingAPI.Infrastructure.Repository;
+using IWParkingAPI.Infrastructure.UnitOfWork;
 using IWParkingAPI.Mappers;
+using IWParkingAPI.Models.Context;
 using IWParkingAPI.Models.Data;
 using IWParkingAPI.Models.Requests;
 using IWParkingAPI.Models.Responses;
@@ -42,8 +45,8 @@ namespace IWParkingAPI.Services.Implementation
         {
             try
             {
-                if (request == null || request.Name.Length == 0 || request.Surname.Length == 0 || request.Email.Length == 0 || request.Password.Length ==0
-                    || request.ConfirmPassword.Length == 0 || request.Phone.Length == 0 || request.Role.Length == 0 )
+                if (request == null || request.Name.Length == 0 || request.Surname.Length == 0 || request.Email.Length == 0 || request.Password.Length == 0
+                    || request.ConfirmPassword.Length == 0 || request.Phone.Length == 0 || request.Role.Length == 0)
                 {
                     throw new BadRequestException("Name, Surname, Email, Password, Confirm Password, Phone and Role are required");
                 }
@@ -83,7 +86,7 @@ namespace IWParkingAPI.Services.Implementation
                 }
                 return _registerResponse;
             }
-            catch(BadRequestException ex)
+            catch (BadRequestException ex)
             {
                 _logger.Error($"Bad Request for RegisterUser {Environment.NewLine}ErrorMessage: {ex.Message}");
                 throw;
@@ -123,17 +126,17 @@ namespace IWParkingAPI.Services.Implementation
                 // authentication successful so generate jwt token
                 return await _jwtUtils.GenerateToken(user);
             }
-            catch(BadRequestException ex)
+            catch (BadRequestException ex)
             {
                 _logger.Error($"Bad Request for LoginUser {Environment.NewLine}ErrorMessage: {ex.Message}");
                 throw;
             }
-            catch(UnauthorizedException ex)
+            catch (UnauthorizedException ex)
             {
                 _logger.Error($"Unauthorized for LoginUser {Environment.NewLine}ErrorMessage: {ex.Message}");
                 throw;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 _logger.Error($"Unexpected error while User login {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
                 throw new InternalErrorException("Unexpected error while User login");
@@ -144,7 +147,7 @@ namespace IWParkingAPI.Services.Implementation
         {
             try
             {
-                if (model == null || model.Email.Length == 0 || model.OldPassword.Length == 0 || model.NewPassword.Length == 0 || model.ConfirmNewPassword.Length == 0 )
+                if (model == null || model.Email.Length == 0 || model.OldPassword.Length == 0 || model.NewPassword.Length == 0 || model.ConfirmNewPassword.Length == 0)
                 {
                     throw new BadRequestException("Email, Old Password, New Password and Confirm New Password are required");
                 }
@@ -190,12 +193,12 @@ namespace IWParkingAPI.Services.Implementation
                     throw new InternalErrorException("Unexpected error while password reset");
                 }
             }
-            catch(BadRequestException ex)
+            catch (BadRequestException ex)
             {
                 _logger.Error($"Bad Request for ChangePassword {Environment.NewLine}ErrorMessage: {ex.Message}");
                 throw;
             }
-            catch(InternalErrorException ex)
+            catch (InternalErrorException ex)
             {
                 _logger.Error($"Internal Error for ChangePassword {Environment.NewLine}ErrorMessage: {ex.Message}");
                 throw;
@@ -257,23 +260,21 @@ namespace IWParkingAPI.Services.Implementation
                     throw new InternalErrorException("Unexpected error while changing the email");
                 }
             }
-            catch(BadRequestException ex)
+            catch (BadRequestException ex)
             {
                 _logger.Error($"Bad Request for ChangeEmail {Environment.NewLine}ErrorMessage: {ex.Message}");
                 throw;
             }
-            catch(InternalErrorException ex)
+            catch (InternalErrorException ex)
             {
                 _logger.Error($"Internal Error for ChangeEmail {Environment.NewLine}ErrorMessage: {ex.Message}");
                 throw;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 _logger.Error($"Unexpected error while changing the email {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
                 throw new InternalErrorException("Unexpected error while changing the email");
             }
-
         }
-
     }
 }
