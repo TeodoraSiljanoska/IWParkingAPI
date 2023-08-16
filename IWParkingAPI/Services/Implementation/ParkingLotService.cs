@@ -9,8 +9,8 @@ using IWParkingAPI.Models.Requests;
 using IWParkingAPI.Models.Responses;
 using IWParkingAPI.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using NLog;
 using System.Net;
-using System.Security.Claims;
 using static IWParkingAPI.Models.Enums.Enums;
 using ParkingLotRequest = IWParkingAPI.Models.Data.ParkingLotRequest;
 
@@ -28,7 +28,7 @@ namespace IWParkingAPI.Services.Implementation
         private readonly GetParkingLotsDTOResponse _getDTOResponse;
         private readonly ParkingLotResponse _response;
         private readonly IHttpContextAccessor _httpContextAccessor;
-
+        private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
 
         public ParkingLotService(IUnitOfWork<ParkingDbContext> unitOfWork, IHttpContextAccessor httpContextAccessor)
         {
@@ -48,7 +48,7 @@ namespace IWParkingAPI.Services.Implementation
             try
             {
                 var parkingLots = _parkingLotRepository.GetAsQueryable(x => x.Status == ((int)Status.Approved)).ToList();
-                if (parkingLots.Count() == 0)
+                if (!parkingLots.Any())
                 {
                     _getResponse.StatusCode = HttpStatusCode.OK;
                     _getResponse.Message = "There aren't any parking lots.";
@@ -62,6 +62,7 @@ namespace IWParkingAPI.Services.Implementation
             }
             catch (Exception ex)
             {
+                _logger.Error($"Unexpected error while getting all Parking Lots {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
                 throw new InternalErrorException("Unexpected error while getting all Parking Lots");
             }
         }
@@ -90,14 +91,17 @@ namespace IWParkingAPI.Services.Implementation
             }
             catch (BadRequestException ex)
             {
+                _logger.Error($"Bad Request for GetParkingLotById {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
                 throw;
             }
             catch (NotFoundException ex)
             {
+                _logger.Error($"Not Found for GetParkingLotById {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
                 throw;
             }
             catch (Exception ex)
             {
+                _logger.Error($"Unexpected error while getting the Parking Lot by Id {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
                 throw new InternalErrorException("Unexpected error while getting the Parking Lot by Id");
             }
         }
@@ -184,38 +188,42 @@ namespace IWParkingAPI.Services.Implementation
             }
             catch (NotFoundException ex)
             {
+                _logger.Error($"Not Found for CreateParkingLot {Environment.NewLine}ErrorMessage: {ex.Message}");
                 throw;
             }
             catch (BadRequestException ex)
             {
+                _logger.Error($"Bad Request for CreateParkingLot {Environment.NewLine}ErrorMessage: {ex.Message}");
                 throw;
             }
             catch (InternalErrorException ex)
             {
+                _logger.Error($"Internal Error for CreateParkingLot {Environment.NewLine}ErrorMessage: {ex.Message}");
                 throw;
             }
             catch (Exception ex)
             {
+                _logger.Error($"Unexpected error while creating the Parking Lot {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
                 throw new InternalErrorException("Unexpected error while creating the Parking Lot");
             }
         }
 
 
-           public ParkingLotResponse UpdateParkingLot(int id, UpdateParkingLotRequest request)
+        public ParkingLotResponse UpdateParkingLot(int id, UpdateParkingLotRequest request)
+        {
+            try
             {
-                try
-                {
                 if (id <= 0 || request == null || request.Name.Length == 0 || request.City.Length == 0 || request.Zone.Length == 0
                     || request.Address.Length == 0 || request.WorkingHourFrom == null || request.WorkingHourTo == null || request.CapacityCar == null || request.CapacityAdaptedCar == null)
-                    {
+                {
                     throw new BadRequestException("All fields are required");
-                    }
+                }
                 ParkingLot parkingLot = _parkingLotRepository.GetAsQueryable(p => p.Id == id, null, x => x.Include(y => y.Users)).FirstOrDefault();
-                
-                    if (parkingLot == null)
-                    {
-                        throw new NotFoundException("Parking Lot not found");
-                    }
+
+                if (parkingLot == null)
+                {
+                    throw new NotFoundException("Parking Lot not found");
+                }
                 int userId = parkingLot.UserId;
                 //var result = _httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
                 // var userId1 = _httpContextAccessor!.HttpContext.User.FindFirstValue("Id");
@@ -239,20 +247,20 @@ namespace IWParkingAPI.Services.Implementation
                 && p.Zone == request.Zone && p.WorkingHourFrom == request.WorkingHourFrom && p.WorkingHourTo == request.WorkingHourTo &&
                 p.Price == request.Price && p.CapacityCar == request.CapacityCar && p.CapacityAdaptedCar == request.CapacityAdaptedCar
                  && (p.UserId == userId || p.UserId != userId) && p.IsDeactivated == false && p.Name != request.Name, null, null).FirstOrDefault();
-                    if (existingplfromuser != null)
-                    {
-                        throw new BadRequestException("Parking Lot with that specifications already exists");
-                    }
+                if (existingplfromuser != null)
+                {
+                    throw new BadRequestException("Parking Lot with that specifications already exists");
+                }
 
-                    if (request.Price <= 0)
-                    {
-                        throw new BadRequestException("Price should be greater than 0");
-                    }
+                if (request.Price <= 0)
+                {
+                    throw new BadRequestException("Price should be greater than 0");
+                }
 
-                    if (request.CapacityCar <= 0 || request.CapacityAdaptedCar <= 0)
-                    {
-                        throw new BadRequestException("Capacity should be greater than 0");
-                    }
+                if (request.CapacityCar <= 0 || request.CapacityAdaptedCar <= 0)
+                {
+                    throw new BadRequestException("Capacity should be greater than 0");
+                }
 
                 if (request.WorkingHourFrom.Hours < 0 || request.WorkingHourFrom.Hours > 24 ||
                 request.WorkingHourFrom.Minutes < 0 || request.WorkingHourFrom.Minutes > 59 || request.WorkingHourFrom.Seconds < 0
@@ -268,7 +276,7 @@ namespace IWParkingAPI.Services.Implementation
                 parkingLot.Zone = (parkingLot.Zone == request.Zone) ? parkingLot.Zone : request.Zone;
                 parkingLot.Address = (parkingLot.Address == request.Address) ? parkingLot.Address : request.Address;
                 parkingLot.City = (parkingLot.City == request.City) ? parkingLot.City : request.City;
-                parkingLot.WorkingHourFrom = (parkingLot.WorkingHourFrom == request.WorkingHourFrom) ?parkingLot.WorkingHourFrom : request.WorkingHourFrom;
+                parkingLot.WorkingHourFrom = (parkingLot.WorkingHourFrom == request.WorkingHourFrom) ? parkingLot.WorkingHourFrom : request.WorkingHourFrom;
                 parkingLot.WorkingHourTo = (parkingLot.WorkingHourTo == request.WorkingHourTo) ? parkingLot.WorkingHourTo : request.WorkingHourTo;
                 parkingLot.CapacityCar = (parkingLot.CapacityCar == request.CapacityCar) ? parkingLot.CapacityCar : request.CapacityCar;
                 parkingLot.CapacityAdaptedCar = (parkingLot.CapacityAdaptedCar == request.CapacityAdaptedCar) ? parkingLot.CapacityAdaptedCar : request.CapacityAdaptedCar;
@@ -283,9 +291,9 @@ namespace IWParkingAPI.Services.Implementation
                 _unitOfWork.Save();
 
                 var parkingLotDTO = _mapper.Map<ParkingLotDTO>(parkingLot);
-              
+
                 var existingRequest = _requestRepository.GetAsQueryable(x => x.ParkingLotId == id && x.UserId == parkingLot.UserId, null, null).FirstOrDefault();
-                if(existingRequest != null)
+                if (existingRequest != null)
                 {
                     if (existingRequest.Status == 1)
                     {
@@ -311,31 +319,34 @@ namespace IWParkingAPI.Services.Implementation
                     _unitOfWork.Save();
                 }
 
-                    _response.ParkingLot = parkingLotDTO;
-                    _response.StatusCode = HttpStatusCode.OK;
-                    _response.Message = "Parking Lot updated successfully";
-                    return _response;
-                }
-                catch(BadRequestException ex)
-                {
-                    throw;
-                }
-                catch(NotFoundException ex)
-                {
-                    throw;
-                }
-                catch(InternalErrorException ex)
-                {
-                    throw new InternalErrorException("Unexpected error while updating the Parking Lot");
-                }
+                _response.ParkingLot = parkingLotDTO;
+                _response.StatusCode = HttpStatusCode.OK;
+                _response.Message = "Parking Lot updated successfully";
+                return _response;
             }
-        
+            catch (BadRequestException ex)
+            {
+                _logger.Error($"Bad Request for UpdateParkingLot {Environment.NewLine}ErrorMessage: {ex.Message}");
+                throw;
+            }
+            catch (NotFoundException ex)
+            {
+                _logger.Error($"Not Found for UpdateParkingLot {Environment.NewLine}ErrorMessage: {ex.Message}");
+                throw;
+            }
+            catch (InternalErrorException ex)
+            {
+                _logger.Error($"Unexpected error while updating the Parking Lot {Environment.NewLine}ErrorMessage: {ex.Message}");
+                throw new InternalErrorException("Unexpected error while updating the Parking Lot");
+            }
+        }
+
 
         public ParkingLotResponse DeactivateParkingLot(int id)
         {
             try
             {
-                if(id <= 0)
+                if (id <= 0)
                 {
                     throw new BadRequestException("ParkingLotId is required");
                 }
@@ -365,14 +376,17 @@ namespace IWParkingAPI.Services.Implementation
             }
             catch (BadRequestException ex)
             {
+                _logger.Error($"Bad Request for DeactivateParkingLot {Environment.NewLine}ErrorMessage: {ex.Message}");
                 throw;
             }
             catch (NotFoundException ex)
             {
+                _logger.Error($"Not Found for DeactivateParkingLot {Environment.NewLine}ErrorMessage: {ex.Message}");
                 throw;
             }
             catch (Exception ex)
             {
+                _logger.Error($"Unexpected error while deactivating the Parking Lot {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
                 throw new InternalErrorException("Unexpected error while deactivating the Parking Lot");
             }
         }
@@ -421,14 +435,17 @@ namespace IWParkingAPI.Services.Implementation
             }
             catch (NotFoundException ex)
             {
+                _logger.Error($"Not Found for RemoveParkingLotFavourite {Environment.NewLine}ErrorMessage: {ex.Message}");
                 throw;
             }
             catch (BadRequestException ex)
             {
+                _logger.Error($"Bad Request for RemoveParkingLotFavourite {Environment.NewLine}ErrorMessage: {ex.Message}");
                 throw;
             }
             catch (Exception ex)
             {
+                _logger.Error($"Unexpected error while removing the Parking Lot from Favourites {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
                 throw new InternalErrorException("Unexpected error while removing the Parking Lot from Favourites");
             }
         }
@@ -437,7 +454,7 @@ namespace IWParkingAPI.Services.Implementation
         {
             try
             {
-                if(userId <= 0 || parkingLotId <= 0)
+                if (userId <= 0 || parkingLotId <= 0)
                 {
                     throw new BadRequestException("UserId and ParkingLotId are required");
                 }
@@ -460,7 +477,7 @@ namespace IWParkingAPI.Services.Implementation
                 {
                     throw new BadRequestException("Parking Lot is already favourite");
                 }
-                
+
                 user.ParkingLotsNavigation.Add(parkingLot);
                 _userRepository.Update(user);
                 _unitOfWork.Save();
@@ -472,14 +489,17 @@ namespace IWParkingAPI.Services.Implementation
             }
             catch (NotFoundException ex)
             {
+                _logger.Error($"Not Found for MakeParkingLotFavorite {Environment.NewLine}ErrorMessage: {ex.Message}");
                 throw;
             }
             catch (BadRequestException ex)
             {
+                _logger.Error($"Bad Request for MakeParkingLotFavorite {Environment.NewLine}ErrorMessage: {ex.Message}");
                 throw;
             }
             catch (Exception ex)
             {
+                _logger.Error($"Unexpected error while adding the Parking Lot Favourites {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
                 throw new InternalErrorException("Unexpected error while adding the Parking Lot Favourites");
             }
         }
@@ -534,14 +554,17 @@ namespace IWParkingAPI.Services.Implementation
             }
             catch (BadRequestException ex)
             {
+                _logger.Error($"Bad Request for GetUserFavouriteParkingLots {Environment.NewLine}ErrorMessage: {ex.Message}");
                 throw;
             }
             catch (NotFoundException ex)
             {
+                _logger.Error($"Not Found for GetUserFavouriteParkingLots {Environment.NewLine}ErrorMessage: {ex.Message}");
                 throw;
             }
             catch (Exception ex)
             {
+                _logger.Error($"Unexpected error while getting all favourite Parking Lots {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
                 throw new InternalErrorException("Unexpected error while getting all favourite Parking Lots");
             }
         }
