@@ -149,7 +149,7 @@ namespace IWParkingAPI.Services.Implementation
                 if (vehicle.IsPrimary == true)
                 {
                     var vehiclesOfUser = _vehicleRepository.GetAsQueryable(v => v.UserId == vehicle.UserId).ToList();
-                    if (vehiclesOfUser != null && vehiclesOfUser.Count() > 0)
+                    if (vehiclesOfUser != null && vehiclesOfUser.Count() > 1)
                     {
                         vehiclesOfUser.Remove(vehicle);
                         vehiclesOfUser.First().IsPrimary = true;
