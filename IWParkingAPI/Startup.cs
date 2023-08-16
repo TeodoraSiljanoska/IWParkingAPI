@@ -1,4 +1,5 @@
-﻿using IWParkingAPI.Infrastructure.Repository;
+﻿using IWParkingAPI.Fluent_Validations;
+using IWParkingAPI.Infrastructure.Repository;
 using IWParkingAPI.Infrastructure.UnitOfWork;
 using IWParkingAPI.Middleware.Authentication;
 using IWParkingAPI.Middleware.Exceptions;
@@ -43,11 +44,7 @@ namespace IWParkingAPI
             services.AddAutoMapper(typeof(Startup));
             services.AddControllers();
 
-            
-           // var logger = NLog.Web.NLogBuilder.ConfigureNLog("nlog.config").GetCurrentClassLogger();
-
-            // var logger = NLogBuilder.ConfigureNLog("nlog.config");
-
+           
             services.AddIdentity<ApplicationUser, ApplicationRole>()
             .AddEntityFrameworkStores<ParkingDbContextCustom>()
             .AddDefaultTokenProviders();
@@ -105,13 +102,9 @@ namespace IWParkingAPI
                        .AllowAnyMethod()
                        .AllowAnyHeader();
             }));
-            //configure logging
-          /*  services.AddLogging(loggingBuilder =>
-            {
-                loggingBuilder.ClearProviders();
-                loggingBuilder.AddNLog();
-            });
-          */
+
+            services.AddValidator();
+          
             var connectionString = Configuration.GetConnectionString("DefaultConnection");
             services.AddDbContext<ParkingDbContext>(o => o.UseSqlServer(connectionString));
             services.AddDbContext<ParkingDbContextCustom>(options => options.UseSqlServer(connectionString));
