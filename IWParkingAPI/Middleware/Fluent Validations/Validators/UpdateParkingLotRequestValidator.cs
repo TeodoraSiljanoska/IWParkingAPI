@@ -1,11 +1,11 @@
 ﻿using FluentValidation;
 using IWParkingAPI.Models.Requests;
 
-namespace IWParkingAPI.Fluent_Validations.Validators
+namespace IWParkingAPI.Middleware.Fluent_Validations.Validators
 {
-    public class ParkingLotReqValidator : AbstractValidator<ParkingLotReq>
+    public class UpdateParkingLotRequestValidator : AbstractValidator<UpdateParkingLotRequest>
     {
-        public ParkingLotReqValidator()
+        public UpdateParkingLotRequestValidator()
         {
             RuleFor(x => x.Name)
                .NotEmpty()
@@ -73,9 +73,6 @@ namespace IWParkingAPI.Fluent_Validations.Validators
                 .LessThan(60)
                 .WithMessage("Invalid WorkingHoursTo: Seconds should be greater than or equal to 0 and less than 60");
 
-            RuleFor(x => x.UserId)
-                .NotEmpty().WithMessage("UserId is required")
-                .GreaterThan(0).WithMessage("UserId should be greater than 0");
         }
     }
 }

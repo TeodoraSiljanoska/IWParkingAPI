@@ -2,6 +2,7 @@
 using IWParkingAPI.Fluent_Validations.Services.Implementation;
 using IWParkingAPI.Fluent_Validations.Services.Interfaces;
 using IWParkingAPI.Fluent_Validations.Validators;
+using IWParkingAPI.Middleware.Fluent_Validations.Validators;
 using IWParkingAPI.Models.Requests;
 using System.ComponentModel.DataAnnotations;
 namespace IWParkingAPI.Fluent_Validations
@@ -28,6 +29,9 @@ namespace IWParkingAPI.Fluent_Validations
         {
             services.AddSingleton<IValidateService, ValidateService>();
             services.AddSingleton <IValidator<ParkingLotReq>, ParkingLotReqValidator >();
+            services.AddSingleton<IValidator<UpdateParkingLotRequest>, UpdateParkingLotRequestValidator>();
+
+
 
             return services;
         }

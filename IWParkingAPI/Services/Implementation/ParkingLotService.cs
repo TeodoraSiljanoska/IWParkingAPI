@@ -189,10 +189,9 @@ namespace IWParkingAPI.Services.Implementation
         {
             try
             {
-                if (id <= 0 || request == null || request.Name.Length == 0 || request.City.Length == 0 || request.Zone.Length == 0
-                    || request.Address.Length == 0 || request.WorkingHourFrom == null || request.WorkingHourTo == null || request.CapacityCar == null || request.CapacityAdaptedCar == null)
+                if (id <= 0)
                 {
-                    throw new BadRequestException("All fields are required");
+                    throw new BadRequestException("Id is required");
                 }
                 ParkingLot parkingLot = _parkingLotRepository.GetAsQueryable(p => p.Id == id, null, x => x.Include(y => y.Users)).FirstOrDefault();
 
@@ -228,24 +227,6 @@ namespace IWParkingAPI.Services.Implementation
                     throw new BadRequestException("Parking Lot with that specifications already exists");
                 }
 
-                if (request.Price <= 0)
-                {
-                    throw new BadRequestException("Price should be greater than 0");
-                }
-
-                if (request.CapacityCar <= 0 || request.CapacityAdaptedCar <= 0)
-                {
-                    throw new BadRequestException("Capacity should be greater than 0");
-                }
-
-                if (request.WorkingHourFrom.Hours < 0 || request.WorkingHourFrom.Hours > 24 ||
-                request.WorkingHourFrom.Minutes < 0 || request.WorkingHourFrom.Minutes > 59 || request.WorkingHourFrom.Seconds < 0
-                || request.WorkingHourFrom.Seconds > 59 || request.WorkingHourTo.Hours < 0 || request.WorkingHourTo.Hours > 24
-                || request.WorkingHourTo.Minutes < 0 || request.WorkingHourTo.Minutes > 59
-                || request.WorkingHourTo.Seconds < 0 || request.WorkingHourTo.Seconds > 59)
-                {
-                    throw new BadRequestException("Invalid working hours");
-                }
 
                 parkingLot.Name = (parkingLot.Name == request.Name) ? parkingLot.Name : request.Name;
                 parkingLot.City = (parkingLot.City == request.City) ? parkingLot.City : request.City;

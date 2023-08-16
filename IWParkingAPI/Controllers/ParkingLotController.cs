@@ -43,6 +43,7 @@ namespace IWParkingAPI.Controllers
         }
 
         [AuthorizeCustom(UserRoles.Owner)]
+        [Validate]
         [HttpPut("Update/{id}")]
         public ParkingLotResponse UpdateParkingLot(int id, UpdateParkingLotRequest request)
         {
