@@ -24,7 +24,7 @@ namespace IWParkingAPI.Controllers
 
         [AuthorizeCustom(UserRoles.SuperAdmin)]
         [HttpGet("GetAll")]
-        public GetUsersResponse GetUsers()
+        public GetUsersDTOResponse GetUsers()
         {
             return _userService.GetAllUsers();
         }
