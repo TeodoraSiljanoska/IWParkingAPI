@@ -19,7 +19,6 @@ namespace IWParkingAPI.Services.Implementation
 {
     public class VehicleService : IVehicleService
     {
-        private readonly IConfiguration _config;
         private readonly IMapper _mapper;
         private readonly IUnitOfWork<ParkingDbContext> _unitOfWork;
         private readonly IGenericRepository<Vehicle> _vehicleRepository;
@@ -31,14 +30,15 @@ namespace IWParkingAPI.Services.Implementation
         private const string TypeAdaptedCar = "Adapted Car";
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
         private readonly IHttpContextAccessor _httpContextAccessor;
-       // private readonly GetClaimsFromToken _getClaimsFromToken;
+        private readonly IConfiguration _config;
+        private readonly IJWTDecode _jWTDecode;
 
 
 
-        public VehicleService(IConfiguration configuration, IUnitOfWork<ParkingDbContext> unitOfWork, IUnitOfWork<ParkingDbContextCustom> custom, IHttpContextAccessor httpContextAccessor
-           /* ,GetClaimsFromToken getClaimsFromToken*/)
+        public VehicleService(IConfiguration configuration, IUnitOfWork<ParkingDbContext> unitOfWork, IUnitOfWork<ParkingDbContextCustom> custom, IHttpContextAccessor httpContextAccessor, IConfiguration config,
+            IJWTDecode jWTDecode)
         {
-            _config = configuration;
+            _config = config;
             _mapper = MapperConfig.InitializeAutomapper();
             _unitOfWork = unitOfWork;
             _custom = custom;
@@ -47,8 +47,7 @@ namespace IWParkingAPI.Services.Implementation
             _response = new VehicleResponse();
             _getResponse = new GetVehiclesResponse();
             _httpContextAccessor = httpContextAccessor;
-        //    _getClaimsFromToken = getClaimsFromToken;
-
+            _jWTDecode = jWTDecode;
         }
 
         public GetVehiclesResponse GetAllVehicles()
@@ -316,17 +315,15 @@ namespace IWParkingAPI.Services.Implementation
             }
         }
 
-        public GetVehiclesResponse GetVehiclesByUserId(/* int userId */)
+        public GetVehiclesResponse GetVehiclesByUserId()
         {
             try
             {
-                /*  if (userId <= 0)
+                var userId = Convert.ToInt32(_jWTDecode.ExtractUserIdFromToken());
+                 if (userId <= 0)
                   {
                       throw new BadRequestException("User Id is required");
                   }
-                */
-                GetClaimsFromToken getClaimsFromToken = new GetClaimsFromToken();
-                int userId = Convert.ToInt32(getClaimsFromToken.ExtractUserIdFromToken());
                 
                 var user = _userRepository.GetById(userId);
                 if (user == null || user.IsDeactivated == true)

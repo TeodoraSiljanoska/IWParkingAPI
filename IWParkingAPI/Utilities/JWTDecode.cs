@@ -1,21 +1,22 @@
-﻿using Microsoft.IdentityModel.Tokens;
+﻿using IWParkingAPI.Infrastructure.UnitOfWork;
+using IWParkingAPI.Models.Context;
+using IWParkingAPI.Models.Responses;
+using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 
 namespace IWParkingAPI.Utilities
 {
-    public class GetClaimsFromToken
+    public class JWTDecode : IJWTDecode
     {
-        private readonly IConfiguration _config;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IConfiguration _config;
 
-        public GetClaimsFromToken() { }
-
-     /*   public GetClaimsFromToken(IConfiguration configuration, IHttpContextAccessor httpContextAccessor)
+        public JWTDecode(IHttpContextAccessor httpContextAccessor, IConfiguration config)
         {
-            _config = configuration;
             _httpContextAccessor = httpContextAccessor;
-        }  */
+            _config = config;
+        }
         public string ExtractUserIdFromToken()
         {
             var tokenHandler = new JwtSecurityTokenHandler();
@@ -25,7 +26,7 @@ namespace IWParkingAPI.Utilities
             {
                 var token = authHeader.ToString().Replace("Bearer ", ""); // Extract the token from "Bearer <token>"
 
-             /*   var validationParameters = new TokenValidationParameters
+                var validationParameters = new TokenValidationParameters
                 {
                     ValidateIssuerSigningKey = true,
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"])),
@@ -35,22 +36,12 @@ namespace IWParkingAPI.Utilities
                     ValidAudience = _config["Jwt:Audience"],
                     ValidateLifetime = true,
                     ClockSkew = TimeSpan.Zero
-                }; */
+                };
 
                 try
                 {
-                    //SecurityToken validatedToken;
-               var principal =     tokenHandler.ValidateToken(token, new TokenValidationParameters
-                    {
-                        ValidateIssuerSigningKey = true,
-                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"])),
-                        ValidateIssuer = true,
-                        ValidateAudience = true,
-                        ValidIssuer = _config["Jwt:Issuer"],
-                        ValidAudience = _config["Jwt:Audience"],
-                        ClockSkew = TimeSpan.Zero // Optional: Adjust the tolerance for expired tokens
-                    }, out SecurityToken validatedToken);
-                   // var principal = tokenHandler.ValidateToken(token, validationParameters, out validatedToken);
+                    SecurityToken validatedToken;
+                    var principal = tokenHandler.ValidateToken(token, validationParameters, out validatedToken);
 
                     var userIdClaim = principal.FindFirst("Id"); // The claim that holds the user ID
                     if (userIdClaim != null)
