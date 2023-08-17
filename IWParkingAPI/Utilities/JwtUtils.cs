@@ -16,14 +16,19 @@ namespace IWParkingAPI.Utilities
         private readonly UserLoginResponse userLoginResponse;
         private readonly TokenValidationResponse tokenValidationResponse;
         private readonly string secretKey;
-        public JwtUtils(IConfiguration configuration, UserManager<ApplicationUser> userManager)
+        private readonly IHttpContextAccessor _httpContextAccessor;
+
+        public JwtUtils() { }
+        public JwtUtils(IConfiguration configuration, UserManager<ApplicationUser> userManager, IHttpContextAccessor httpContextAccessor)
         {
             _config = configuration;
             _userManager = userManager;
             userLoginResponse = new UserLoginResponse();
             tokenValidationResponse = new TokenValidationResponse();
             secretKey = _config["Jwt:Key"];
-    }
+            _httpContextAccessor = httpContextAccessor;
+
+        }
         public async Task<UserLoginResponse> GenerateToken(ApplicationUser user)
         {
             var userRoles = await _userManager.GetRolesAsync(user);
@@ -95,6 +100,47 @@ namespace IWParkingAPI.Utilities
                 tokenValidationResponse.IsValid = false;
                 return tokenValidationResponse;
             }
+        }
+
+        public string ExtractUserIdFromToken()
+        {
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var context = _httpContextAccessor.HttpContext;
+
+            if (context != null && context.Request.Headers.TryGetValue("Authorization", out var authHeader))
+            {
+                var token = authHeader.ToString().Replace("Bearer ", ""); // Extract the token from "Bearer <token>"
+
+                var validationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"])),
+                    ValidateIssuer = true,
+                    ValidIssuer = _config["Jwt:Issuer"],
+                    ValidateAudience = true,
+                    ValidAudience = _config["Jwt:Audience"],
+                    ValidateLifetime = true,
+                    ClockSkew = TimeSpan.Zero
+                };
+
+                try
+                {
+                    SecurityToken validatedToken;
+                    var principal = tokenHandler.ValidateToken(token, validationParameters, out validatedToken);
+
+                    var userIdClaim = principal.FindFirst("Id"); // The claim that holds the user ID
+                    if (userIdClaim != null)
+                    {
+                        return userIdClaim.Value;
+                    }
+                }
+                catch (Exception)
+                {
+                    // Token validation or decoding failed
+                }
+            }
+
+            return null;
         }
     }
 }
