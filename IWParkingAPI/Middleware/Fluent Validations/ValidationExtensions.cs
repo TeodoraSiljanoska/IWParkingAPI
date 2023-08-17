@@ -31,7 +31,7 @@ namespace IWParkingAPI.Fluent_Validations
             services.AddSingleton <IValidator<ParkingLotReq>, ParkingLotReqValidator >();
             services.AddSingleton<IValidator<UpdateParkingLotRequest>, UpdateParkingLotRequestValidator>();
 
-
+            services.AddSingleton<IValidator<RoleRequest>, CreateRoleRequestValidator>();
 
             return services;
         }
