@@ -35,6 +35,8 @@ namespace IWParkingAPI.Fluent_Validations
 
             services.AddSingleton<IValidator<RequestRequest>, RequestRequestValidator>();
 
+            services.AddSingleton<IValidator<UpdateUserRequest>, UpdateUserRequestValidator>();
+
             return services;
         }
     }
