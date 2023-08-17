@@ -77,11 +77,6 @@ namespace IWParkingAPI.Services.Implementation
                     throw new BadRequestException("Request Id is required");
                 }
 
-                if (request.Status == null || request.Status.Length == 0)
-                {
-                    throw new BadRequestException("Status is required");
-                }
-
                 var req = _requestRepository.GetAsQueryable(x => x.Id == id, null, x => x.Include(y => y.User).Include(y => y.ParkingLot)).FirstOrDefault();
 
                 if (req == null)

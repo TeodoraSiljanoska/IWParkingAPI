@@ -33,6 +33,8 @@ namespace IWParkingAPI.Fluent_Validations
 
             services.AddSingleton<IValidator<RoleRequest>, RoleRequestValidator>();
 
+            services.AddSingleton<IValidator<RequestRequest>, RequestRequestValidator>();
+
             return services;
         }
     }
