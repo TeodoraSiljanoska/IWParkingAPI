@@ -1,7 +1,6 @@
-﻿using IWParkingAPI.Infrastructure.UnitOfWork;
-using IWParkingAPI.Models.Context;
-using IWParkingAPI.Models.Responses;
+﻿using IWParkingAPI.CustomExceptions;
 using Microsoft.IdentityModel.Tokens;
+using NLog;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 
@@ -11,6 +10,8 @@ namespace IWParkingAPI.Utilities
     {
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IConfiguration _config;
+        private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
+
 
         public JWTDecode(IHttpContextAccessor httpContextAccessor, IConfiguration config)
         {
@@ -24,8 +25,8 @@ namespace IWParkingAPI.Utilities
 
             if (context != null && context.Request.Headers.TryGetValue("Authorization", out var authHeader))
             {
-                var token = authHeader.ToString().Replace("Bearer ", ""); // Extract the token from "Bearer <token>"
-
+                // var token = authHeader.ToString().Replace("Bearer ", ""); // Extract the token from "Bearer <token>"
+                var token = authHeader.FirstOrDefault()?.Split(" ").Last();
                 var validationParameters = new TokenValidationParameters
                 {
                     ValidateIssuerSigningKey = true,
@@ -49,9 +50,10 @@ namespace IWParkingAPI.Utilities
                         return userIdClaim.Value;
                     }
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
-                    // Token validation or decoding failed
+                    _logger.Error($"Unexpected error while decoding the token {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
+                    throw new InternalErrorException("Unexpected error while decoding the token");
                 }
             }
 

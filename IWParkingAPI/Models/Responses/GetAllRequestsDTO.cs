@@ -15,6 +15,6 @@ namespace IWParkingAPI.Models.Responses
         public DateTime TimeCreated { get; set; }
 
         public virtual ParkingLotDTO ParkingLot { get; set; } = null!;
-        public virtual UserDataDTO User { get; set; } = null!;
+        public virtual UserDTO User { get; set; } = null!;
     }
 }

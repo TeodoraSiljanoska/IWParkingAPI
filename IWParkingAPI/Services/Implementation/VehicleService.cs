@@ -315,11 +315,11 @@ namespace IWParkingAPI.Services.Implementation
             try
             {
                 var userId = Convert.ToInt32(_jWTDecode.ExtractUserIdFromToken());
-                 if (userId <= 0)
+               /*  if (userId <= 0)
                   {
                       throw new BadRequestException("User Id is required");
                   }
-                
+                */
                 var user = _userRepository.GetById(userId);
                 if (user == null || user.IsDeactivated == true)
                 {

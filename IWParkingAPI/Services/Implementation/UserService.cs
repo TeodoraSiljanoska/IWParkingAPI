@@ -16,7 +16,6 @@ public class UserService : IUserService
 {
     private readonly IUnitOfWork<ParkingDbContext> _unitOfWork;
     private readonly IGenericRepository<AspNetUser> _userRepository;
-    private readonly UserResponse _response;
     private readonly GetUsersDTOResponse _getResponse;
     private readonly UserDTOResponse _userDTOResponse;
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
@@ -26,7 +25,6 @@ public class UserService : IUserService
     {
         _unitOfWork = unitOfWork;
         _userRepository = _unitOfWork.GetGenericRepository<AspNetUser>();
-        _response = new UserResponse();
         _getResponse = new GetUsersDTOResponse();
         _userDTOResponse = new UserDTOResponse();
         _mapper = MapperConfig.InitializeAutomapper();
@@ -42,14 +40,14 @@ public class UserService : IUserService
             {
                 _getResponse.StatusCode = HttpStatusCode.OK;
                 _getResponse.Message = "There aren't any users";
-                _getResponse.Users = Enumerable.Empty<UserDataDTO>();
+                _getResponse.Users = Enumerable.Empty<UserDTO>();
                 return _getResponse;
             }
 
-            var UserDTOList = new List<UserDataDTO>();
+            var UserDTOList = new List<UserDTO>();
             foreach (var user in users)
             {
-                UserDTOList.Add(_mapper.Map<UserDataDTO>(user));
+                UserDTOList.Add(_mapper.Map<UserDTO>(user));
             }
 
             _getResponse.StatusCode = HttpStatusCode.OK;
