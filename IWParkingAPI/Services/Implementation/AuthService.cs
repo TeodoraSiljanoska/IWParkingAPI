@@ -139,10 +139,6 @@ namespace IWParkingAPI.Services.Implementation
         {
             try
             {
-                /*if (model == null || model.Email.Length == 0 || model.OldPassword.Length == 0 || model.NewPassword.Length == 0 || model.ConfirmNewPassword.Length == 0)
-                {
-                    throw new BadRequestException("Email, Old Password, New Password and Confirm New Password are required");
-                }*/
                 var user = await _userManager.FindByNameAsync(model.Email);
                // var userAspNet = _userRepository.GetAsQueryable(x => x.Email.Equals(model.Email), null, x => x.Include(y => y.Roles)).FirstOrDefault();
                 if (user == null)
@@ -161,11 +157,6 @@ namespace IWParkingAPI.Services.Implementation
                 {
                     throw new InternalErrorException("Unexpected error while generating reset token");
                 }
-
-                /*if (model.NewPassword != model.ConfirmNewPassword)
-                {
-                    throw new BadRequestException("New passwords don't match");
-                }*/
 
                 if (model.NewPassword == model.OldPassword || model.ConfirmNewPassword == model.OldPassword)
                 {
@@ -211,11 +202,6 @@ namespace IWParkingAPI.Services.Implementation
         {
             try
             {
-             /*   if (model == null || model.OldEmail.Length == 0 || model.NewEmail.Length == 0)
-                {
-                    throw new BadRequestException("Old Email and New Email are required");
-                }*/
-
                 var user = await _userManager.FindByNameAsync(model.OldEmail);
 
                 if (user == null)
@@ -227,11 +213,6 @@ namespace IWParkingAPI.Services.Implementation
                 {
                     throw new BadRequestException("The old email is incorrect");
                 }
-
-              /*  if (model.OldEmail == model.NewEmail)
-                {
-                    throw new BadRequestException("No updates were entered. Please enter the updates");
-                }*/
 
                 var userWithThatUsername = await _userManager.FindByNameAsync(model.NewEmail);
                 if (userWithThatUsername != null)
