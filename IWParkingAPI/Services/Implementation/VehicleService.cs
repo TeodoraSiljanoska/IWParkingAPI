@@ -308,7 +308,7 @@ namespace IWParkingAPI.Services.Implementation
             }
         }
 
-        public GetVehiclesResponse GetVehiclesByUserId()
+        public GetAllVehiclesByUserIdResponse GetVehiclesByUserId()
         {
             try
             {
