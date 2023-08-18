@@ -30,6 +30,8 @@ namespace IWParkingAPI.Fluent_Validations
             services.AddSingleton<IValidateService, ValidateService>();
             services.AddSingleton <IValidator<ParkingLotReq>, ParkingLotReqValidator >();
             services.AddSingleton<IValidator<UpdateParkingLotRequest>, UpdateParkingLotRequestValidator>();
+            services.AddSingleton<IValidator<VehicleRequest>, AddNewVehicleValidator>();
+            services.AddSingleton<IValidator<UpdateVehicleRequest>, UpdateVehicleRequestValidator>();
 
             services.AddSingleton<IValidator<RoleRequest>, RoleRequestValidator>();
 
