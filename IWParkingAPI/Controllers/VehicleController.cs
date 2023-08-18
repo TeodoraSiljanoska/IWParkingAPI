@@ -1,4 +1,5 @@
-﻿using IWParkingAPI.Middleware.Authorization;
+﻿using IWParkingAPI.Fluent_Validations;
+using IWParkingAPI.Middleware.Authorization;
 using IWParkingAPI.Models;
 using IWParkingAPI.Models.Requests;
 using IWParkingAPI.Models.Responses;
@@ -25,36 +26,38 @@ namespace IWParkingAPI.Controllers
         }
 
         [AuthorizeCustom(UserRoles.User)]
+        [Validate]
         [HttpPost("Create")]
-        public VehicleResponse Create(VehicleRequest request)
+        public VehicleResponseDTO Create(VehicleRequest request)
         {
             return _vehicleService.AddNewVehicle(request);
         }
 
         [AuthorizeCustom(UserRoles.User)]
+        [Validate]
         [HttpPut("Update/{id}")]
-        public VehicleResponse Update(int id, UpdateVehicleRequest changes)
+        public VehicleResponseDTO Update(int id, UpdateVehicleRequest changes)
         {
             return _vehicleService.UpdateVehicle(id, changes);
         }
 
         [AuthorizeCustom(UserRoles.User)]
         [HttpDelete("Delete/{id}")]
-        public VehicleResponse Delete(int id)
+        public VehicleResponseDTO Delete(int id)
         {
             return _vehicleService.DeleteVehicle(id);
         }
 
         [AuthorizeCustom(UserRoles.User)]
         [HttpGet("Get/{id}")]
-        public VehicleResponse GetVehicleById(int id)
+        public VehicleResponseDTO GetVehicleById(int id)
         {
             return _vehicleService.GetVehicleById(id);
         }
 
         [AuthorizeCustom(UserRoles.User)]
         [HttpPost("MakePrimary/{userId},{vehicleId}")]
-        public VehicleResponse MakePrimary(int userId, int vehicleId)
+        public MakeVehiclePrimaryResponse MakePrimary(int userId, int vehicleId)
         {
             return _vehicleService.MakeVehiclePrimary(userId, vehicleId);
         }

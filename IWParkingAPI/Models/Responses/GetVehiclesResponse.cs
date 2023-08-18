@@ -4,7 +4,7 @@ namespace IWParkingAPI.Models.Responses
 {
     public class GetVehiclesResponse : ResponseBase
     {
-        public IEnumerable<Vehicle>? Vehicles { get; set; } = new List<Vehicle>();
+        public IEnumerable<VehicleDTO>? Vehicles { get; set; } = new List<VehicleDTO>();
 
     }
 }

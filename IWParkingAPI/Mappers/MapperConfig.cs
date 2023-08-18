@@ -42,6 +42,23 @@ namespace IWParkingAPI.Mappers
                 //   .ForSourceMember(src => src.Type, opt => opt.DoNotValidate())
                 //   .ForSourceMember(src => src.PlateNumber, opt => opt.DoNotValidate()); ;
 
+                cfg.CreateMap<Vehicle, VehicleDTO>()
+              .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
+              .ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.UserId))
+              .ForMember(dest => dest.Type, opt => opt.MapFrom(src => src.Type))
+              .ForMember(dest => dest.PlateNumber, opt => opt.MapFrom(src => src.PlateNumber))
+              .ForMember(dest => dest.TimeCreated, opt => opt.MapFrom(src => src.TimeCreated))
+              .ForMember(dest => dest.TimeModified, opt => opt.MapFrom(src => src.TimeModified))
+              .ForMember(dest => dest.IsPrimary, opt => opt.MapFrom(src => src.IsPrimary))
+              .ForMember(dest => dest.User, opt => opt.MapFrom(src => src.User));
+
+                cfg.CreateMap<Vehicle, VehicleWithoutUserDTO>()
+              .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
+              .ForMember(dest => dest.Type, opt => opt.MapFrom(src => src.Type))
+              .ForMember(dest => dest.PlateNumber, opt => opt.MapFrom(src => src.PlateNumber))
+              .ForMember(dest => dest.TimeCreated, opt => opt.MapFrom(src => src.TimeCreated))
+              .ForMember(dest => dest.TimeModified, opt => opt.MapFrom(src => src.TimeModified))
+              .ForMember(dest => dest.IsPrimary, opt => opt.MapFrom(src => src.IsPrimary));
 
 
                 cfg.CreateMap<UpdateVehicleRequest, Vehicle>()
@@ -90,6 +107,14 @@ namespace IWParkingAPI.Mappers
                 .ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.UserId))
                 .ForMember(dest => dest.ParkingLotId, opt => opt.MapFrom(src => src.ParkingLotId))
                 .ForMember(dest => dest.TimeCreated, opt => opt.MapFrom(src => src.TimeCreated));
+
+                cfg.CreateMap<AspNetUser, UserWithoutRoleDTO>()
+                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
+                .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.UserName))
+                .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name))
+                .ForMember(dest => dest.Surname, opt => opt.MapFrom(src => src.Surname))
+                .ForMember(dest => dest.PhoneNumber, opt => opt.MapFrom(src => src.PhoneNumber))
+                .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Email));
 
                 cfg.CreateMap<AspNetUser, UserDTO>()
                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))

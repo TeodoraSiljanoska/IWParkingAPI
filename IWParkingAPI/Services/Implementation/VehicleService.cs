@@ -10,6 +10,8 @@ using IWParkingAPI.Services.Interfaces;
 using System.Net;
 using IWParkingAPI.CustomExceptions;
 using NLog;
+using Microsoft.EntityFrameworkCore;
+//using System.Data.Entity;
 using IWParkingAPI.Utilities;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.IdentityModel.Tokens;
@@ -22,16 +24,15 @@ namespace IWParkingAPI.Services.Implementation
         private readonly IMapper _mapper;
         private readonly IUnitOfWork<ParkingDbContext> _unitOfWork;
         private readonly IGenericRepository<Vehicle> _vehicleRepository;
-        private readonly IGenericRepository<ApplicationUser> _userRepository;
-        private readonly IUnitOfWork<ParkingDbContextCustom> _custom;
-        private readonly VehicleResponse _response;
+        private readonly IGenericRepository<AspNetUser> _userRepository;       
+        private readonly VehicleResponseDTO _responseDTO;
         private readonly GetVehiclesResponse _getResponse;
-        private const string TypeCar = "Car";
-        private const string TypeAdaptedCar = "Adapted Car";
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IConfiguration _config;
         private readonly IJWTDecode _jWTDecode;
+        private readonly GetAllVehiclesByUserIdResponse _vehiclesByUserIdResponse;
+        private readonly MakeVehiclePrimaryResponse _makePrimaryResponse;
 
 
 
@@ -41,32 +42,38 @@ namespace IWParkingAPI.Services.Implementation
             _config = config;
             _mapper = MapperConfig.InitializeAutomapper();
             _unitOfWork = unitOfWork;
-            _custom = custom;
             _vehicleRepository = _unitOfWork.GetGenericRepository<Vehicle>();
-            _userRepository = _custom.GetGenericRepository<ApplicationUser>();
-            _response = new VehicleResponse();
+            _userRepository = _unitOfWork.GetGenericRepository<AspNetUser>();
+            _responseDTO = new VehicleResponseDTO();
             _getResponse = new GetVehiclesResponse();
             _httpContextAccessor = httpContextAccessor;
             _jWTDecode = jWTDecode;
+            _vehiclesByUserIdResponse = new GetAllVehiclesByUserIdResponse();
+            _makePrimaryResponse = new MakeVehiclePrimaryResponse();
         }
 
         public GetVehiclesResponse GetAllVehicles()
         {
             try
             {
-                var vehicles = _vehicleRepository.GetAll();
+                var vehicles = _vehicleRepository.GetAsQueryable(null, null, x => x.Include(y => y.User).Include(y => y.User.Roles)).ToList();
 
                 if (!vehicles.Any())
                 {
                     _getResponse.StatusCode = HttpStatusCode.OK;
                     _getResponse.Message = "There aren't any vehicles";
-                    _getResponse.Vehicles = Enumerable.Empty<Vehicle>();
+                    _getResponse.Vehicles = Enumerable.Empty<VehicleDTO>();
                     return _getResponse;
                 }
-
+                var GetAllVehiclesDTOList = new List<VehicleDTO>();
+                foreach (var p in vehicles)
+                {
+                    GetAllVehiclesDTOList.Add(_mapper.Map<VehicleDTO>(p));
+                }
+               
                 _getResponse.StatusCode = HttpStatusCode.OK;
                 _getResponse.Message = "Vehicles returned successfully";
-                _getResponse.Vehicles = vehicles;
+                _getResponse.Vehicles = GetAllVehiclesDTOList;
                 return _getResponse;
             }
             catch (Exception ex)
@@ -76,16 +83,11 @@ namespace IWParkingAPI.Services.Implementation
             }
         }
 
-        public VehicleResponse AddNewVehicle(VehicleRequest request)
+        public VehicleResponseDTO AddNewVehicle(VehicleRequest request)
         {
             try
             {
-                if (request.UserId <= 0 || request.PlateNumber == null || request.PlateNumber.Length == 0 || request.Type == null || request.Type.Length == 0)
-                {
-                    throw new BadRequestException("User Id, Plate Number and Type are required");
-                }
-
-                var existingUser = _userRepository.GetById(request.UserId);
+                var existingUser = _userRepository.GetAsQueryable(u => u.Id == request.UserId, null, null).FirstOrDefault();
 
                 if (existingUser == null || existingUser.IsDeactivated == true)
                 {
@@ -96,11 +98,6 @@ namespace IWParkingAPI.Services.Implementation
                 if (checkExistingPlateNumber != null)
                 {
                     throw new BadRequestException("Vehicle with that plate number already exists");
-                }
-
-                if (request.Type != TypeCar && request.Type != TypeAdaptedCar)
-                {
-                    throw new BadRequestException("Vehicle type must be Car or Adapted Car");
                 }
 
                 var vehicle = _mapper.Map<Vehicle>(request);
@@ -115,10 +112,14 @@ namespace IWParkingAPI.Services.Implementation
                 _vehicleRepository.Insert(vehicle);
                 _unitOfWork.Save();
 
-                _response.Vehicle = vehicle;
-                _response.StatusCode = HttpStatusCode.OK;
-                _response.Message = "Vehicle created successfully";
-                return _response;
+                var userForResponse = _mapper.Map<UserWithoutRoleDTO>(existingUser);
+                var vehicleForResponse = _mapper.Map<VehicleDTO>(vehicle);
+
+                vehicleForResponse.User = userForResponse;
+                _responseDTO.Vehicle = vehicleForResponse;
+                _responseDTO.StatusCode = HttpStatusCode.OK;
+                _responseDTO.Message = "Vehicle created successfully";
+                return _responseDTO;
             }
             catch (NotFoundException ex)
             {
@@ -142,7 +143,7 @@ namespace IWParkingAPI.Services.Implementation
             }
         }
 
-        public VehicleResponse DeleteVehicle(int id)
+        public VehicleResponseDTO DeleteVehicle(int id)
         {
             try
             {
@@ -151,7 +152,7 @@ namespace IWParkingAPI.Services.Implementation
                     throw new BadRequestException("Vehicle Id is required");
                 }
 
-                var vehicle = _vehicleRepository.GetById(id);
+                var vehicle = _vehicleRepository.GetAsQueryable(x => x.Id == id, null, x => x.Include(y => y.User)).FirstOrDefault();
                 if (vehicle == null)
                 {
                     throw new NotFoundException("Vehicle not found");
@@ -170,16 +171,17 @@ namespace IWParkingAPI.Services.Implementation
                 _vehicleRepository.Delete(vehicle);
                 _unitOfWork.Save();
 
-                var deletedVehicle = _vehicleRepository.GetAsQueryable(v => v.Id == id).FirstOrDefault();
+                var deletedVehicle = _vehicleRepository.GetAsQueryable(x => x.Id == id, null, x => x.Include(y => y.User)).FirstOrDefault();
                 if (deletedVehicle != null)
                 {
                     throw new InternalErrorException("An error while deleting the Vehicle occurred");
                 }
-
-                _response.Vehicle = vehicle;
-                _response.StatusCode = HttpStatusCode.OK;
-                _response.Message = "Vehicle deleted successfully";
-                return _response;
+                
+                var vehicleForResponse = _mapper.Map<VehicleDTO>(vehicle);
+                _responseDTO.Vehicle = vehicleForResponse;
+                _responseDTO.StatusCode = HttpStatusCode.OK;
+                _responseDTO.Message = "Vehicle deleted successfully";
+                return _responseDTO;
             }
             catch (BadRequestException ex)
             {
@@ -203,29 +205,19 @@ namespace IWParkingAPI.Services.Implementation
             }
         }
 
-        public VehicleResponse UpdateVehicle(int id, UpdateVehicleRequest request)
+        public VehicleResponseDTO UpdateVehicle(int id, UpdateVehicleRequest request)
         {
             try
             {
-                if (id <= 0 || request.PlateNumber == null || request.PlateNumber.Length == 0 || request.Type == null || request.Type.Length == 0)
+                if (id <= 0)
                 {
-                    throw new BadRequestException("Vehicle Id, Plate Number and Type are required");
+                    throw new BadRequestException("Vehicle Id is required");
                 }
 
-                var vehicle = _vehicleRepository.GetById(id);
+                var vehicle = _vehicleRepository.GetAsQueryable(x => x.Id == id, null, x => x.Include(y => y.User)).FirstOrDefault();
                 if (vehicle == null)
                 {
                     throw new NotFoundException("Vehicle not found");
-                }
-
-                if (request.PlateNumber == null || request.Type == null)
-                {
-                    throw new BadRequestException("Plate Number and Type are required");
-                }
-
-                if (request.Type != TypeCar && request.Type != TypeAdaptedCar)
-                {
-                    throw new BadRequestException("Vehicle type must be Car or Adapted Car");
                 }
 
                 if (vehicle.PlateNumber == request.PlateNumber && vehicle.Type == request.Type)
@@ -249,11 +241,11 @@ namespace IWParkingAPI.Services.Implementation
                 _vehicleRepository.Update(vehicle);
                 _unitOfWork.Save();
 
-                _response.Vehicle = vehicle;
-                _response.StatusCode = HttpStatusCode.OK;
-                _response.Message = "Vehicle updated successfully";
-
-                return _response;
+                var vehicleForResponse = _mapper.Map<VehicleDTO>(vehicle);
+                _responseDTO.Vehicle = vehicleForResponse;
+                _responseDTO.StatusCode = HttpStatusCode.OK;
+                _responseDTO.Message = "Vehicle updated successfully";
+                return _responseDTO;
             }
             catch (BadRequestException ex)
             {
@@ -277,7 +269,7 @@ namespace IWParkingAPI.Services.Implementation
             }
         }
 
-        public VehicleResponse GetVehicleById(int id)
+        public VehicleResponseDTO GetVehicleById(int id)
         {
             try
             {
@@ -286,17 +278,18 @@ namespace IWParkingAPI.Services.Implementation
                     throw new BadRequestException("Vehicle Id is required");
                 }
 
-                Vehicle vehicle = _vehicleRepository.GetById(id);
+                var vehicle = _vehicleRepository.GetAsQueryable(x => x.Id == id, null, x => x.Include(y => y.User)).FirstOrDefault();
 
                 if (vehicle == null)
                 {
                     throw new NotFoundException("Vehicle not found");
                 }
 
-                _response.Vehicle = vehicle;
-                _response.StatusCode = HttpStatusCode.OK;
-                _response.Message = "Vehicle returned successfully";
-                return _response;
+                var vehicleForResponse = _mapper.Map<VehicleDTO>(vehicle);
+                _responseDTO.Vehicle = vehicleForResponse;
+                _responseDTO.StatusCode = HttpStatusCode.OK;
+                _responseDTO.Message = "Vehicle returned successfully";
+                return _responseDTO;
             }
             catch (BadRequestException ex)
             {
@@ -335,16 +328,22 @@ namespace IWParkingAPI.Services.Implementation
 
                 if (!vehicles.Any())
                 {
-                    _getResponse.StatusCode = HttpStatusCode.OK;
-                    _getResponse.Message = "User doesn't have any vehicles";
-                    _getResponse.Vehicles = Enumerable.Empty<Vehicle>();
-                    return _getResponse;
+                    _vehiclesByUserIdResponse.StatusCode = HttpStatusCode.OK;
+                    _vehiclesByUserIdResponse.Message = "User doesn't have any vehicles";
+                    _vehiclesByUserIdResponse.Vehicles = Enumerable.Empty<VehicleWithoutUserDTO>();
+                    return _vehiclesByUserIdResponse;
                 }
 
-                _getResponse.Message = "Vehicles returned successfully";
-                _getResponse.StatusCode = HttpStatusCode.OK;
-                _getResponse.Vehicles = vehicles;
-                return _getResponse;
+                var GetAllVehiclesDTOList = new List<VehicleWithoutUserDTO>();
+                foreach (var p in vehicles)
+                {
+                    GetAllVehiclesDTOList.Add(_mapper.Map<VehicleWithoutUserDTO>(p));
+                }
+
+                _vehiclesByUserIdResponse.StatusCode = HttpStatusCode.OK;
+                _vehiclesByUserIdResponse.Message = "Vehicles returned successfully";
+                _vehiclesByUserIdResponse.Vehicles = GetAllVehiclesDTOList;
+                return _vehiclesByUserIdResponse;
             }
             catch (BadRequestException ex)
             {
@@ -364,7 +363,7 @@ namespace IWParkingAPI.Services.Implementation
 
         }
 
-        public VehicleResponse MakeVehiclePrimary(int userId, int vehicleId)
+        public MakeVehiclePrimaryResponse MakeVehiclePrimary(int userId, int vehicleId)
         {
             try
             {
@@ -408,10 +407,12 @@ namespace IWParkingAPI.Services.Implementation
                 _vehicleRepository.Update(vehicle);
                 _unitOfWork.Save();
 
-                _response.StatusCode = HttpStatusCode.OK;
-                _response.Message = "Vehicle is made to be primary";
-                _response.Vehicle = vehicle;
-                return _response;
+                var vehicleForResponse = _mapper.Map<VehicleWithoutUserDTO>(vehicle);
+
+                _makePrimaryResponse.StatusCode = HttpStatusCode.OK;
+                _makePrimaryResponse.Message = "Vehicle is made to be primary";
+                _makePrimaryResponse.Vehicle = vehicleForResponse;
+                return _makePrimaryResponse;
             }
             catch (BadRequestException ex)
             {
