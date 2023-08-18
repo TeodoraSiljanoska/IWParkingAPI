@@ -1,4 +1,5 @@
-﻿using IWParkingAPI.Middleware.Authorization;
+﻿using IWParkingAPI.Fluent_Validations;
+using IWParkingAPI.Middleware.Authorization;
 using IWParkingAPI.Models;
 using IWParkingAPI.Models.Requests;
 using IWParkingAPI.Models.Responses;
@@ -27,6 +28,7 @@ namespace IWParkingAPI.Controllers
 
         [AuthorizeCustom(UserRoles.SuperAdmin)]
         [HttpPut("Modify/{id}")]
+        [Validate]
         public RequestResponse ModifyRequest(int id, RequestRequest request)
         {
             return _requestService.ModifyRequest(id, request);

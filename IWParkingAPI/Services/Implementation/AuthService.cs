@@ -27,9 +27,13 @@ namespace IWParkingAPI.Services.Implementation
         private readonly RoleManager<ApplicationRole> _roleManager;
         private readonly IJwtUtils _jwtUtils;
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
+        private readonly UserDTOResponse _userDTOResponse;
+        private readonly IUnitOfWork<ParkingDbContext> _unitOfWork;
+        private readonly IGenericRepository<AspNetUser> _userRepository;
+        private readonly ResponseBase _responseBase;
 
         public AuthService(RoleManager<ApplicationRole> roleManager, UserManager<ApplicationUser> userManager,
-            IJwtUtils jwtUtils, SignInManager<ApplicationUser> signInManager)
+            IJwtUtils jwtUtils, SignInManager<ApplicationUser> signInManager, IUnitOfWork<ParkingDbContext> unitOfWork)
         {
             _mapper = MapperConfig.InitializeAutomapper();
             _response = new UserResponse();
@@ -39,26 +43,20 @@ namespace IWParkingAPI.Services.Implementation
             _signInManager = signInManager;
             _roleManager = roleManager;
             _jwtUtils = jwtUtils;
+            _userDTOResponse = new UserDTOResponse();
+            _unitOfWork = unitOfWork;
+            _userRepository = _unitOfWork.GetGenericRepository<AspNetUser>();
+            _responseBase = new ResponseBase();
         }
 
         public async Task<UserRegisterResponse> RegisterUser(UserRegisterRequest request)
         {
             try
             {
-                if (request == null || request.Name.Length == 0 || request.Surname.Length == 0 || request.Email.Length == 0 || request.Password.Length == 0
-                    || request.ConfirmPassword.Length == 0 || request.Phone.Length == 0 || request.Role.Length == 0)
-                {
-                    throw new BadRequestException("Name, Surname, Email, Password, Confirm Password, Phone and Role are required");
-                }
                 var user = await _userManager.FindByNameAsync(request.Email);
                 if (user != null)
                 {
                     throw new BadRequestException("User already exists");
-                }
-
-                if (request.Password != request.ConfirmPassword)
-                {
-                    throw new BadRequestException("Passwords do not match");
                 }
 
                 var role = await _roleManager.FindByNameAsync(request.Role);
@@ -102,10 +100,6 @@ namespace IWParkingAPI.Services.Implementation
         {
             try
             {
-                if (model == null || model.Email.Length == 0 || model.Password.Length == 0)
-                {
-                    throw new BadRequestException("Email and Password are required");
-                }
                 var user = await _userManager.FindByNameAsync(model.Email);
 
                 if (user == null)
@@ -143,16 +137,12 @@ namespace IWParkingAPI.Services.Implementation
             }
         }
 
-        public async Task<UserResponse> ChangePassword(UserResetPasswordRequest model)
+        public async Task<ResponseBase> ChangePassword(UserResetPasswordRequest model)
         {
             try
             {
-                if (model == null || model.Email.Length == 0 || model.OldPassword.Length == 0 || model.NewPassword.Length == 0 || model.ConfirmNewPassword.Length == 0)
-                {
-                    throw new BadRequestException("Email, Old Password, New Password and Confirm New Password are required");
-                }
                 var user = await _userManager.FindByNameAsync(model.Email);
-
+               // var userAspNet = _userRepository.GetAsQueryable(x => x.Email.Equals(model.Email), null, x => x.Include(y => y.Roles)).FirstOrDefault();
                 if (user == null)
                 {
                     throw new BadRequestException("User with that email doesn't exist");
@@ -170,11 +160,6 @@ namespace IWParkingAPI.Services.Implementation
                     throw new InternalErrorException("Unexpected error while generating reset token");
                 }
 
-                if (model.NewPassword != model.ConfirmNewPassword)
-                {
-                    throw new BadRequestException("New passwords don't match");
-                }
-
                 if (model.NewPassword == model.OldPassword || model.ConfirmNewPassword == model.OldPassword)
                 {
                     throw new BadRequestException("No updates were entered. Please enter the updates");
@@ -184,9 +169,14 @@ namespace IWParkingAPI.Services.Implementation
 
                 if (result.Succeeded)
                 {
-                    _response.Message = "User reset password successfully";
-                    _response.StatusCode = HttpStatusCode.OK;
-                    return _response;
+                   //userAspNet.TimeModified = DateTime.Now;
+                    //_userRepository.Update(userAspNet);
+                    //_unitOfWork.Save();
+                    //var userDto = _mapper.Map<UserDTO>(userAspNet);
+                    //_response.User = user;
+                    _responseBase.Message = "User reset password successfully";
+                    _responseBase.StatusCode = HttpStatusCode.OK;
+                    return _responseBase;
                 }
                 else
                 {
@@ -210,15 +200,10 @@ namespace IWParkingAPI.Services.Implementation
             }
         }
 
-        public async Task<UserResponse> ChangeEmail(UserChangeEmailRequest model)
+        public async Task<ResponseBase> ChangeEmail(UserChangeEmailRequest model)
         {
             try
             {
-                if (model == null || model.OldEmail.Length == 0 || model.NewEmail.Length == 0)
-                {
-                    throw new BadRequestException("Old Email and New Email are required");
-                }
-
                 var user = await _userManager.FindByNameAsync(model.OldEmail);
 
                 if (user == null)
@@ -231,13 +216,8 @@ namespace IWParkingAPI.Services.Implementation
                     throw new BadRequestException("The old email is incorrect");
                 }
 
-                if (model.OldEmail == model.NewEmail)
-                {
-                    throw new BadRequestException("No updates were entered. Please enter the updates");
-                }
-
-                var userwiththatusername = await _userManager.FindByNameAsync(model.NewEmail);
-                if (userwiththatusername != null)
+                var userWithThatUsername = await _userManager.FindByNameAsync(model.NewEmail);
+                if (userWithThatUsername != null)
                 {
                     throw new BadRequestException("Email is already taken");
                 }
@@ -251,9 +231,9 @@ namespace IWParkingAPI.Services.Implementation
                 var result = await _userManager.UpdateAsync(user);
                 if (result.Succeeded)
                 {
-                    _response.Message = "Email changed successfully!";
-                    _response.StatusCode = HttpStatusCode.OK;
-                    return _response;
+                    _responseBase.Message = "Email changed successfully!";
+                    _responseBase.StatusCode = HttpStatusCode.OK;
+                    return _responseBase;
                 }
                 else
                 {

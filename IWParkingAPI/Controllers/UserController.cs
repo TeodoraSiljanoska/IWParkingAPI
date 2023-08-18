@@ -1,4 +1,5 @@
 ﻿
+using IWParkingAPI.Fluent_Validations;
 using IWParkingAPI.Middleware.Authorization;
 using IWParkingAPI.Models;
 using IWParkingAPI.Models.Data;
@@ -31,21 +32,22 @@ namespace IWParkingAPI.Controllers
 
         [AuthorizeCustom(UserRoles.SuperAdmin, UserRoles.User)]
         [HttpGet("Get/{id}")]
-        public UserResponse GetUser(int id)
+        public UserDTOResponse GetUser(int id)
         {
             return _userService.GetUserById(id);
         }
 
         [AuthorizeCustom(UserRoles.User)]
         [HttpPut("Update/{id}")]
-        public UserResponse Update(int id, UpdateUserRequest changes)
+        [Validate]
+        public UserDTOResponse Update(int id, UpdateUserRequest changes)
         {
             return _userService.UpdateUser(id, changes);
         }
 
         [AuthorizeCustom(UserRoles.User)]
         [HttpDelete("Deactivate/{id}")]
-        public UserResponse Deactivate(int id)
+        public UserDTOResponse Deactivate(int id)
         {
             return _userService.DeactivateUser(id);
         }
