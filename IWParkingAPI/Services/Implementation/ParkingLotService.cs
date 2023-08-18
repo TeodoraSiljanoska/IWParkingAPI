@@ -129,12 +129,17 @@ namespace IWParkingAPI.Services.Implementation
                 {
                     throw new BadRequestException("Parking Lot with that name already exists");
                 }
-             
+                TimeSpan from;
+                TimeSpan to;
+                var resFrom = TimeSpan.TryParse(request.WorkingHourFrom, out from);
+                var resTo = TimeSpan.TryParse(request.WorkingHourTo, out to);
 
                 var parkingLot = _mapper.Map<ParkingLot>(request);
                 parkingLot.UserId = request.UserId;
                 parkingLot.TimeCreated = DateTime.Now;
                 parkingLot.Status = (int)Status.Pending;
+                parkingLot.WorkingHourTo = from;
+                parkingLot.WorkingHourTo = to;
                 _parkingLotRepository.Insert(parkingLot);
                 _unitOfWork.Save();
 
