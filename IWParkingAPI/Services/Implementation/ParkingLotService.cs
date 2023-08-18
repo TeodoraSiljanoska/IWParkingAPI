@@ -129,7 +129,7 @@ namespace IWParkingAPI.Services.Implementation
                 {
                     throw new BadRequestException("Parking Lot with that name already exists");
                 }
-             
+
 
                 var parkingLot = _mapper.Map<ParkingLot>(request);
                 parkingLot.UserId = request.UserId;

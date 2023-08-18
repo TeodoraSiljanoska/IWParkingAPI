@@ -31,25 +31,32 @@ namespace IWParkingAPI.Controllers
         }
 
         [AuthorizeCustom(UserRoles.SuperAdmin, UserRoles.User)]
-        [HttpGet("Get/{id}")]
-        public UserDTOResponse GetUser(int id)
+        [HttpGet("Get")]
+        public UserDTOResponse GetUser()
         {
-            return _userService.GetUserById(id);
+            return _userService.GetUserById();
         }
 
         [AuthorizeCustom(UserRoles.User)]
-        [HttpPut("Update/{id}")]
+        [HttpPut("Update")]
         [Validate]
-        public UserDTOResponse Update(int id, UpdateUserRequest changes)
+        public UserDTOResponse Update(UpdateUserRequest changes)
         {
-            return _userService.UpdateUser(id, changes);
+            return _userService.UpdateUser(changes);
         }
 
         [AuthorizeCustom(UserRoles.User)]
-        [HttpDelete("Deactivate/{id}")]
-        public UserDTOResponse Deactivate(int id)
+        [HttpDelete("Deactivate")]
+        public UserDTOResponse Deactivate()
         {
-            return _userService.DeactivateUser(id);
+            return _userService.DeactivateUser();
+        }
+
+        [AuthorizeCustom(UserRoles.SuperAdmin)]
+        [HttpDelete("Deactivate/{id}")]
+        public UserDTOResponse DeactivateUserAdmin(int id)
+        {
+            return _userService.DeactivateUserAdmin(id);
         }
     }
 }

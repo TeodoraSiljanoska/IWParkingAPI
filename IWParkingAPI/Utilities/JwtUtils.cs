@@ -34,13 +34,15 @@ namespace IWParkingAPI.Utilities
 
             var authClaims = new List<Claim>
             {
+                /// Not in use
                 //new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 //new Claim(ClaimTypes.Name, user.UserName),
-                new Claim("Id", user.Id.ToString()),
-                new Claim("Name", user.Name),
-                new Claim("Surname", user.Surname),
-                new Claim("Email", user.Email),
-                new Claim("Phone", user.PhoneNumber)
+                //new Claim("Name", user.Name),
+                //new Claim("Surname", user.Surname),
+                //new Claim("Email", user.Email),
+                //new Claim("Phone", user.PhoneNumber)
+
+                new Claim("Id", user.Id.ToString())
             };
 
             foreach (var userRole in userRoles)
