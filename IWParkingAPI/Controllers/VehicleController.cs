@@ -63,10 +63,10 @@ namespace IWParkingAPI.Controllers
         }
 
         [AuthorizeCustom(UserRoles.User)]
-        [HttpGet("GetByUserId/{userId}")]
-        public GetAllVehiclesByUserIdResponse GetVehiclesByUserId(int userId)
+        [HttpGet("GetByUserId")]
+        public GetAllVehiclesByUserIdResponse GetVehiclesByUserId()
         {
-            return _vehicleService.GetVehiclesByUserId(userId);
+            return _vehicleService.GetVehiclesByUserId();
         }
     }
 }

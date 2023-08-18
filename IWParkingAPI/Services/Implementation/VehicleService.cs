@@ -12,12 +12,15 @@ using IWParkingAPI.CustomExceptions;
 using NLog;
 using Microsoft.EntityFrameworkCore;
 //using System.Data.Entity;
+using IWParkingAPI.Utilities;
+using System.IdentityModel.Tokens.Jwt;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 namespace IWParkingAPI.Services.Implementation
 {
     public class VehicleService : IVehicleService
     {
-
         private readonly IMapper _mapper;
         private readonly IUnitOfWork<ParkingDbContext> _unitOfWork;
         private readonly IGenericRepository<Vehicle> _vehicleRepository;
@@ -25,18 +28,26 @@ namespace IWParkingAPI.Services.Implementation
         private readonly VehicleResponseDTO _responseDTO;
         private readonly GetVehiclesResponse _getResponse;
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IConfiguration _config;
+        private readonly IJWTDecode _jWTDecode;
         private readonly GetAllVehiclesByUserIdResponse _vehiclesByUserIdResponse;
         private readonly MakeVehiclePrimaryResponse _makePrimaryResponse;
 
 
-        public VehicleService(IUnitOfWork<ParkingDbContext> unitOfWork)
+
+        public VehicleService(IConfiguration configuration, IUnitOfWork<ParkingDbContext> unitOfWork, IUnitOfWork<ParkingDbContextCustom> custom, IHttpContextAccessor httpContextAccessor, IConfiguration config,
+            IJWTDecode jWTDecode)
         {
+            _config = config;
             _mapper = MapperConfig.InitializeAutomapper();
             _unitOfWork = unitOfWork;
             _vehicleRepository = _unitOfWork.GetGenericRepository<Vehicle>();
             _userRepository = _unitOfWork.GetGenericRepository<AspNetUser>();
             _responseDTO = new VehicleResponseDTO();
             _getResponse = new GetVehiclesResponse();
+            _httpContextAccessor = httpContextAccessor;
+            _jWTDecode = jWTDecode;
             _vehiclesByUserIdResponse = new GetAllVehiclesByUserIdResponse();
             _makePrimaryResponse = new MakeVehiclePrimaryResponse();
         }
@@ -55,8 +66,10 @@ namespace IWParkingAPI.Services.Implementation
                     return _getResponse;
                 }
                 var GetAllVehiclesDTOList = new List<VehicleDTO>();
+               
                 foreach (var p in vehicles)
                 {
+                    if (p.User.IsDeactivated == false)
                     GetAllVehiclesDTOList.Add(_mapper.Map<VehicleDTO>(p));
                 }
                
@@ -297,15 +310,16 @@ namespace IWParkingAPI.Services.Implementation
             }
         }
 
-        public GetAllVehiclesByUserIdResponse GetVehiclesByUserId(int userId)
+        public GetAllVehiclesByUserIdResponse GetVehiclesByUserId()
         {
             try
             {
-                if (userId <= 0)
-                {
-                    throw new BadRequestException("User Id is required");
-                }
-
+                var userId = Convert.ToInt32(_jWTDecode.ExtractUserIdFromToken());
+               /*  if (userId <= 0)
+                  {
+                      throw new BadRequestException("User Id is required");
+                  }
+                */
                 var user = _userRepository.GetById(userId);
                 if (user == null || user.IsDeactivated == true)
                 {
@@ -418,5 +432,6 @@ namespace IWParkingAPI.Services.Implementation
                 throw new InternalErrorException("Unexpected error while making Vehicle primary");
             }
         }
+       
     }
 }

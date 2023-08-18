@@ -16,6 +16,9 @@ namespace IWParkingAPI.Utilities
         private readonly UserLoginResponse userLoginResponse;
         private readonly TokenValidationResponse tokenValidationResponse;
         private readonly string secretKey;
+     
+
+       
         public JwtUtils(IConfiguration configuration, UserManager<ApplicationUser> userManager)
         {
             _config = configuration;
@@ -23,7 +26,8 @@ namespace IWParkingAPI.Utilities
             userLoginResponse = new UserLoginResponse();
             tokenValidationResponse = new TokenValidationResponse();
             secretKey = _config["Jwt:Key"];
-    }
+
+        }
         public async Task<UserLoginResponse> GenerateToken(ApplicationUser user)
         {
             var userRoles = await _userManager.GetRolesAsync(user);

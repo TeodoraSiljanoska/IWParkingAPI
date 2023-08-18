@@ -19,8 +19,6 @@ namespace IWParkingAPI.Services.Implementation
     {
 
         private readonly IMapper _mapper;
-        private readonly UserResponse _response;
-        private readonly UserLoginResponse _loginResponse;
         private readonly UserRegisterResponse _registerResponse;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
@@ -36,9 +34,7 @@ namespace IWParkingAPI.Services.Implementation
             IJwtUtils jwtUtils, SignInManager<ApplicationUser> signInManager, IUnitOfWork<ParkingDbContext> unitOfWork)
         {
             _mapper = MapperConfig.InitializeAutomapper();
-            _response = new UserResponse();
             _registerResponse = new UserRegisterResponse();
-            _loginResponse = new UserLoginResponse();
             _userManager = userManager;
             _signInManager = signInManager;
             _roleManager = roleManager;
