@@ -16,6 +16,7 @@ using IWParkingAPI.Utilities;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using IWParkingAPI.Models;
 
 namespace IWParkingAPI.Services.Implementation
 {
@@ -315,11 +316,6 @@ namespace IWParkingAPI.Services.Implementation
             try
             {
                 var userId = Convert.ToInt32(_jWTDecode.ExtractUserIdFromToken());
-               /*  if (userId <= 0)
-                  {
-                      throw new BadRequestException("User Id is required");
-                  }
-                */
                 var user = _userRepository.GetById(userId);
                 if (user == null || user.IsDeactivated == true)
                 {

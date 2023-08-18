@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using IWParkingAPI.Models;
 using IWParkingAPI.Models.Data;
 using IWParkingAPI.Models.Requests;
 using IWParkingAPI.Models.Responses;
@@ -90,8 +91,7 @@ namespace IWParkingAPI.Mappers
               .ForMember(dest => dest.WorkingHourTo, opt => opt.MapFrom(src => src.WorkingHourTo))
               .ForMember(dest => dest.CapacityCar, opt => opt.MapFrom(src => src.CapacityCar))
               .ForMember(dest => dest.CapacityAdaptedCar, opt => opt.MapFrom(src => src.CapacityAdaptedCar))
-              .ForMember(dest => dest.Price, opt => opt.MapFrom(src => src.Price))
-              .ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.UserId));
+              .ForMember(dest => dest.Price, opt => opt.MapFrom(src => src.Price));
 
                 cfg.CreateMap<ParkingLot, ParkingLotDTO>()
              .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name))
@@ -109,7 +109,7 @@ namespace IWParkingAPI.Mappers
              .ForMember(dest => dest.TimeModified, opt => opt.MapFrom(src => src.TimeModified))
              .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status));
 
-                cfg.CreateMap<Models.Data.ParkingLotRequest, RequestDTO>()
+                cfg.CreateMap<ParkingLotRequest, RequestDTO>()
                 .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
                 .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status))
                 .ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.UserId))

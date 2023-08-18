@@ -7,12 +7,13 @@ using IWParkingAPI.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using System.Net;
 using AutoMapper;
-using ParkingLotRequest = IWParkingAPI.Models.Data.ParkingLotRequest;
+//using ParkingLotRequest = IWParkingAPI.Models.Data.ParkingLotRequest;
 using IWParkingAPI.Models.Context;
 using static IWParkingAPI.Models.Enums.Enums;
 using IWParkingAPI.Models.Data;
 using IWParkingAPI.CustomExceptions;
 using NLog;
+using IWParkingAPI.Models;
 
 namespace IWParkingAPI.Services.Implementation
 {
@@ -102,10 +103,15 @@ namespace IWParkingAPI.Services.Implementation
                 {
                     throw new NotFoundException("Parking lot not found");
                 }
+                if((int)enumValue == (int)Status.Approved && req.Type == (int)RequestType.Deactivate)
+                {
+                    parkingLot.IsDeactivated = true;
+                    _parkingLotRepository.Update(parkingLot);
+                    _unitOfWork.Save();
+                }
 
                 req.Status = (int)enumValue;
                 req.TimeCreated = DateTime.Now;
-
                 parkingLot.Status = (int)enumValue;
                 parkingLot.TimeModified = DateTime.Now;
 

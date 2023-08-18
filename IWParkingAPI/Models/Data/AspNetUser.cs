@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text.Json.Serialization;
 
-namespace IWParkingAPI.Models.Data;
+namespace IWParkingAPI.Models;
 
 public partial class AspNetUser
 {
@@ -60,8 +59,7 @@ public partial class AspNetUser
 
     public virtual ICollection<Vehicle> Vehicles { get; set; } = new List<Vehicle>();
 
-   public virtual ICollection<ParkingLot> ParkingLotsNavigation { get; set; } = new List<ParkingLot>();
+    public virtual ICollection<ParkingLot> ParkingLotsNavigation { get; set; } = new List<ParkingLot>();
 
     public virtual ICollection<AspNetRole> Roles { get; set; } = new List<AspNetRole>();
- 
 }

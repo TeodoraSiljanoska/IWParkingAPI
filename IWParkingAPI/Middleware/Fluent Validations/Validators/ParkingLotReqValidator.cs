@@ -73,9 +73,9 @@ namespace IWParkingAPI.Fluent_Validations.Validators
                 .LessThan(60)
                 .WithMessage("Invalid WorkingHoursTo: Seconds should be greater than or equal to 0 and less than 60");
 
-            RuleFor(x => x.UserId)
+       /*     RuleFor(x => x.UserId)
                 .NotEmpty().WithMessage("UserId is required")
-                .GreaterThan(0).WithMessage("UserId should be greater than 0");
+                .GreaterThan(0).WithMessage("UserId should be greater than 0"); */
         }
     }
 }
