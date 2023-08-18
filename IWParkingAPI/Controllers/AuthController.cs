@@ -33,14 +33,14 @@ namespace IWParkingAPI.Controllers
 
         [HttpPost("ChangePassword")]
         [Validate]
-        public Task<UserResponse> ChangePassword([FromBody] UserResetPasswordRequest request)
+        public Task<ResponseBase> ChangePassword([FromBody] UserResetPasswordRequest request)
         {
             return _authService.ChangePassword(request);
         }
 
         [HttpPost("ChangeEmail")]
         [Validate]
-        public Task<UserResponse> ChangeEmail([FromBody] UserChangeEmailRequest request)
+        public Task<ResponseBase> ChangeEmail([FromBody] UserChangeEmailRequest request)
         {
             return _authService.ChangeEmail(request);
         }

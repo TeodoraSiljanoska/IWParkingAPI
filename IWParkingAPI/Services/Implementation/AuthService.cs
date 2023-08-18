@@ -30,6 +30,7 @@ namespace IWParkingAPI.Services.Implementation
         private readonly UserDTOResponse _userDTOResponse;
         private readonly IUnitOfWork<ParkingDbContext> _unitOfWork;
         private readonly IGenericRepository<AspNetUser> _userRepository;
+        private readonly ResponseBase _responseBase;
 
         public AuthService(RoleManager<ApplicationRole> roleManager, UserManager<ApplicationUser> userManager,
             IJwtUtils jwtUtils, SignInManager<ApplicationUser> signInManager, IUnitOfWork<ParkingDbContext> unitOfWork)
@@ -45,6 +46,7 @@ namespace IWParkingAPI.Services.Implementation
             _userDTOResponse = new UserDTOResponse();
             _unitOfWork = unitOfWork;
             _userRepository = _unitOfWork.GetGenericRepository<AspNetUser>();
+            _responseBase = new ResponseBase();
         }
 
         public async Task<UserRegisterResponse> RegisterUser(UserRegisterRequest request)
@@ -135,7 +137,7 @@ namespace IWParkingAPI.Services.Implementation
             }
         }
 
-        public async Task<UserResponse> ChangePassword(UserResetPasswordRequest model)
+        public async Task<ResponseBase> ChangePassword(UserResetPasswordRequest model)
         {
             try
             {
@@ -172,9 +174,9 @@ namespace IWParkingAPI.Services.Implementation
                     //_unitOfWork.Save();
                     //var userDto = _mapper.Map<UserDTO>(userAspNet);
                     //_response.User = user;
-                    _response.Message = "User reset password successfully";
-                    _response.StatusCode = HttpStatusCode.OK;
-                    return _response;
+                    _responseBase.Message = "User reset password successfully";
+                    _responseBase.StatusCode = HttpStatusCode.OK;
+                    return _responseBase;
                 }
                 else
                 {
@@ -198,7 +200,7 @@ namespace IWParkingAPI.Services.Implementation
             }
         }
 
-        public async Task<UserResponse> ChangeEmail(UserChangeEmailRequest model)
+        public async Task<ResponseBase> ChangeEmail(UserChangeEmailRequest model)
         {
             try
             {
@@ -229,9 +231,9 @@ namespace IWParkingAPI.Services.Implementation
                 var result = await _userManager.UpdateAsync(user);
                 if (result.Succeeded)
                 {
-                    _response.Message = "Email changed successfully!";
-                    _response.StatusCode = HttpStatusCode.OK;
-                    return _response;
+                    _responseBase.Message = "Email changed successfully!";
+                    _responseBase.StatusCode = HttpStatusCode.OK;
+                    return _responseBase;
                 }
                 else
                 {

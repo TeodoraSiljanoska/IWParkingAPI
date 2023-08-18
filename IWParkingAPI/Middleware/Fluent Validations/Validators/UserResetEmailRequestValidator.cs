@@ -8,12 +8,12 @@ namespace IWParkingAPI.Middleware.Fluent_Validations.Validators
         public UserResetEmailRequestValidator() 
         {
             RuleFor(x => x.OldEmail)
-                .NotEmpty().WithMessage("Old email is required");
+                .NotEmpty().WithMessage("Old Email address is required");
 
             RuleFor(x => x.NewEmail)
-                .NotEmpty().WithMessage("New email is required")
-                .NotEqual(x => x.OldEmail).WithMessage("Old email and new email should not be equal")
-                .EmailAddress().WithMessage("Email address is invalid");
+                .NotEmpty().WithMessage("New Email address is required")
+                .NotEqual(x => x.OldEmail).WithMessage("Old Email address and new Email address should not be equal")
+                .EmailAddress().WithMessage("New Email address is invalid");
         }
     }
 }
