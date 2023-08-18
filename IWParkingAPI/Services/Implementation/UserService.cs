@@ -40,14 +40,14 @@ public class UserService : IUserService
             {
                 _getResponse.StatusCode = HttpStatusCode.OK;
                 _getResponse.Message = "There aren't any users";
-                _getResponse.Users = Enumerable.Empty<UserDTO>();
+                _getResponse.Users = Enumerable.Empty<UserDataDTO>();
                 return _getResponse;
             }
 
-            var UserDTOList = new List<UserDTO>();
+            var UserDTOList = new List<UserDataDTO>();
             foreach (var user in users)
             {
-                UserDTOList.Add(_mapper.Map<UserDTO>(user));
+                UserDTOList.Add(_mapper.Map<UserDataDTO>(user));
             }
 
             _getResponse.StatusCode = HttpStatusCode.OK;

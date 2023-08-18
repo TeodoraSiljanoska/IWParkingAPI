@@ -116,7 +116,7 @@ namespace IWParkingAPI.Mappers
                 .ForMember(dest => dest.PhoneNumber, opt => opt.MapFrom(src => src.PhoneNumber))
                 .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Email));
 
-                cfg.CreateMap<AspNetUser, UserDTO>()
+                cfg.CreateMap<AspNetUser, UserDataDTO>()
                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
                .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.UserName))
                .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name))

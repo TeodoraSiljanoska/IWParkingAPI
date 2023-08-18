@@ -66,8 +66,10 @@ namespace IWParkingAPI.Services.Implementation
                     return _getResponse;
                 }
                 var GetAllVehiclesDTOList = new List<VehicleDTO>();
+               
                 foreach (var p in vehicles)
                 {
+                    if (p.User.IsDeactivated == false)
                     GetAllVehiclesDTOList.Add(_mapper.Map<VehicleDTO>(p));
                 }
                

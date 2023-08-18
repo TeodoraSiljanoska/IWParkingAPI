@@ -1,6 +1,6 @@
 ﻿namespace IWParkingAPI.Models.Responses
 {
-    public class UserDTO
+    public class UserDataDTO
     {
         public int Id { get; set; }
         public string? UserName { get; set; }
