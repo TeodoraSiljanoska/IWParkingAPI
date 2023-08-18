@@ -7,7 +7,7 @@ namespace IWParkingAPI.Services.Interfaces
     {
         Task<UserRegisterResponse> RegisterUser(UserRegisterRequest request);
         Task<UserLoginResponse> LoginUser(UserLoginRequest model);
-        Task<UserResponse> ChangePassword(UserResetPasswordRequest request);
-        Task<UserResponse> ChangeEmail(UserChangeEmailRequest request);
+        Task<ResponseBase> ChangePassword(UserResetPasswordRequest request);
+        Task<ResponseBase> ChangeEmail(UserChangeEmailRequest request);
     }
 }

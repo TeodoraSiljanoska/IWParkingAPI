@@ -33,8 +33,15 @@ namespace IWParkingAPI.Fluent_Validations
             services.AddSingleton<IValidator<VehicleRequest>, AddNewVehicleValidator>();
             services.AddSingleton<IValidator<UpdateVehicleRequest>, UpdateVehicleRequestValidator>();
 
+            services.AddSingleton<IValidator<RoleRequest>, RoleRequestValidator>();
 
+            services.AddSingleton<IValidator<RequestRequest>, RequestRequestValidator>();
 
+            services.AddSingleton<IValidator<UpdateUserRequest>, UpdateUserRequestValidator>();
+            services.AddSingleton<IValidator<UserRegisterRequest>, UserRegisterRequestValidator>();
+            services.AddSingleton<IValidator<UserLoginRequest>, UserLoginRequestValidator>();
+            services.AddSingleton<IValidator<UserResetPasswordRequest>, UserResetPasswordRequestValidator>();
+            services.AddSingleton<IValidator<UserChangeEmailRequest>, UserResetEmailRequestValidator>();
             return services;
         }
     }

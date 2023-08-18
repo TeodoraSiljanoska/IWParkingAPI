@@ -1,4 +1,5 @@
-﻿using IWParkingAPI.Middleware.Authorization;
+﻿using IWParkingAPI.Fluent_Validations;
+using IWParkingAPI.Middleware.Authorization;
 using IWParkingAPI.Models;
 using IWParkingAPI.Models.Data;
 using IWParkingAPI.Models.Requests;
@@ -34,12 +35,14 @@ namespace IWParkingAPI.Controllers
         }
 
         [HttpPost("Create")]
+        [Validate]
         public RoleResponse Create(RoleRequest request)
         {
             return _roleService.CreateRole(request);
         }
 
         [HttpPut("Update/{id}")]
+        [Validate]
         public RoleResponse Update(int id, RoleRequest changes)
         {
             return _roleService.UpdateRole(id, changes);

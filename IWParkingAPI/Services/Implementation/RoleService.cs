@@ -95,10 +95,6 @@ namespace IWParkingAPI.Services.Implementation
         {
             try
             {
-                if (request == null || request.Name.Length == 0)
-                {
-                    throw new BadRequestException("Role name is required");
-                }
                 if (_roleRepository.FindByPredicate(u => u.Name == request.Name))
                 {
                     throw new BadRequestException("Role already exists");
@@ -134,11 +130,6 @@ namespace IWParkingAPI.Services.Implementation
                 if (id <= 0)
                 {
                     throw new BadRequestException("Role Id is required");
-                }
-
-                if (changes == null || changes.Name.Length == 0)
-                {
-                    throw new BadRequestException("Role Name is required");
                 }
 
                 ApplicationRole role = _roleRepository.GetById(id);

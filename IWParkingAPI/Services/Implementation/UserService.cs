@@ -18,6 +18,7 @@ public class UserService : IUserService
     private readonly IGenericRepository<AspNetUser> _userRepository;
     private readonly UserResponse _response;
     private readonly GetUsersDTOResponse _getResponse;
+    private readonly UserDTOResponse _userDTOResponse;
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
     private readonly IMapper _mapper;
 
@@ -27,6 +28,7 @@ public class UserService : IUserService
         _userRepository = _unitOfWork.GetGenericRepository<AspNetUser>();
         _response = new UserResponse();
         _getResponse = new GetUsersDTOResponse();
+        _userDTOResponse = new UserDTOResponse();
         _mapper = MapperConfig.InitializeAutomapper();
     }
 
@@ -62,7 +64,7 @@ public class UserService : IUserService
         }
     }
 
-    public UserResponse GetUserById(int id)
+    public UserDTOResponse GetUserById(int id)
     {
         try
         {
@@ -71,17 +73,19 @@ public class UserService : IUserService
                 throw new BadRequestException("User Id is required");
             }
 
-            AspNetUser user = _userRepository.GetById(id);
+            var user = _userRepository.GetAsQueryable(u => u.Id == id, null, x => x.Include(y => y.Roles)).FirstOrDefault();
 
             if (user == null)
             {
                 throw new NotFoundException("User not found");
             }
 
-            _response.User = user;
-            _response.StatusCode = HttpStatusCode.OK;
-            _response.Message = "User returned successfully";
-            return _response;
+            var userDto = _mapper.Map<UserDTO>(user);
+
+            _userDTOResponse.User = userDto;
+            _userDTOResponse.StatusCode = HttpStatusCode.OK;
+            _userDTOResponse.Message = "User returned successfully";
+            return _userDTOResponse;
         }
         catch (BadRequestException ex)
         {
@@ -100,17 +104,11 @@ public class UserService : IUserService
         }
     }
 
-    public UserResponse UpdateUser(int id, UpdateUserRequest changes)
+    public UserDTOResponse UpdateUser(int id, UpdateUserRequest changes)
     {
         try
         {
-            if (id <= 0 || changes.Name == null || changes.Name.Length == 0 || changes.Surname == null || changes.Surname.Length == 0 ||
-                changes.Email == null || changes.Email.Length == 0 || changes.PhoneNumber == null || changes.PhoneNumber.Length == 0)
-            {
-                throw new BadRequestException("User Id, Name, Surname, Email and Phone number are required");
-            }
-
-            var user = _userRepository.GetById(id);
+            var user = _userRepository.GetAsQueryable(u => u.Id == id, null, x => x.Include(y => y.Roles)).FirstOrDefault();
             if (user == null || user.IsDeactivated == true)
             {
                 throw new NotFoundException("User not found");
@@ -141,11 +139,13 @@ public class UserService : IUserService
             _userRepository.Update(user);
             _unitOfWork.Save();
 
-            _response.User = user;
-            _response.StatusCode = HttpStatusCode.OK;
-            _response.Message = "User updated successfully";
+            var userDto = _mapper.Map<UserDTO>(user);
 
-            return _response;
+            _userDTOResponse.User = userDto;
+            _userDTOResponse.StatusCode = HttpStatusCode.OK;
+            _userDTOResponse.Message = "User updated successfully";
+
+            return _userDTOResponse;
         }
         catch (BadRequestException ex)
         {
@@ -170,7 +170,7 @@ public class UserService : IUserService
 
     }
 
-    public UserResponse DeactivateUser(int id)
+    public UserDTOResponse DeactivateUser(int id)
     {
         try
         {
@@ -179,10 +179,16 @@ public class UserService : IUserService
                 throw new BadRequestException("User Id is required");
             }
 
-            var user = _userRepository.GetById(id);
-            if (user == null || user.IsDeactivated == true)
+            var user = _userRepository.GetAsQueryable(u => u.Id == id, null, x => x.Include(y => y.Roles)).FirstOrDefault();
+
+            if (user == null)
             {
                 throw new NotFoundException("User not found");
+            }
+
+            if (user.IsDeactivated == true)
+            {
+                throw new BadRequestException("User is already deactivated");
             }
 
             user.IsDeactivated = true;
@@ -190,11 +196,14 @@ public class UserService : IUserService
             _userRepository.Update(user);
             _unitOfWork.Save();
 
-            _response.User = user;
-            _response.StatusCode = HttpStatusCode.OK;
-            _response.Message = "User deactivated successfully";
+            var userDto = _mapper.Map<UserDTO>(user);
+            userDto.IsDeactivated = true;
 
-            return _response;
+            _userDTOResponse.User = userDto;
+            _userDTOResponse.StatusCode = HttpStatusCode.OK;
+            _userDTOResponse.Message = "User deactivated successfully";
+
+            return _userDTOResponse;
         }
         catch (BadRequestException ex)
         {
