@@ -51,7 +51,27 @@ namespace IWParkingAPI.Services.Implementation
         {
             try
             {
-                var parkingLots = _parkingLotRepository.GetAsQueryable(x => x.Status == ((int)Status.Approved)).ToList();
+                var userId = Convert.ToInt32(_jWTDecode.ExtractUserIdFromToken());
+                var role = _jWTDecode.ExtractRoleFromToken();
+
+                List<ParkingLot> parkingLots;
+                if (userId == 0 || role.Equals(UserRoles.User))
+                {
+                    parkingLots = _parkingLotRepository.GetAsQueryable(x => x.Status == ((int)Status.Approved)).ToList();
+                }
+                else if (role.Equals(UserRoles.Owner))
+                {
+                    parkingLots = _parkingLotRepository.GetAsQueryable(x => x.UserId == userId).ToList();
+                }
+                else if (role.Equals(UserRoles.SuperAdmin))
+                {
+                    parkingLots = _parkingLotRepository.GetAsQueryable().ToList();
+                }
+                else
+                {
+                    parkingLots = _parkingLotRepository.GetAsQueryable(x => x.Status == ((int)Status.Approved)).ToList();
+                }
+
                 if (!parkingLots.Any())
                 {
                     _getResponse.StatusCode = HttpStatusCode.OK;
@@ -126,7 +146,8 @@ namespace IWParkingAPI.Services.Implementation
                 {
                     throw new BadRequestException("Parking Lot with that name already exists");
                 }
-            
+
+
                 var parkingLot = _mapper.Map<ParkingLot>(request);
                 parkingLot.UserId = userId;
                 parkingLot.User = existinguser;

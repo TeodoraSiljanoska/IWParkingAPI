@@ -90,7 +90,8 @@ namespace IWParkingAPI.Services.Implementation
         {
             try
             {
-                var existingUser = _userRepository.GetAsQueryable(u => u.Id == request.UserId, null, null).FirstOrDefault();
+                var userId = Convert.ToInt32(_jWTDecode.ExtractUserIdFromToken());
+                var existingUser = _userRepository.GetAsQueryable(u => u.Id == userId, null, null).FirstOrDefault();
 
                 if (existingUser == null || existingUser.IsDeactivated == true)
                 {
@@ -105,7 +106,7 @@ namespace IWParkingAPI.Services.Implementation
 
                 var vehicle = _mapper.Map<Vehicle>(request);
 
-                var vehiclesOfTheUser = _vehicleRepository.GetAsQueryable(v => v.UserId == request.UserId).ToList();
+                var vehiclesOfTheUser = _vehicleRepository.GetAsQueryable(v => v.UserId == userId).ToList();
                 if (vehiclesOfTheUser.Count() == 0)
                 {
                     vehicle.IsPrimary = true;
@@ -361,13 +362,14 @@ namespace IWParkingAPI.Services.Implementation
 
         }
 
-        public MakeVehiclePrimaryResponse MakeVehiclePrimary(int userId, int vehicleId)
+        public MakeVehiclePrimaryResponse MakeVehiclePrimary(int vehicleId)
         {
             try
             {
-                if (userId <= 0 || vehicleId <= 0)
+                var userId = Convert.ToInt32(_jWTDecode.ExtractUserIdFromToken());
+                if (vehicleId <= 0)
                 {
-                    throw new BadRequestException("User Id and Vehicle Id are required");
+                    throw new BadRequestException("Vehicle Id is required");
                 }
 
                 Vehicle vehicle = _vehicleRepository.GetById(vehicleId);

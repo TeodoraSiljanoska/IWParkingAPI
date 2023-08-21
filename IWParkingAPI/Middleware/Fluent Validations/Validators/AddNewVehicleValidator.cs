@@ -7,10 +7,6 @@ namespace IWParkingAPI.Middleware.Fluent_Validations.Validators
     {
         public AddNewVehicleValidator()
         {
-            RuleFor(x => x.UserId)
-               .NotEmpty().WithMessage("UserId is required")
-               .GreaterThan(0).WithMessage("UserId should be greater than 0");
-
             RuleFor(x => x.PlateNumber)
                .NotEmpty().WithMessage("PlateNumber is required")
                .Matches("^(?=.*[A-Z])(?=.*[0-9])[A-Z0-9]+$");
