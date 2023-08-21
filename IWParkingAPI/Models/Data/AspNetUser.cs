@@ -57,6 +57,8 @@ public partial class AspNetUser
 
     public virtual ICollection<Reservation> Reservations { get; set; } = new List<Reservation>();
 
+    public virtual ICollection<TempParkingLot> TempParkingLots { get; set; } = new List<TempParkingLot>();
+
     public virtual ICollection<Vehicle> Vehicles { get; set; } = new List<Vehicle>();
 
     public virtual ICollection<ParkingLot> ParkingLotsNavigation { get; set; } = new List<ParkingLot>();

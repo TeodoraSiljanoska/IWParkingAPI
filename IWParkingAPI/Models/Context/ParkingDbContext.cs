@@ -35,6 +35,8 @@ public partial class ParkingDbContext : DbContext
 
     public virtual DbSet<Reservation> Reservations { get; set; }
 
+    public virtual DbSet<TempParkingLot> TempParkingLots { get; set; }
+
     public virtual DbSet<Vehicle> Vehicles { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -171,7 +173,7 @@ public partial class ParkingDbContext : DbContext
             entity.Property(e => e.Type).HasDefaultValueSql("((1))");
             entity.Property(e => e.UserId).HasColumnName("User_Id");
 
-            entity.HasOne(d => d.ParkingLot).WithMany(p => p.ParkingLotRequests)
+            entity.HasOne(d => d.TempParkingLot).WithMany(p => p.ParkingLotRequests)
                 .HasForeignKey(d => d.ParkingLotId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Request.Parking_Lot_Id");
@@ -230,6 +232,34 @@ public partial class ParkingDbContext : DbContext
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Reservation.User_Id");
+        });
+
+        modelBuilder.Entity<TempParkingLot>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__TempPark__3214EC07F64E9621");
+
+            entity.ToTable("TempParkingLot");
+
+            entity.Property(e => e.Address).HasMaxLength(20);
+            entity.Property(e => e.CapacityAdaptedCar).HasColumnName("Capacity_Adapted_Car");
+            entity.Property(e => e.CapacityCar).HasColumnName("Capacity_Car");
+            entity.Property(e => e.City).HasMaxLength(20);
+            entity.Property(e => e.IsDeactivated)
+                .IsRequired()
+                .HasDefaultValueSql("('False')");
+            entity.Property(e => e.Name).HasMaxLength(20);
+            entity.Property(e => e.Status).HasDefaultValueSql("((1))");
+            entity.Property(e => e.TimeCreated).HasColumnType("datetime");
+            entity.Property(e => e.TimeModified).HasColumnType("datetime");
+            entity.Property(e => e.UserId).HasColumnName("User_Id");
+            entity.Property(e => e.WorkingHourFrom).HasColumnName("Working_Hour_From");
+            entity.Property(e => e.WorkingHourTo).HasColumnName("Working_Hour_To");
+            entity.Property(e => e.Zone).HasMaxLength(20);
+
+            entity.HasOne(d => d.User).WithMany(p => p.TempParkingLots)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_TempParking Lot.User_Id");
         });
 
         modelBuilder.Entity<Vehicle>(entity =>

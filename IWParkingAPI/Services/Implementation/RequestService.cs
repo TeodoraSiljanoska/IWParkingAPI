@@ -22,6 +22,7 @@ namespace IWParkingAPI.Services.Implementation
         private readonly IUnitOfWork<ParkingDbContext> _unitOfWork;
         private readonly IGenericRepository<ParkingLotRequest> _requestRepository;
         private readonly IGenericRepository<ParkingLot> _parkingLotRepository;
+        private readonly IGenericRepository<TempParkingLot> _tempParkingLotRepository;
         private readonly RequestResponse _response;
         private readonly GetAllParkingLotRequestsResponse _allRequestsResponse;
         private readonly IMapper _mapper;
@@ -33,6 +34,7 @@ namespace IWParkingAPI.Services.Implementation
             _unitOfWork = unitOfWork;
             _requestRepository = _unitOfWork.GetGenericRepository<ParkingLotRequest>();
             _parkingLotRepository = _unitOfWork.GetGenericRepository<ParkingLot>();
+            _tempParkingLotRepository = _unitOfWork.GetGenericRepository<TempParkingLot>();
             _response = new RequestResponse();
             _allRequestsResponse = new GetAllParkingLotRequestsResponse();
             _mapper = MapperConfig.InitializeAutomapper();
@@ -104,10 +106,29 @@ namespace IWParkingAPI.Services.Implementation
                     throw new NotFoundException("Parking lot not found");
                 }
 
-                if((int)enumValue == (int)Status.Approved && req.Type == (int)RequestType.Deactivate)
+                if ((int)enumValue == (int)Status.Approved && req.Type == (int)RequestType.Activate)
+                {
+                  var tempParkingLot = _tempParkingLotRepository.GetAsQueryable(p => p.Id == req.ParkingLotId && p.UserId == req.UserId, null, x => x.Include(y => y.User)).FirstOrDefault();
+                    _parkingLotRepository.Insert(_mapper.Map<ParkingLot>(tempParkingLot));
+                    // _unitOfWork.Save();
+
+                    _requestRepository.Delete(req);
+                    _unitOfWork.Save();
+                }
+
+                if ((int)enumValue == (int)Status.Declined && req.Type == (int)RequestType.Activate)
+                {
+                    var tempParkingLot = _tempParkingLotRepository.GetAsQueryable(p => p.Id == req.ParkingLotId && p.UserId == req.UserId, null, x => x.Include(y => y.User)).FirstOrDefault();
+                    _tempParkingLotRepository.Delete(tempParkingLot);
+
+                    _requestRepository.Delete(req);
+                    _unitOfWork.Save();
+                }
+
+                if ((int)enumValue == (int)Status.Approved && req.Type == (int)RequestType.Deactivate)
                 {
                     parkingLot.IsDeactivated = true;
-                    _parkingLotRepository.Update(parkingLot);
+                    _parkingLotRepository.Update(_mapper.Map<ParkingLot>(parkingLot));
                    // _unitOfWork.Save();
 
                     _requestRepository.Delete(req);
@@ -121,18 +142,38 @@ namespace IWParkingAPI.Services.Implementation
                 }
 
 
-                if((int)enumValue == (int)Status.Approved && req.Type == (int)RequestType.Activate)
+                if((int)enumValue == (int)Status.Approved && req.Type == (int)RequestType.Update)
                 {
+                    var ParkingLot = _parkingLotRepository.GetAsQueryable(p => p.Id == req.ParkingLotId && p.UserId == req.UserId, null, x => x.Include(y => y.User)).FirstOrDefault();
+                    var tempParkingLot = _tempParkingLotRepository.GetAsQueryable(p => p.Id == req.ParkingLotId && p.UserId == req.UserId, null, x => x.Include(y => y.User)).FirstOrDefault();
+
+
+                    ParkingLot.Name = (ParkingLot.Name == tempParkingLot.Name) ? ParkingLot.Name : tempParkingLot.Name;
+                    ParkingLot.City = (ParkingLot.City == tempParkingLot.City) ? ParkingLot.City : tempParkingLot.City;
+                    ParkingLot.Zone = (ParkingLot.Zone == tempParkingLot.Zone) ? ParkingLot.Zone : tempParkingLot.Zone;
+                    ParkingLot.Address = (ParkingLot.Address == tempParkingLot.Address) ? ParkingLot.Address : tempParkingLot.Address;
+                    ParkingLot.City = (ParkingLot.City == tempParkingLot.City) ? ParkingLot.City : tempParkingLot.City;
+                    ParkingLot.WorkingHourFrom = (ParkingLot.WorkingHourFrom == tempParkingLot.WorkingHourFrom) ? ParkingLot.WorkingHourFrom : tempParkingLot.WorkingHourFrom;
+                    ParkingLot.WorkingHourTo = (ParkingLot.WorkingHourTo == tempParkingLot.WorkingHourTo) ? ParkingLot.WorkingHourTo : tempParkingLot.WorkingHourTo;
+                    ParkingLot.CapacityCar = (ParkingLot.CapacityCar == tempParkingLot.CapacityCar) ? ParkingLot.CapacityCar : tempParkingLot.CapacityCar;
+                    ParkingLot.CapacityAdaptedCar = (ParkingLot.CapacityAdaptedCar == tempParkingLot.CapacityAdaptedCar) ? ParkingLot.CapacityAdaptedCar : tempParkingLot.CapacityAdaptedCar;
+                    ParkingLot.Price = (ParkingLot.Price == tempParkingLot.Price) ? ParkingLot.Price : tempParkingLot.Price;
+                   // ParkingLot.User = _userRepository.GetAsQueryable(u => u.Id == userId, null, null).FirstOrDefault();
+                    ParkingLot.TimeModified = DateTime.Now;
+
+                    parkingLot.Status = (int)Status.Pending;
+
+
                     parkingLot.Status = (int)Status.Approved;
-                    _parkingLotRepository.Update(parkingLot);
+                    _parkingLotRepository.Update(_mapper.Map<ParkingLot>(parkingLot));
                     _requestRepository.Delete(req);
                     _unitOfWork.Save();
                 }
                 
-                if((int)enumValue == (int)Status.Declined && req.Type == (int)RequestType.Activate)
+                if((int)enumValue == (int)Status.Declined && req.Type == (int)RequestType.Update)
                 {
-                    parkingLot.Status = (int)Status.Declined;
-                    _parkingLotRepository.Update(parkingLot);
+                    var tempParkingLot = _tempParkingLotRepository.GetAsQueryable(p => p.Id == req.ParkingLotId && p.UserId == req.UserId, null, x => x.Include(y => y.User)).FirstOrDefault();
+                    _tempParkingLotRepository.Delete(tempParkingLot);
                     _requestRepository.Delete(req);
                     _unitOfWork.Save();
                 }    
