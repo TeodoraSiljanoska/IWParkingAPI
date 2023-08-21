@@ -49,14 +49,14 @@ namespace IWParkingAPI.Services.Implementation
                 {
                     _allRequestsResponse.StatusCode = HttpStatusCode.OK;
                     _allRequestsResponse.Message = "There aren't any requests.";
-                    _allRequestsResponse.Requests = Enumerable.Empty<GetAllRequestsDTO>();
+                    _allRequestsResponse.Requests = Enumerable.Empty<RequestDTO>();
                     return _allRequestsResponse;
                 }
 
-                var GetAllRequestsDTOList = new List<GetAllRequestsDTO>();
+                var GetAllRequestsDTOList = new List<RequestDTO>();
                 foreach (var p in requests)
                 {
-                    GetAllRequestsDTOList.Add(_mapper.Map<GetAllRequestsDTO>(p));
+                    GetAllRequestsDTOList.Add(_mapper.Map<RequestDTO>(p));
                 }
                 _allRequestsResponse.StatusCode = HttpStatusCode.OK;
                 _allRequestsResponse.Message = "Requests returned successfully";

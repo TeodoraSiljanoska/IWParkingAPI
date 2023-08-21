@@ -3,7 +3,6 @@ using IWParkingAPI.Middleware.Authorization;
 using IWParkingAPI.Models;
 using IWParkingAPI.Models.Requests;
 using IWParkingAPI.Models.Responses;
-using IWParkingAPI.Models.Responses.Dto;
 using IWParkingAPI.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 

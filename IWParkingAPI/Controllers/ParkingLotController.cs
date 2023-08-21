@@ -4,7 +4,6 @@ using IWParkingAPI.Models;
 using IWParkingAPI.Models.Data;
 using IWParkingAPI.Models.Requests;
 using IWParkingAPI.Models.Responses;
-using IWParkingAPI.Models.Responses.Dto;
 using IWParkingAPI.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc;

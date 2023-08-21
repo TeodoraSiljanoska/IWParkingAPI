@@ -1,7 +1,6 @@
 ﻿using IWParkingAPI.Models.Data;
-using IWParkingAPI.Models.Responses;
 
-namespace IWParkingAPI.Models.Responses.Dto
+namespace IWParkingAPI.Models.Responses
 {
     public class GetRolesResponse : ResponseBase
     {
