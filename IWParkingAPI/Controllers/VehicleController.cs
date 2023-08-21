@@ -56,10 +56,10 @@ namespace IWParkingAPI.Controllers
         }
 
         [AuthorizeCustom(UserRoles.User)]
-        [HttpPost("MakePrimary/{userId},{vehicleId}")]
-        public MakeVehiclePrimaryResponse MakePrimary(int userId, int vehicleId)
+        [HttpPost("MakePrimary/{vehicleId}")]
+        public MakeVehiclePrimaryResponse MakePrimary(int vehicleId)
         {
-            return _vehicleService.MakeVehiclePrimary(userId, vehicleId);
+            return _vehicleService.MakeVehiclePrimary(vehicleId);
         }
 
         [AuthorizeCustom(UserRoles.User)]
