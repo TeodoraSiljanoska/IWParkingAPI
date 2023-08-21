@@ -316,11 +316,6 @@ namespace IWParkingAPI.Services.Implementation
             try
             {
                 var userId = Convert.ToInt32(_jWTDecode.ExtractUserIdFromToken());
-               /*  if (userId <= 0)
-                  {
-                      throw new BadRequestException("User Id is required");
-                  }
-                */
                 var user = _userRepository.GetById(userId);
                 if (user == null || user.IsDeactivated == true)
                 {
@@ -371,9 +366,9 @@ namespace IWParkingAPI.Services.Implementation
             try
             {
                 var userId = Convert.ToInt32(_jWTDecode.ExtractUserIdFromToken());
-                if (userId <= 0 || vehicleId <= 0)
+                if (vehicleId <= 0)
                 {
-                    throw new BadRequestException("User Id and Vehicle Id are required");
+                    throw new BadRequestException("Vehicle Id is required");
                 }
 
                 Vehicle vehicle = _vehicleRepository.GetById(vehicleId);
