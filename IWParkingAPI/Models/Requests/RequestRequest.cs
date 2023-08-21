@@ -2,6 +2,6 @@
 {
     public class RequestRequest
     {
-        public string Status { get; set; }
+        public string Status { get; set; } = null!;
     }
 }

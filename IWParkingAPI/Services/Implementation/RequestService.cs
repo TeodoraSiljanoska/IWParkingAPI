@@ -68,7 +68,7 @@ namespace IWParkingAPI.Services.Implementation
                 throw new InternalErrorException("Unexpected error while getting all Requests");
             }
         }
-        public RequestResponse ModifyRequest(int id, RequestRequest request)
+        public RequestResponse ModifyRequest(int id, Models.Requests.RequestRequest request)
         {
             try
             {
