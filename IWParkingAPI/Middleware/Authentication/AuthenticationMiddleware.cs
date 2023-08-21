@@ -17,7 +17,7 @@ namespace IWParkingAPI.Middleware.Authentication
 
         public async Task Invoke(HttpContext context, IJwtUtils jwtUtils)
         {
-            var allowedUrlsList = new List<string> { RouteEndpoints.Login, RouteEndpoints.Register, RouteEndpoints.ParkingLots };
+            var allowedUrlsList = new List<string> { RouteEndpoints.Login, RouteEndpoints.Register };
 
             // if the path is one of these defined paths,
             // the token doesn't need to be validated
@@ -31,6 +31,13 @@ namespace IWParkingAPI.Middleware.Authentication
             {
                 // get the token from the Request Header
                 var token = context.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
+
+                // allow anonymous and path is parkingLotGetAll
+                if (context.Request.Path.HasValue && context.Request.Path.Value.Equals(RouteEndpoints.ParkingLots) && token == null)
+                {
+                    await _next(context);
+                    return;
+                }
 
                 // if the token is null, return unauthorized
                 if (token == null)
