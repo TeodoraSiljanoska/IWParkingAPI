@@ -103,6 +103,7 @@ namespace IWParkingAPI.Services.Implementation
                 }
 
                 vehicle.TimeCreated = DateTime.Now;
+                vehicle.UserId = userId;
                 _vehicleRepository.Insert(vehicle);
                 _unitOfWork.Save();
 
