@@ -103,21 +103,45 @@ namespace IWParkingAPI.Services.Implementation
                 {
                     throw new NotFoundException("Parking lot not found");
                 }
+
                 if((int)enumValue == (int)Status.Approved && req.Type == (int)RequestType.Deactivate)
                 {
                     parkingLot.IsDeactivated = true;
                     _parkingLotRepository.Update(parkingLot);
+                   // _unitOfWork.Save();
+
+                    _requestRepository.Delete(req);
                     _unitOfWork.Save();
                 }
 
-                req.Status = (int)enumValue;
-                req.TimeCreated = DateTime.Now;
-                parkingLot.Status = (int)enumValue;
+                if((int)enumValue == (int)Status.Declined && req.Type == (int)RequestType.Deactivate)
+                {
+                    _requestRepository.Delete(req);
+                    _unitOfWork.Save();
+                }
+
+
+                if((int)enumValue == (int)Status.Approved && req.Type == (int)RequestType.Activate)
+                {
+                    parkingLot.Status = (int)Status.Approved;
+                    _parkingLotRepository.Update(parkingLot);
+                    _requestRepository.Delete(req);
+                    _unitOfWork.Save();
+                }
+                
+                if((int)enumValue == (int)Status.Declined && req.Type == (int)RequestType.Activate)
+                {
+                    parkingLot.Status = (int)Status.Declined;
+                    _parkingLotRepository.Update(parkingLot);
+                    _requestRepository.Delete(req);
+                    _unitOfWork.Save();
+                }    
+               // parkingLot.Status = (int)enumValue;
                 parkingLot.TimeModified = DateTime.Now;
 
-                _requestRepository.Update(req);
-                _parkingLotRepository.Update(parkingLot);
-                _unitOfWork.Save();
+               // _requestRepository.Update(req);
+              //  _parkingLotRepository.Update(parkingLot);
+              //  _unitOfWork.Save();
 
                 _response.StatusCode = HttpStatusCode.OK;
                 _response.Message = "Request modified successfully";

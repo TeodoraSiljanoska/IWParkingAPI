@@ -22,7 +22,10 @@ namespace IWParkingAPI.Models.Enums
             Activate = 1,
 
             [Display(Name = "Deactivate")]
-            Deactivate = 2
+            Deactivate = 2,
+
+            [Display(Name = "Update")]
+            Update = 3
         }
     }
 }
