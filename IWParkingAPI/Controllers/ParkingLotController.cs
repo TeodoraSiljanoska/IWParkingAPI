@@ -21,7 +21,7 @@ namespace IWParkingAPI.Controllers
         }
 
         [HttpGet("GetAll")]
-        public GetParkingLotsResponse GetParkingLots()
+        public AllParkingLotsResponse GetParkingLots()
         {
             return _parkingLotService.GetAllParkingLots();
         }

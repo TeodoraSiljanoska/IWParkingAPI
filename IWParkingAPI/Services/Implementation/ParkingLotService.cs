@@ -29,7 +29,7 @@ namespace IWParkingAPI.Services.Implementation
         private readonly IGenericRepository<ParkingLotRequest> _parkingLotRequestRepository;
         private readonly IGenericRepository<AspNetUser> _userRepository;
         private readonly IGenericRepository<ParkingLotRequest> _requestRepository;
-        private readonly GetParkingLotsResponse _getResponse;
+        private readonly AllParkingLotsResponse _getResponse;
         private readonly GetParkingLotsDTOResponse _getDTOResponse;
         private readonly ParkingLotResponse _response;
         private readonly IHttpContextAccessor _httpContextAccessor;
@@ -44,13 +44,13 @@ namespace IWParkingAPI.Services.Implementation
             _parkingLotRequestRepository = _unitOfWork.GetGenericRepository<ParkingLotRequest>();
             _userRepository = _unitOfWork.GetGenericRepository<AspNetUser>();
             _requestRepository = _unitOfWork.GetGenericRepository<ParkingLotRequest>();
-            _getResponse = new GetParkingLotsResponse();
+            _getResponse = new AllParkingLotsResponse();
             _response = new ParkingLotResponse();
             _httpContextAccessor = httpContextAccessor;
             _getDTOResponse = new GetParkingLotsDTOResponse();
             _jWTDecode = jWTDecode;
         }
-        public GetParkingLotsResponse GetAllParkingLots()
+        public AllParkingLotsResponse GetAllParkingLots()
         {
             try
             {

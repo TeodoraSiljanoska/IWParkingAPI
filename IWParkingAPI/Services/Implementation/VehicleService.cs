@@ -26,13 +26,13 @@ namespace IWParkingAPI.Services.Implementation
         private readonly IUnitOfWork<ParkingDbContext> _unitOfWork;
         private readonly IGenericRepository<Vehicle> _vehicleRepository;
         private readonly IGenericRepository<AspNetUser> _userRepository;       
-        private readonly VehicleResponseDTO _responseDTO;
+        private readonly VehicleDTOResponse _responseDTO;
         private readonly GetVehiclesResponse _getResponse;
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IConfiguration _config;
         private readonly IJWTDecode _jWTDecode;
-        private readonly GetAllVehiclesByUserIdResponse _vehiclesByUserIdResponse;
+        private readonly AllVehiclesByUserResponse _vehiclesByUserIdResponse;
         private readonly MakeVehiclePrimaryResponse _makePrimaryResponse;
 
 
@@ -45,11 +45,11 @@ namespace IWParkingAPI.Services.Implementation
             _unitOfWork = unitOfWork;
             _vehicleRepository = _unitOfWork.GetGenericRepository<Vehicle>();
             _userRepository = _unitOfWork.GetGenericRepository<AspNetUser>();
-            _responseDTO = new VehicleResponseDTO();
+            _responseDTO = new VehicleDTOResponse();
             _getResponse = new GetVehiclesResponse();
             _httpContextAccessor = httpContextAccessor;
             _jWTDecode = jWTDecode;
-            _vehiclesByUserIdResponse = new GetAllVehiclesByUserIdResponse();
+            _vehiclesByUserIdResponse = new AllVehiclesByUserResponse();
             _makePrimaryResponse = new MakeVehiclePrimaryResponse();
         }
 
@@ -86,7 +86,7 @@ namespace IWParkingAPI.Services.Implementation
             }
         }
 
-        public VehicleResponseDTO AddNewVehicle(VehicleRequest request)
+        public VehicleDTOResponse AddNewVehicle(VehicleRequest request)
         {
             try
             {
@@ -147,7 +147,7 @@ namespace IWParkingAPI.Services.Implementation
             }
         }
 
-        public VehicleResponseDTO DeleteVehicle(int id)
+        public VehicleDTOResponse DeleteVehicle(int id)
         {
             try
             {
@@ -209,7 +209,7 @@ namespace IWParkingAPI.Services.Implementation
             }
         }
 
-        public VehicleResponseDTO UpdateVehicle(int id, UpdateVehicleRequest request)
+        public VehicleDTOResponse UpdateVehicle(int id, UpdateVehicleRequest request)
         {
             try
             {
@@ -273,7 +273,7 @@ namespace IWParkingAPI.Services.Implementation
             }
         }
 
-        public VehicleResponseDTO GetVehicleById(int id)
+        public VehicleDTOResponse GetVehicleById(int id)
         {
             try
             {
@@ -312,7 +312,7 @@ namespace IWParkingAPI.Services.Implementation
             }
         }
 
-        public GetAllVehiclesByUserIdResponse GetVehiclesByUserId()
+        public AllVehiclesByUserResponse GetVehiclesByUserId()
         {
             try
             {

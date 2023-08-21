@@ -15,6 +15,13 @@ namespace IWParkingAPI.Mappers
                 .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name))
                 .ForMember(dest => dest.NormalizedName, opt => opt.MapFrom(src => src.Name.ToUpper()));
 
+                cfg.CreateMap<ApplicationRole, RoleDTO>()
+                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
+                .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name))
+                .ForMember(dest => dest.TimeCreated, opt => opt.MapFrom(src => src.TimeCreated))
+                .ForMember(dest => dest.TimeModified, opt => opt.MapFrom(src => src.TimeModified));
+
+
                 cfg.CreateMap<UserRequest, ApplicationUser>()
                 .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.Email))
                 .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name))

@@ -23,7 +23,7 @@ namespace IWParkingAPI.Services.Implementation
         private readonly IGenericRepository<ParkingLotRequest> _requestRepository;
         private readonly IGenericRepository<ParkingLot> _parkingLotRepository;
         private readonly RequestResponse _response;
-        private readonly GetAllParkingLotRequestsResponse _allRequestsResponse;
+        private readonly AllRequestsResponse _allRequestsResponse;
         private readonly IMapper _mapper;
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
 
@@ -34,12 +34,12 @@ namespace IWParkingAPI.Services.Implementation
             _requestRepository = _unitOfWork.GetGenericRepository<ParkingLotRequest>();
             _parkingLotRepository = _unitOfWork.GetGenericRepository<ParkingLot>();
             _response = new RequestResponse();
-            _allRequestsResponse = new GetAllParkingLotRequestsResponse();
+            _allRequestsResponse = new AllRequestsResponse();
             _mapper = MapperConfig.InitializeAutomapper();
 
         }
 
-        public GetAllParkingLotRequestsResponse GetAllRequests()
+        public AllRequestsResponse GetAllRequests()
         {
             try
             {

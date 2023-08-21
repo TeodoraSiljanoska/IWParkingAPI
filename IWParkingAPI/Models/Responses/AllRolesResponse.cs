@@ -3,8 +3,8 @@ using IWParkingAPI.Models.Responses.Dto;
 
 namespace IWParkingAPI.Models.Responses
 {
-    public class RoleResponse : ResponseBase
+    public class AllRolesResponse : ResponseBase
     {
-        public RoleDTO Role { get; set; } = new RoleDTO();
+        public IEnumerable<RoleDTO>? Roles { get; set; } = new List<RoleDTO>();
     }
 }

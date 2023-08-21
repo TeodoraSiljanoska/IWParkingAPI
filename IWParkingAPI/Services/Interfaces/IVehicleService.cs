@@ -7,11 +7,11 @@ namespace IWParkingAPI.Services.Interfaces
     public interface IVehicleService
     {
         public GetVehiclesResponse GetAllVehicles();
-        public VehicleResponseDTO AddNewVehicle(VehicleRequest request);
-        public VehicleResponseDTO UpdateVehicle(int id, UpdateVehicleRequest request);
-        public VehicleResponseDTO DeleteVehicle(int id);
-        public VehicleResponseDTO GetVehicleById(int id);
+        public VehicleDTOResponse AddNewVehicle(VehicleRequest request);
+        public VehicleDTOResponse UpdateVehicle(int id, UpdateVehicleRequest request);
+        public VehicleDTOResponse DeleteVehicle(int id);
+        public VehicleDTOResponse GetVehicleById(int id);
         public MakeVehiclePrimaryResponse MakeVehiclePrimary(int vehicleId);
-        public GetAllVehiclesByUserIdResponse GetVehiclesByUserId();
+        public AllVehiclesByUserResponse GetVehiclesByUserId();
     }
 }

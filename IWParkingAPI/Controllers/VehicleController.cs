@@ -28,7 +28,7 @@ namespace IWParkingAPI.Controllers
         [AuthorizeCustom(UserRoles.User)]
         [Validate]
         [HttpPost("Create")]
-        public VehicleResponseDTO Create(VehicleRequest request)
+        public VehicleDTOResponse Create(VehicleRequest request)
         {
             return _vehicleService.AddNewVehicle(request);
         }
@@ -36,21 +36,21 @@ namespace IWParkingAPI.Controllers
         [AuthorizeCustom(UserRoles.User)]
         [Validate]
         [HttpPut("Update/{id}")]
-        public VehicleResponseDTO Update(int id, UpdateVehicleRequest changes)
+        public VehicleDTOResponse Update(int id, UpdateVehicleRequest changes)
         {
             return _vehicleService.UpdateVehicle(id, changes);
         }
 
         [AuthorizeCustom(UserRoles.User)]
         [HttpDelete("Delete/{id}")]
-        public VehicleResponseDTO Delete(int id)
+        public VehicleDTOResponse Delete(int id)
         {
             return _vehicleService.DeleteVehicle(id);
         }
 
         [AuthorizeCustom(UserRoles.User)]
         [HttpGet("Get/{id}")]
-        public VehicleResponseDTO GetVehicleById(int id)
+        public VehicleDTOResponse GetVehicleById(int id)
         {
             return _vehicleService.GetVehicleById(id);
         }
@@ -64,7 +64,7 @@ namespace IWParkingAPI.Controllers
 
         [AuthorizeCustom(UserRoles.User)]
         [HttpGet("GetByUserId")]
-        public GetAllVehiclesByUserIdResponse GetVehiclesByUserId()
+        public AllVehiclesByUserResponse GetVehiclesByUserId()
         {
             return _vehicleService.GetVehiclesByUserId();
         }

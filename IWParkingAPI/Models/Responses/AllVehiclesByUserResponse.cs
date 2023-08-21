@@ -2,7 +2,7 @@
 
 namespace IWParkingAPI.Models.Responses
 {
-    public class GetAllVehiclesByUserIdResponse : ResponseBase
+    public class AllVehiclesByUserResponse : ResponseBase
     {
         public IEnumerable<VehicleWithoutUserDTO>? Vehicles { get; set; } = new List<VehicleWithoutUserDTO>();
 
