@@ -11,6 +11,7 @@ using NLog;
 using Microsoft.EntityFrameworkCore;
 using IWParkingAPI.Mappers;
 using AutoMapper;
+using IWParkingAPI.Utilities;
 
 public class UserService : IUserService
 {
@@ -20,14 +21,16 @@ public class UserService : IUserService
     private readonly UserDTOResponse _userDTOResponse;
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
     private readonly IMapper _mapper;
+    private readonly IJWTDecode _jWTDecode;
 
-    public UserService(IUnitOfWork<ParkingDbContext> unitOfWork)
+    public UserService(IUnitOfWork<ParkingDbContext> unitOfWork, IJWTDecode jWTDecode)
     {
         _unitOfWork = unitOfWork;
         _userRepository = _unitOfWork.GetGenericRepository<AspNetUser>();
         _getResponse = new GetUsersDTOResponse();
         _userDTOResponse = new UserDTOResponse();
         _mapper = MapperConfig.InitializeAutomapper();
+        _jWTDecode = jWTDecode;
     }
 
     public GetUsersDTOResponse GetAllUsers()
@@ -62,14 +65,11 @@ public class UserService : IUserService
         }
     }
 
-    public UserDTOResponse GetUserById(int id)
+    public UserDTOResponse GetUserById()
     {
         try
         {
-            if (id <= 0)
-            {
-                throw new BadRequestException("User Id is required");
-            }
+            var id = Convert.ToInt32(_jWTDecode.ExtractUserIdFromToken());
 
             var user = _userRepository.GetAsQueryable(u => u.Id == id, null, x => x.Include(y => y.Roles)).FirstOrDefault();
 
@@ -102,10 +102,11 @@ public class UserService : IUserService
         }
     }
 
-    public UserDTOResponse UpdateUser(int id, UpdateUserRequest changes)
+    public UserDTOResponse UpdateUser(UpdateUserRequest changes)
     {
         try
         {
+            var id = Convert.ToInt32(_jWTDecode.ExtractUserIdFromToken());
             var user = _userRepository.GetAsQueryable(u => u.Id == id, null, x => x.Include(y => y.Roles)).FirstOrDefault();
             if (user == null || user.IsDeactivated == true)
             {
@@ -168,7 +169,60 @@ public class UserService : IUserService
 
     }
 
-    public UserDTOResponse DeactivateUser(int id)
+    public UserDTOResponse DeactivateUser()
+    {
+        try
+        {
+            var id = Convert.ToInt32(_jWTDecode.ExtractUserIdFromToken());
+            if (id <= 0)
+            {
+                throw new BadRequestException("User Id is required");
+            }
+
+            var user = _userRepository.GetAsQueryable(u => u.Id == id, null, x => x.Include(y => y.Roles)).FirstOrDefault();
+
+            if (user == null)
+            {
+                throw new NotFoundException("User not found");
+            }
+
+            if (user.IsDeactivated == true)
+            {
+                throw new BadRequestException("User is already deactivated");
+            }
+
+            user.IsDeactivated = true;
+            user.TimeModified = DateTime.Now;
+            _userRepository.Update(user);
+            _unitOfWork.Save();
+
+            var userDto = _mapper.Map<UserDTO>(user);
+            userDto.IsDeactivated = true;
+
+            _userDTOResponse.User = userDto;
+            _userDTOResponse.StatusCode = HttpStatusCode.OK;
+            _userDTOResponse.Message = "User deactivated successfully";
+
+            return _userDTOResponse;
+        }
+        catch (BadRequestException ex)
+        {
+            _logger.Error($"Bad Request for DeactivateUser {Environment.NewLine}ErrorMessage: {ex.Message}");
+            throw;
+        }
+        catch (NotFoundException ex)
+        {
+            _logger.Error($"Not Found for DeactivateUser {Environment.NewLine}ErrorMessage: {ex.Message}");
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.Error($"Unexpected error while deactivating the User {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
+            throw new InternalErrorException("Unexpected error while deactivating the User");
+        }
+    }
+
+    public UserDTOResponse DeactivateUserAdmin(int id)
     {
         try
         {
