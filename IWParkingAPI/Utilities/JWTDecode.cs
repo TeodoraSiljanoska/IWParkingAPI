@@ -59,5 +59,47 @@ namespace IWParkingAPI.Utilities
 
             return null;
         }
+
+        public string ExtractRoleFromToken()
+        {
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var context = _httpContextAccessor.HttpContext;
+
+            if (context != null && context.Request.Headers.TryGetValue("Authorization", out var authHeader))
+            {
+                // var token = authHeader.ToString().Replace("Bearer ", ""); // Extract the token from "Bearer <token>"
+                var token = authHeader.FirstOrDefault()?.Split(" ").Last();
+                var validationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"])),
+                    ValidateIssuer = true,
+                    ValidIssuer = _config["Jwt:Issuer"],
+                    ValidateAudience = true,
+                    ValidAudience = _config["Jwt:Audience"],
+                    ValidateLifetime = true,
+                    ClockSkew = TimeSpan.Zero
+                };
+
+                try
+                {
+                    SecurityToken validatedToken;
+                    var principal = tokenHandler.ValidateToken(token, validationParameters, out validatedToken);
+
+                    var userRoleClaim = principal.FindFirst("Role"); // The claim that holds the Role
+                    if (userRoleClaim != null)
+                    {
+                        return userRoleClaim.Value;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.Error($"Unexpected error while decoding the token {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
+                    throw new InternalErrorException("Unexpected error while decoding the token");
+                }
+            }
+
+            return null;
+        }
     }
 }

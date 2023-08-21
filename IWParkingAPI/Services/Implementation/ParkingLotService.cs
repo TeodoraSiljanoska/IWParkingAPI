@@ -5,11 +5,13 @@ using IWParkingAPI.Fluent_Validations.Validators;
 using IWParkingAPI.Infrastructure.Repository;
 using IWParkingAPI.Infrastructure.UnitOfWork;
 using IWParkingAPI.Mappers;
+using IWParkingAPI.Models;
 using IWParkingAPI.Models.Context;
 using IWParkingAPI.Models.Data;
 using IWParkingAPI.Models.Requests;
 using IWParkingAPI.Models.Responses;
 using IWParkingAPI.Services.Interfaces;
+using IWParkingAPI.Utilities;
 using Microsoft.EntityFrameworkCore;
 using NLog;
 using System.Net;
@@ -31,8 +33,9 @@ namespace IWParkingAPI.Services.Implementation
         private readonly ParkingLotResponse _response;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
+        private readonly IJWTDecode _jWTDecode;
 
-        public ParkingLotService(IUnitOfWork<ParkingDbContext> unitOfWork, IHttpContextAccessor httpContextAccessor)
+        public ParkingLotService(IUnitOfWork<ParkingDbContext> unitOfWork, IHttpContextAccessor httpContextAccessor, IJWTDecode jWTDecode)
         {
             _mapper = MapperConfig.InitializeAutomapper();
             _unitOfWork = unitOfWork;
@@ -44,12 +47,33 @@ namespace IWParkingAPI.Services.Implementation
             _response = new ParkingLotResponse();
             _httpContextAccessor = httpContextAccessor;
             _getDTOResponse = new GetParkingLotsDTOResponse();
+            _jWTDecode = jWTDecode;
         }
         public GetParkingLotsResponse GetAllParkingLots()
         {
             try
             {
-                var parkingLots = _parkingLotRepository.GetAsQueryable(x => x.Status == ((int)Status.Approved)).ToList();
+                var userId = Convert.ToInt32(_jWTDecode.ExtractUserIdFromToken());
+                var role = _jWTDecode.ExtractRoleFromToken();
+
+                List<ParkingLot> parkingLots;
+                if (userId == 0 || role.Equals(UserRoles.User))
+                {
+                    parkingLots = _parkingLotRepository.GetAsQueryable(x => x.Status == ((int)Status.Approved)).ToList();
+                }
+                else if (role.Equals(UserRoles.Owner))
+                {
+                    parkingLots = _parkingLotRepository.GetAsQueryable(x => x.UserId == userId).ToList();
+                }
+                else if (role.Equals(UserRoles.SuperAdmin))
+                {
+                    parkingLots = _parkingLotRepository.GetAsQueryable().ToList();
+                }
+                else
+                {
+                    parkingLots = _parkingLotRepository.GetAsQueryable(x => x.Status == ((int)Status.Approved)).ToList();
+                }
+
                 if (!parkingLots.Any())
                 {
                     _getResponse.StatusCode = HttpStatusCode.OK;
