@@ -1,6 +1,6 @@
 ﻿using IWParkingAPI.Models.Data;
 
-namespace IWParkingAPI.Models.Responses
+namespace IWParkingAPI.Models.Responses.Dto
 {
     public class GetAllRequestsDTO
     {

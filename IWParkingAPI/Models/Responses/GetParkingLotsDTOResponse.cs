@@ -1,6 +1,7 @@
 ﻿using IWParkingAPI.Models.Data;
+using IWParkingAPI.Models.Responses;
 
-namespace IWParkingAPI.Models.Responses
+namespace IWParkingAPI.Models.Responses.Dto
 {
     public class GetParkingLotsDTOResponse : ResponseBase
     {

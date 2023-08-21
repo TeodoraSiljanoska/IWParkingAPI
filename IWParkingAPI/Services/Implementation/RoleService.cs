@@ -7,6 +7,7 @@ using IWParkingAPI.Models.Context;
 using IWParkingAPI.Models.Data;
 using IWParkingAPI.Models.Requests;
 using IWParkingAPI.Models.Responses;
+using IWParkingAPI.Models.Responses.Dto;
 using IWParkingAPI.Services.Interfaces;
 using NLog;
 using System.Net;

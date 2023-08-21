@@ -3,7 +3,6 @@ using IWParkingAPI.Infrastructure.UnitOfWork;
 using IWParkingAPI.Models.Context;
 using IWParkingAPI.Models.Data;
 using IWParkingAPI.Models.Requests;
-using IWParkingAPI.Models.Responses;
 using IWParkingAPI.Services.Interfaces;
 using System.Net;
 using IWParkingAPI.CustomExceptions;
@@ -12,6 +11,8 @@ using Microsoft.EntityFrameworkCore;
 using IWParkingAPI.Mappers;
 using AutoMapper;
 using IWParkingAPI.Utilities;
+using IWParkingAPI.Models.Responses.Dto;
+using IWParkingAPI.Models.Responses;
 
 public class UserService : IUserService
 {

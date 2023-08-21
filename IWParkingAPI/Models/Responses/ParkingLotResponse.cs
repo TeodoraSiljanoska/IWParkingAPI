@@ -1,4 +1,5 @@
 ﻿using IWParkingAPI.Models.Data;
+using IWParkingAPI.Models.Responses.Dto;
 
 namespace IWParkingAPI.Models.Responses
 {

@@ -1,4 +1,6 @@
-﻿namespace IWParkingAPI.Models.Responses
+﻿using IWParkingAPI.Models.Responses.Dto;
+
+namespace IWParkingAPI.Models.Responses
 {
     public class UserDTOResponse : ResponseBase
     {

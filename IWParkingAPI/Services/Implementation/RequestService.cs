@@ -13,6 +13,7 @@ using static IWParkingAPI.Models.Enums.Enums;
 using IWParkingAPI.Models.Data;
 using IWParkingAPI.CustomExceptions;
 using NLog;
+using IWParkingAPI.Models.Responses.Dto;
 
 namespace IWParkingAPI.Services.Implementation
 {

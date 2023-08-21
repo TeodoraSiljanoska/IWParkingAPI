@@ -16,6 +16,7 @@ using IWParkingAPI.Utilities;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using IWParkingAPI.Models.Responses.Dto;
 
 namespace IWParkingAPI.Services.Implementation
 {
