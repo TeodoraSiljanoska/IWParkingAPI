@@ -78,7 +78,7 @@ namespace IWParkingAPI.Services.Implementation
                 }
 
                 List<ParkingLotDTO> parkingLotDTOs = new List<ParkingLotDTO>();
-                foreach(var p in parkingLots)
+                foreach (var p in parkingLots)
                 {
                     parkingLotDTOs.Add(_mapper.Map<ParkingLotDTO>(p));
                 }
@@ -225,8 +225,6 @@ namespace IWParkingAPI.Services.Implementation
                     throw new NotFoundException("Parking Lot not found");
                 }
                 int userId = parkingLot.UserId;
-                //var result = _httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
-                // var userId1 = _httpContextAccessor!.HttpContext.User.FindFirstValue("Id");
 
                 if (parkingLot.Name != request.Name)
                 {
@@ -266,8 +264,6 @@ namespace IWParkingAPI.Services.Implementation
                 parkingLot.UserId = userId;
                 parkingLot.TimeModified = DateTime.Now;
 
-                //saveParkingLot.UserId = Convert.ToInt32(userId);
-                //saveParkingLot.TimeModified = DateTime.Now;
                 parkingLot.Status = (int)Status.Pending;
                 _parkingLotRepository.Update(parkingLot);
                 _unitOfWork.Save();

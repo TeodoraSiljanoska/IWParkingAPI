@@ -106,11 +106,6 @@ namespace IWParkingAPI.Services.Implementation
                 _vehicleRepository.Insert(vehicle);
                 _unitOfWork.Save();
 
-                //var userForResponse = _mapper.Map<UserDTO>(existingUser);
-                //var vehicleForResponse = _mapper.Map<VehicleDTO>(vehicle);
-
-                //vehicleForResponse.User = userForResponse;
-
                 var VehicleDTO = _mapper.Map<VehicleDTO>(vehicle);
 
                 _makePrimaryResponse.Vehicle = VehicleDTO;
@@ -181,10 +176,7 @@ namespace IWParkingAPI.Services.Implementation
                     throw new InternalErrorException("An error while deleting the Vehicle occurred");
                 }
 
-                //var vehicleForResponse = _mapper.Map<VehicleDTO>(vehicle);
-
-
-                var VehicleDTO = _mapper.Map<VehicleDTO>(deletedVehicle);
+                var VehicleDTO = _mapper.Map<VehicleDTO>(vehicle);
 
                 _makePrimaryResponse.Vehicle = VehicleDTO;
                 _makePrimaryResponse.StatusCode = HttpStatusCode.OK;
@@ -256,8 +248,6 @@ namespace IWParkingAPI.Services.Implementation
                 _vehicleRepository.Update(vehicle);
                 _unitOfWork.Save();
 
-                //var vehicleForResponse = _mapper.Map<VehicleDTO>(vehicle);
-
                 var VehicleDTO = _mapper.Map<VehicleDTO>(vehicle);
 
                 _makePrimaryResponse.Vehicle = VehicleDTO;
@@ -309,8 +299,6 @@ namespace IWParkingAPI.Services.Implementation
                 {
                     throw new BadRequestException("You do not own this vehicle");
                 }
-
-                //var vehicleForResponse = _mapper.Map<VehicleDTO>(vehicle);
 
                 var VehicleDTO = _mapper.Map<VehicleDTO>(vehicle);
 

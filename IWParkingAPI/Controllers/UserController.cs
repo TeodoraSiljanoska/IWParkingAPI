@@ -45,7 +45,7 @@ namespace IWParkingAPI.Controllers
             return _userService.UpdateUser(changes);
         }
 
-        [AuthorizeCustom(UserRoles.User)]
+        [AuthorizeCustom(UserRoles.User, UserRoles.Owner)]
         [HttpDelete("Deactivate")]
         public UserResponse Deactivate()
         {

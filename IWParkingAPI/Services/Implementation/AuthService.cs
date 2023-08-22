@@ -160,11 +160,6 @@ namespace IWParkingAPI.Services.Implementation
 
                 if (result.Succeeded)
                 {
-                   //userAspNet.TimeModified = DateTime.Now;
-                    //_userRepository.Update(userAspNet);
-                    //_unitOfWork.Save();
-                    //var userDto = _mapper.Map<UserDTO>(userAspNet);
-                    //_response.User = user;
                     _responseBase.Message = "User reset password successfully";
                     _responseBase.StatusCode = HttpStatusCode.OK;
                     return _responseBase;
@@ -218,7 +213,6 @@ namespace IWParkingAPI.Services.Implementation
                 user.UserName = model.NewEmail;
                 user.NormalizedUserName = model.NewEmail.ToUpper();
                 user.TimeModified = DateTime.Now;
-                // user.SecurityStamp = await _userManager.UpdateSecurityStampAsync(user);
                 var result = await _userManager.UpdateAsync(user);
                 if (result.Succeeded)
                 {
