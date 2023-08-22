@@ -17,7 +17,5 @@ public partial class ParkingLotRequest
 
     public int Type { get; set; }
 
-    public virtual TempParkingLot ParkingLot { get; set; } = null!;
-
     public virtual AspNetUser User { get; set; } = null!;
 }

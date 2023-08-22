@@ -173,11 +173,6 @@ public partial class ParkingDbContext : DbContext
             entity.Property(e => e.Type).HasDefaultValueSql("((1))");
             entity.Property(e => e.UserId).HasColumnName("User_Id");
 
-            entity.HasOne(d => d.TempParkingLot).WithMany(p => p.ParkingLotRequests)
-                .HasForeignKey(d => d.ParkingLotId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Request.Parking_Lot_Id");
-
             entity.HasOne(d => d.User).WithMany(p => p.ParkingLotRequests)
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)

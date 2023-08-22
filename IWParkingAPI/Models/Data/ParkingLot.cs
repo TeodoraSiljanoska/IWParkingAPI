@@ -35,8 +35,6 @@ public partial class ParkingLot
 
     public int Status { get; set; }
 
-    public virtual ICollection<ParkingLotRequest> ParkingLotRequests { get; set; } = new List<ParkingLotRequest>();
-
     public virtual ICollection<Reservation> Reservations { get; set; } = new List<Reservation>();
 
     public virtual AspNetUser User { get; set; } = null!;
