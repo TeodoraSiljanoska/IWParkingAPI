@@ -1,7 +1,5 @@
 ﻿using AutoMapper;
-using FluentValidation.Results;
 using IWParkingAPI.CustomExceptions;
-using IWParkingAPI.Fluent_Validations.Validators;
 using IWParkingAPI.Infrastructure.Repository;
 using IWParkingAPI.Infrastructure.UnitOfWork;
 using IWParkingAPI.Mappers;
@@ -29,14 +27,12 @@ namespace IWParkingAPI.Services.Implementation
         private readonly IGenericRepository<ParkingLotRequest> _parkingLotRequestRepository;
         private readonly IGenericRepository<AspNetUser> _userRepository;
         private readonly IGenericRepository<ParkingLotRequest> _requestRepository;
-        private readonly AllParkingLotsResponse _getResponse;
-        private readonly GetParkingLotsDTOResponse _getDTOResponse;
+        private readonly AllParkingLotsResponse _getDTOResponse;
         private readonly ParkingLotResponse _response;
-        private readonly IHttpContextAccessor _httpContextAccessor;
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
         private readonly IJWTDecode _jWTDecode;
 
-        public ParkingLotService(IUnitOfWork<ParkingDbContext> unitOfWork, IHttpContextAccessor httpContextAccessor, IJWTDecode jWTDecode)
+        public ParkingLotService(IUnitOfWork<ParkingDbContext> unitOfWork, IJWTDecode jWTDecode)
         {
             _mapper = MapperConfig.InitializeAutomapper();
             _unitOfWork = unitOfWork;
@@ -44,10 +40,8 @@ namespace IWParkingAPI.Services.Implementation
             _parkingLotRequestRepository = _unitOfWork.GetGenericRepository<ParkingLotRequest>();
             _userRepository = _unitOfWork.GetGenericRepository<AspNetUser>();
             _requestRepository = _unitOfWork.GetGenericRepository<ParkingLotRequest>();
-            _getResponse = new AllParkingLotsResponse();
             _response = new ParkingLotResponse();
-            _httpContextAccessor = httpContextAccessor;
-            _getDTOResponse = new GetParkingLotsDTOResponse();
+            _getDTOResponse = new AllParkingLotsResponse();
             _jWTDecode = jWTDecode;
         }
         public AllParkingLotsResponse GetAllParkingLots()
@@ -77,15 +71,21 @@ namespace IWParkingAPI.Services.Implementation
 
                 if (!parkingLots.Any())
                 {
-                    _getResponse.StatusCode = HttpStatusCode.OK;
-                    _getResponse.Message = "There aren't any parking lots.";
-                    _getResponse.ParkingLots = Enumerable.Empty<ParkingLot>();
-                    return _getResponse;
+                    _getDTOResponse.StatusCode = HttpStatusCode.OK;
+                    _getDTOResponse.Message = "There aren't any parking lots.";
+                    _getDTOResponse.ParkingLots = Enumerable.Empty<ParkingLotDTO>();
+                    return _getDTOResponse;
                 }
-                _getResponse.StatusCode = HttpStatusCode.OK;
-                _getResponse.Message = "Parking lots returned successfully";
-                _getResponse.ParkingLots = parkingLots;
-                return _getResponse;
+
+                List<ParkingLotDTO> parkingLotDTOs = new List<ParkingLotDTO>();
+                foreach(var p in parkingLots)
+                {
+                    parkingLotDTOs.Add(_mapper.Map<ParkingLotDTO>(p));
+                }
+                _getDTOResponse.StatusCode = HttpStatusCode.OK;
+                _getDTOResponse.Message = "Parking lots returned successfully";
+                _getDTOResponse.ParkingLots = parkingLotDTOs;
+                return _getDTOResponse;
             }
             catch (Exception ex)
             {
@@ -486,7 +486,7 @@ namespace IWParkingAPI.Services.Implementation
             }
         }
 
-        public GetParkingLotsDTOResponse GetUserFavouriteParkingLots(int userId)
+        public AllParkingLotsResponse GetUserFavouriteParkingLots(int userId)
         {
             try
             {
