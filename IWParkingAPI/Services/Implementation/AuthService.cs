@@ -22,7 +22,7 @@ namespace IWParkingAPI.Services.Implementation
         private readonly RoleManager<ApplicationRole> _roleManager;
         private readonly IJwtUtils _jwtUtils;
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
-        private readonly UserDTOResponse _userDTOResponse;
+        private readonly UserResponse _userDTOResponse;
         private readonly ResponseBase _responseBase;
 
         public AuthService(RoleManager<ApplicationRole> roleManager, UserManager<ApplicationUser> userManager,
@@ -33,11 +33,11 @@ namespace IWParkingAPI.Services.Implementation
             _signInManager = signInManager;
             _roleManager = roleManager;
             _jwtUtils = jwtUtils;
-            _userDTOResponse = new UserDTOResponse();
+            _userDTOResponse = new UserResponse();
             _responseBase = new ResponseBase();
         }
 
-        public async Task<UserDTOResponse> RegisterUser(UserRegisterRequest request)
+        public async Task<UserResponse> RegisterUser(UserRegisterRequest request)
         {
             try
             {

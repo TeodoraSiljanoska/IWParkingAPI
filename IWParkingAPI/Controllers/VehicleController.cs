@@ -20,7 +20,7 @@ namespace IWParkingAPI.Controllers
 
         [AuthorizeCustom(UserRoles.SuperAdmin)]
         [HttpGet("GetAll")]
-        public GetVehiclesResponse GetVehicles()
+        public AllVehiclesWithUserResponse GetVehicles()
         {
             return _vehicleService.GetAllVehicles();
         }
@@ -28,7 +28,7 @@ namespace IWParkingAPI.Controllers
         [AuthorizeCustom(UserRoles.User)]
         [Validate]
         [HttpPost("Create")]
-        public VehicleDTOResponse Create(VehicleRequest request)
+        public VehicleResponse Create(VehicleRequest request)
         {
             return _vehicleService.AddNewVehicle(request);
         }
@@ -36,35 +36,35 @@ namespace IWParkingAPI.Controllers
         [AuthorizeCustom(UserRoles.User)]
         [Validate]
         [HttpPut("Update/{id}")]
-        public VehicleDTOResponse Update(int id, UpdateVehicleRequest changes)
+        public VehicleResponse Update(int id, UpdateVehicleRequest changes)
         {
             return _vehicleService.UpdateVehicle(id, changes);
         }
 
         [AuthorizeCustom(UserRoles.User)]
         [HttpDelete("Delete/{id}")]
-        public VehicleDTOResponse Delete(int id)
+        public VehicleResponse Delete(int id)
         {
             return _vehicleService.DeleteVehicle(id);
         }
 
         [AuthorizeCustom(UserRoles.User)]
         [HttpGet("Get/{id}")]
-        public VehicleDTOResponse GetVehicleById(int id)
+        public VehicleResponse GetVehicleById(int id)
         {
             return _vehicleService.GetVehicleById(id);
         }
 
         [AuthorizeCustom(UserRoles.User)]
         [HttpPost("MakePrimary/{vehicleId}")]
-        public MakeVehiclePrimaryResponse MakePrimary(int vehicleId)
+        public VehicleResponse MakePrimary(int vehicleId)
         {
             return _vehicleService.MakeVehiclePrimary(vehicleId);
         }
 
         [AuthorizeCustom(UserRoles.User)]
         [HttpGet("GetByUserId")]
-        public AllVehiclesByUserResponse GetVehiclesByUserId()
+        public AllVehiclesResponse GetVehiclesByUserId()
         {
             return _vehicleService.GetVehiclesByUserId();
         }

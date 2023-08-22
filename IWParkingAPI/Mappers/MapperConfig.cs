@@ -49,7 +49,7 @@ namespace IWParkingAPI.Mappers
                 //   .ForSourceMember(src => src.Type, opt => opt.DoNotValidate())
                 //   .ForSourceMember(src => src.PlateNumber, opt => opt.DoNotValidate()); ;
 
-                cfg.CreateMap<Vehicle, VehicleDTO>()
+                cfg.CreateMap<Vehicle, VehicleWithUserDTO>()
               .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
               .ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.UserId))
               .ForMember(dest => dest.Type, opt => opt.MapFrom(src => src.Type))
@@ -59,7 +59,7 @@ namespace IWParkingAPI.Mappers
               .ForMember(dest => dest.IsPrimary, opt => opt.MapFrom(src => src.IsPrimary))
               .ForMember(dest => dest.User, opt => opt.MapFrom(src => src.User));
 
-                cfg.CreateMap<Vehicle, VehicleWithoutUserDTO>()
+                cfg.CreateMap<Vehicle, VehicleDTO>()
               .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
               .ForMember(dest => dest.Type, opt => opt.MapFrom(src => src.Type))
               .ForMember(dest => dest.PlateNumber, opt => opt.MapFrom(src => src.PlateNumber))

@@ -18,8 +18,8 @@ public class UserService : IUserService
 {
     private readonly IUnitOfWork<ParkingDbContext> _unitOfWork;
     private readonly IGenericRepository<AspNetUser> _userRepository;
-    private readonly GetUsersDTOResponse _getResponse;
-    private readonly UserDTOResponse _userDTOResponse;
+    private readonly AllUsersResponse _getResponse;
+    private readonly UserResponse _userDTOResponse;
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
     private readonly IMapper _mapper;
     private readonly IJWTDecode _jWTDecode;
@@ -28,13 +28,13 @@ public class UserService : IUserService
     {
         _unitOfWork = unitOfWork;
         _userRepository = _unitOfWork.GetGenericRepository<AspNetUser>();
-        _getResponse = new GetUsersDTOResponse();
-        _userDTOResponse = new UserDTOResponse();
+        _getResponse = new AllUsersResponse();
+        _userDTOResponse = new UserResponse();
         _mapper = MapperConfig.InitializeAutomapper();
         _jWTDecode = jWTDecode;
     }
 
-    public GetUsersDTOResponse GetAllUsers()
+    public AllUsersResponse GetAllUsers()
     {
         try
         {
@@ -66,7 +66,7 @@ public class UserService : IUserService
         }
     }
 
-    public UserDTOResponse GetUserById()
+    public UserResponse GetUserById()
     {
         try
         {
@@ -103,7 +103,7 @@ public class UserService : IUserService
         }
     }
 
-    public UserDTOResponse UpdateUser(UpdateUserRequest changes)
+    public UserResponse UpdateUser(UpdateUserRequest changes)
     {
         try
         {
@@ -170,7 +170,7 @@ public class UserService : IUserService
 
     }
 
-    public UserDTOResponse DeactivateUser()
+    public UserResponse DeactivateUser()
     {
         try
         {
@@ -223,7 +223,7 @@ public class UserService : IUserService
         }
     }
 
-    public UserDTOResponse DeactivateUserAdmin(int id)
+    public UserResponse DeactivateUserAdmin(int id)
     {
         try
         {

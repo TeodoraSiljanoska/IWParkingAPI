@@ -2,8 +2,9 @@
 
 namespace IWParkingAPI.Models.Responses
 {
-    public class VehicleDTOResponse : ResponseBase
+    public class VehicleResponse : ResponseBase
     {
         public VehicleDTO Vehicle { get; set; } = new VehicleDTO();
+
     }
 }

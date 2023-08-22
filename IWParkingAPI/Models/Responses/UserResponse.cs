@@ -2,7 +2,7 @@
 
 namespace IWParkingAPI.Models.Responses
 {
-    public class UserDTOResponse : ResponseBase
+    public class UserResponse : ResponseBase
     {
         public UserDTO User { get; set; } = null!;
     }
