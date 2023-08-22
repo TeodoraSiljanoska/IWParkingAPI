@@ -116,13 +116,13 @@ namespace IWParkingAPI.Mappers
              .ForMember(dest => dest.TimeModified, opt => opt.MapFrom(src => src.TimeModified))
              .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status));
 
-                cfg.CreateMap<AspNetUser, UserWithoutRoleDTO>()
+                /*cfg.CreateMap<AspNetUser, UserWithoutRoleDTO>()
                 .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
                 .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.UserName))
                 .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name))
                 .ForMember(dest => dest.Surname, opt => opt.MapFrom(src => src.Surname))
                 .ForMember(dest => dest.PhoneNumber, opt => opt.MapFrom(src => src.PhoneNumber))
-                .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Email));
+                .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Email));*/
 
                 cfg.CreateMap<AspNetUser, UserDTO>()
                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))

@@ -16,6 +16,6 @@
 
         public bool? IsPrimary { get; set; }
 
-        public virtual UserWithoutRoleDTO User { get; set; } = null!;
+        public virtual UserDTO User { get; set; } = null!;
     }
 }
