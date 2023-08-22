@@ -54,7 +54,8 @@ namespace IWParkingAPI.Services.Implementation
                 List<ParkingLot> parkingLots;
                 if (userId == 0 || role.Equals(UserRoles.User))
                 {
-                    parkingLots = _parkingLotRepository.GetAsQueryable(x => x.Status == ((int)Status.Approved)).ToList();
+                    parkingLots = _parkingLotRepository.GetAsQueryable(x => x.Status == ((int)Status.Approved)
+                    && x.IsDeactivated == false).ToList();
                 }
                 else if (role.Equals(UserRoles.Owner))
                 {
@@ -66,7 +67,8 @@ namespace IWParkingAPI.Services.Implementation
                 }
                 else
                 {
-                    parkingLots = _parkingLotRepository.GetAsQueryable(x => x.Status == ((int)Status.Approved)).ToList();
+                    parkingLots = _parkingLotRepository.GetAsQueryable(x => x.Status == ((int)Status.Approved)
+                    && x.IsDeactivated == false).ToList();
                 }
 
                 if (!parkingLots.Any())
