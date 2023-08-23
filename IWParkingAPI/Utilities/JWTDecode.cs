@@ -67,7 +67,7 @@ namespace IWParkingAPI.Utilities
             var claims = ExtractClaims();
             if (claims == null)
             {
-                return "";
+                return null;
             }
             var claimByType = claims.Where(claim => claim.Type.Equals(claimType)).FirstOrDefault();
 

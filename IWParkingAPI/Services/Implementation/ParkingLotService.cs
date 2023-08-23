@@ -54,18 +54,13 @@ namespace IWParkingAPI.Services.Implementation
                 var role = _jWTDecode.ExtractClaimByType("Role");
 
                 List<ParkingLot> parkingLots;
-                if (userId == null || role.Equals(UserRoles.User))
+                if (userId == null || role.Equals(UserRoles.User) || role.Equals(UserRoles.SuperAdmin))
                 {
                     parkingLots = _parkingLotRepository.GetAsQueryable(x => x.Status == ((int)Status.Approved)).ToList();
                 }
                 else if (role.Equals(UserRoles.Owner))
                 {
                     parkingLots = _parkingLotRepository.GetAsQueryable(x => x.UserId == int.Parse(userId)).ToList();
-                }
-                else if (role.Equals(UserRoles.SuperAdmin))
-                {
-                    parkingLots = _parkingLotRepository.GetAsQueryable(x => x.Status == ((int)Status.Approved) ||
-                        x.Status == ((int)Status.Declined)).ToList();
                 }
                 else
                 {
