@@ -150,6 +150,20 @@ namespace IWParkingAPI.Services.Implementation
                     throw new BadRequestException("Parking Lot with that name already exists");
                 }
 
+                var existingInPL = _parkingLotRepository.GetAsQueryable(p => p.City == request.City && p.Address == request.Address
+                && p.Zone == request.Zone && p.WorkingHourFrom == request.WorkingHourFrom && p.WorkingHourTo == request.WorkingHourTo &&
+                p.Price == request.Price && p.CapacityCar == request.CapacityCar && p.CapacityAdaptedCar == request.CapacityAdaptedCar
+                 && p.IsDeactivated == false && p.Name != request.Name, null, null).FirstOrDefault();
+
+                var existingInTemp = _tempParkingLotRepository.GetAsQueryable(p => p.City == request.City && p.Address == request.Address
+                && p.Zone == request.Zone && p.WorkingHourFrom == request.WorkingHourFrom && p.WorkingHourTo == request.WorkingHourTo &&
+                p.Price == request.Price && p.CapacityCar == request.CapacityCar && p.CapacityAdaptedCar == request.CapacityAdaptedCar
+                && p.IsDeactivated == false && p.Name != request.Name, null, null).FirstOrDefault();
+                if (existingInPL != null || existingInTemp != null)
+                {
+                    throw new BadRequestException("Parking Lot with that specifications already exists");
+                }
+
 
                 var parkingLot = _mapper.Map<TempParkingLot>(request);
                 parkingLot.UserId = userId;
@@ -180,7 +194,7 @@ namespace IWParkingAPI.Services.Implementation
 
                 _response.ParkingLot = parkingLotDTO;
                 _response.StatusCode = HttpStatusCode.OK;
-                _response.Message = "Parking Lot created successfully";
+                _response.Message = "Request for creating the Parking Lot created successfully";
                 return _response;
             }
             catch (NotFoundException ex)
@@ -282,7 +296,11 @@ namespace IWParkingAPI.Services.Implementation
                 parkingLot.Status = (int)Status.Pending; */
 
                 var tempParkingLot = _mapper.Map<TempParkingLot>(request);
-
+                tempParkingLot.Status = (int)Status.Pending;
+                tempParkingLot.TimeCreated = DateTime.Now;
+                tempParkingLot.UserId = parkingLot.UserId;
+                tempParkingLot.User = parkingLot.User;
+                tempParkingLot.ParkingLotId = parkingLot.Id;
                 _tempParkingLotRepository.Insert(tempParkingLot);
                 _unitOfWork.Save();
 

@@ -243,6 +243,7 @@ public partial class ParkingDbContext : DbContext
                 .IsRequired()
                 .HasDefaultValueSql("('False')");
             entity.Property(e => e.Name).HasMaxLength(20);
+            entity.Property(e => e.ParkingLotId).HasColumnName("ParkingLot_Id");
             entity.Property(e => e.Status).HasDefaultValueSql("((1))");
             entity.Property(e => e.TimeCreated).HasColumnType("datetime");
             entity.Property(e => e.TimeModified).HasColumnType("datetime");

@@ -35,5 +35,7 @@ public partial class TempParkingLot
 
     public int Status { get; set; }
 
+    public int? ParkingLotId { get; set; }
+
     public virtual AspNetUser User { get; set; } = null!;
 }
