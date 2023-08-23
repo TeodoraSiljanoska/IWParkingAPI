@@ -128,12 +128,23 @@ namespace IWParkingAPI.Services.Implementation
         {
             try
             {
-                var userId = Convert.ToInt32(_jWTDecode.ExtractUserIdFromToken());
+                var strUserId = _jWTDecode.ExtractClaimByType("Id");
+                if(strUserId == null)
+                {
+                    throw new BadRequestException("Unexpected error while Creating the Parking Lot");
+                }
+                var userId = Convert.ToInt32(strUserId);
+
                 var existinguser = _userRepository.GetById(userId);
                 if (existinguser == null || existinguser.IsDeactivated == true)
                 {
                     throw new NotFoundException("User doesn't exist");
                 }
+                TimeSpan from;
+                TimeSpan to;
+                var resFrom = TimeSpan.TryParse(request.WorkingHourFrom, out from);
+                var resTo = TimeSpan.TryParse(request.WorkingHourTo, out to);
+
 
                 var existingPL = _parkingLotRepository.GetAsQueryable(p => p.Name == request.Name && p.City == request.City, null, null).FirstOrDefault();
                 var expl = _tempParkingLotRepository.GetAsQueryable(p => p.Name == request.Name && p.City == request.City, null, null).FirstOrDefault();
@@ -143,16 +154,13 @@ namespace IWParkingAPI.Services.Implementation
                 }
 
                 var existingInPL = _parkingLotRepository.GetAsQueryable(p => p.City == request.City && p.Address == request.Address
-                && p.Zone == request.Zone && p.WorkingHourFrom == request.WorkingHourFrom && p.WorkingHourTo == request.WorkingHourTo &&
+                && p.Zone == request.Zone && p.WorkingHourFrom == from && p.WorkingHourTo == to &&
                 p.Price == request.Price && p.CapacityCar == request.CapacityCar && p.CapacityAdaptedCar == request.CapacityAdaptedCar
                  && p.IsDeactivated == false && p.Name != request.Name, null, null).FirstOrDefault();
-                TimeSpan from;
-                TimeSpan to;
-                var resFrom = TimeSpan.TryParse(request.WorkingHourFrom, out from);
-                var resTo = TimeSpan.TryParse(request.WorkingHourTo, out to);
+               
 
                 var existingInTemp = _tempParkingLotRepository.GetAsQueryable(p => p.City == request.City && p.Address == request.Address
-                && p.Zone == request.Zone && p.WorkingHourFrom == request.WorkingHourFrom && p.WorkingHourTo == request.WorkingHourTo &&
+                && p.Zone == request.Zone && p.WorkingHourFrom == from && p.WorkingHourTo == to &&
                 p.Price == request.Price && p.CapacityCar == request.CapacityCar && p.CapacityAdaptedCar == request.CapacityAdaptedCar
                 && p.IsDeactivated == false && p.Name != request.Name, null, null).FirstOrDefault();
                 if (existingInPL != null || existingInTemp != null)
@@ -168,7 +176,6 @@ namespace IWParkingAPI.Services.Implementation
                 parkingLot.Status = (int)Status.Pending;
                 parkingLot.WorkingHourTo = from;
                 parkingLot.WorkingHourTo = to;
-                _parkingLotRepository.Insert(parkingLot);
                 _tempParkingLotRepository.Insert(parkingLot);
                 _unitOfWork.Save();
 
@@ -222,11 +229,12 @@ namespace IWParkingAPI.Services.Implementation
         {
             try
             {
-                int userId = Convert.ToInt32(_jWTDecode.ExtractUserIdFromToken());
-                if (id <= 0)
+                var strUserId = _jWTDecode.ExtractClaimByType("Id");
+                if (strUserId == null)
                 {
-                    throw new BadRequestException("Id is required");
+                    throw new BadRequestException("Unexpected error while Creating the Parking Lot");
                 }
+                var userId = Convert.ToInt32(strUserId);
 
                 ParkingLot parkingLot = _parkingLotRepository.GetAsQueryable(p => p.Id == id && p.UserId == userId, null, x => x.Include(y => y.Users)).FirstOrDefault();//.Where(x => x.UserId == userId); 
 
@@ -235,8 +243,6 @@ namespace IWParkingAPI.Services.Implementation
                     throw new NotFoundException("Parking Lot not found");
                 }
               
-                // var userId1 = _httpContextAccessor!.HttpContext.User.FindFirstValue("Id");
-
                 if (parkingLot.Name != request.Name)
                 {
                     var expl = _tempParkingLotRepository.GetAsQueryable(p => p.Name == request.Name && p.City == request.City, null, null).FirstOrDefault();
@@ -246,6 +252,7 @@ namespace IWParkingAPI.Services.Implementation
                         throw new BadRequestException("Parking Lot with that name already exists");
                     }
                 }
+
                 var pl = _parkingLotRepository.GetAsQueryable(parkingLot => parkingLot.Name == request.Name && parkingLot.City == request.City && parkingLot.Zone == request.Zone &&
                    parkingLot.Address == request.Address && parkingLot.WorkingHourFrom == request.WorkingHourFrom &&
                    parkingLot.WorkingHourTo == request.WorkingHourTo && parkingLot.CapacityCar == request.CapacityCar &&
@@ -259,6 +266,7 @@ namespace IWParkingAPI.Services.Implementation
                 {
                     throw new BadRequestException("No updates were entered. Please enter the updates");
                 }
+
                 var existingplfromuser = _parkingLotRepository.GetAsQueryable(p => p.City == request.City && p.Address == request.Address
                 && p.Zone == request.Zone && p.WorkingHourFrom == request.WorkingHourFrom && p.WorkingHourTo == request.WorkingHourTo &&
                 p.Price == request.Price && p.CapacityCar == request.CapacityCar && p.CapacityAdaptedCar == request.CapacityAdaptedCar
@@ -268,9 +276,12 @@ namespace IWParkingAPI.Services.Implementation
                 && p.Zone == request.Zone && p.WorkingHourFrom == request.WorkingHourFrom && p.WorkingHourTo == request.WorkingHourTo &&
                 p.Price == request.Price && p.CapacityCar == request.CapacityCar && p.CapacityAdaptedCar == request.CapacityAdaptedCar
                  && (p.UserId == userId || p.UserId != userId) && p.IsDeactivated == false && p.Name != request.Name, null, null).FirstOrDefault();
-                if (existingplfromuser != null || existingplfromuser1 !=null)
+                
+                if (existingplfromuser != null || existingplfromuser1 != null)
                 {
                     throw new BadRequestException("Parking Lot with that specifications already exists");
+                }
+
                 var tempParkingLot = _mapper.Map<TempParkingLot>(request);
                 tempParkingLot.Status = (int)Status.Pending;
                 tempParkingLot.TimeCreated = DateTime.Now;
@@ -278,8 +289,7 @@ namespace IWParkingAPI.Services.Implementation
                 tempParkingLot.User = parkingLot.User;
                 tempParkingLot.ParkingLotId = parkingLot.Id;
                 _tempParkingLotRepository.Insert(tempParkingLot);
-                parkingLot.Status = (int)Status.Pending;
-                _parkingLotRepository.Update(parkingLot);
+               
                 _unitOfWork.Save();
 
                 var existingRequest = _requestRepository.GetAsQueryable(x => x.ParkingLotId == id && x.UserId == parkingLot.UserId, null, null).FirstOrDefault();
@@ -349,7 +359,12 @@ namespace IWParkingAPI.Services.Implementation
                     throw new BadRequestException("ParkingLotId is required");
                 }
 
-                int userId = Convert.ToInt32(_jWTDecode.ExtractUserIdFromToken());
+                var strUserId = _jWTDecode.ExtractClaimByType("Id");
+                if (strUserId == null)
+                {
+                    throw new BadRequestException("Unexpected error while Creating the Parking Lot");
+                }
+                var userId = Convert.ToInt32(strUserId);
                 ParkingLot parkingLot = _parkingLotRepository.GetAsQueryable(p => p.Id == id && p.UserId == userId, null, x => x.Include(y => y.Users)).FirstOrDefault();
 
                 if (parkingLot == null)
@@ -382,6 +397,7 @@ namespace IWParkingAPI.Services.Implementation
                     _parkingLotRequestRepository.Insert(plrequest);
                     _unitOfWork.Save();
                 }
+
                  var parkingLotDTOResponse = _mapper.Map<ParkingLotDTO>(parkingLot);
 
                 _response.ParkingLot = parkingLotDTOResponse;
@@ -416,7 +432,12 @@ namespace IWParkingAPI.Services.Implementation
                     throw new BadRequestException("ParkingLotId is required");
                 }
 
-                int userId = Convert.ToInt32(_jWTDecode.ExtractUserIdFromToken());
+                var strUserId = _jWTDecode.ExtractClaimByType("Id");
+                if (strUserId == null)
+                {
+                    throw new BadRequestException("Unexpected error while Creating the Parking Lot");
+                }
+                var userId = Convert.ToInt32(strUserId);
                 var user = _userRepository.GetAsQueryable(x => x.Id == userId, null, x => x.Include(y => y.ParkingLotsNavigation)).FirstOrDefault();
 
                 if (user == null || user.IsDeactivated == true)
@@ -476,8 +497,13 @@ namespace IWParkingAPI.Services.Implementation
                 {
                     throw new BadRequestException("UserId and ParkingLotId are required");
                 }
-                
-                int userId = Convert.ToInt32(_jWTDecode.ExtractUserIdFromToken());
+
+                var strUserId = _jWTDecode.ExtractClaimByType("Id");
+                if (strUserId == null)
+                {
+                    throw new BadRequestException("Unexpected error while Creating the Parking Lot");
+                }
+                var userId = Convert.ToInt32(strUserId);
                 var user = _userRepository.GetAsQueryable(x => x.Id == userId, null, x => x.Include(y => y.ParkingLotsNavigation)).FirstOrDefault();
                 var parkingLot = _parkingLotRepository.GetById(parkingLotId);
                 var parkingLotDTO = _mapper.Map<ParkingLotDTO>(parkingLot);
@@ -527,7 +553,12 @@ namespace IWParkingAPI.Services.Implementation
         {
             try
             {
-                var userId = Convert.ToInt32(_jWTDecode.ExtractUserIdFromToken());
+                var strUserId = _jWTDecode.ExtractClaimByType("Id");
+                if (strUserId == null)
+                {
+                    throw new BadRequestException("Unexpected error while Creating the Parking Lot");
+                }
+                var userId = Convert.ToInt32(strUserId);
 
                 var user = _userRepository.GetById(userId);
                 if (user == null || user.IsDeactivated == true)
