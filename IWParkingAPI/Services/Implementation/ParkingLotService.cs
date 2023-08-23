@@ -176,6 +176,7 @@ namespace IWParkingAPI.Services.Implementation
                 parkingLot.Status = (int)Status.Pending;
                 parkingLot.WorkingHourTo = from;
                 parkingLot.WorkingHourTo = to;
+                parkingLot.ParkingLotId = null;
                 _tempParkingLotRepository.Insert(parkingLot);
                 _unitOfWork.Save();
 
@@ -253,13 +254,18 @@ namespace IWParkingAPI.Services.Implementation
                     }
                 }
 
+                TimeSpan from;
+                TimeSpan to;
+                var resFrom = TimeSpan.TryParse(request.WorkingHourFrom, out from);
+                var resTo = TimeSpan.TryParse(request.WorkingHourTo, out to);
+
                 var pl = _parkingLotRepository.GetAsQueryable(parkingLot => parkingLot.Name == request.Name && parkingLot.City == request.City && parkingLot.Zone == request.Zone &&
-                   parkingLot.Address == request.Address && parkingLot.WorkingHourFrom == request.WorkingHourFrom &&
-                   parkingLot.WorkingHourTo == request.WorkingHourTo && parkingLot.CapacityCar == request.CapacityCar &&
+                   parkingLot.Address == request.Address && parkingLot.WorkingHourFrom == from &&
+                   parkingLot.WorkingHourTo == to && parkingLot.CapacityCar == request.CapacityCar &&
                    parkingLot.CapacityAdaptedCar == request.CapacityAdaptedCar && parkingLot.Price == request.Price, null, null).FirstOrDefault();
                 var pl1 = _tempParkingLotRepository.GetAsQueryable(parkingLot => parkingLot.Name == request.Name && parkingLot.City == request.City && parkingLot.Zone == request.Zone &&
-                   parkingLot.Address == request.Address && parkingLot.WorkingHourFrom == request.WorkingHourFrom &&
-                   parkingLot.WorkingHourTo == request.WorkingHourTo && parkingLot.CapacityCar == request.CapacityCar &&
+                   parkingLot.Address == request.Address && parkingLot.WorkingHourFrom == from &&
+                   parkingLot.WorkingHourTo == to && parkingLot.CapacityCar == request.CapacityCar &&
                    parkingLot.CapacityAdaptedCar == request.CapacityAdaptedCar && parkingLot.Price == request.Price, null, null).FirstOrDefault();
 
                 if (pl != null || pl1 != null)
@@ -268,12 +274,12 @@ namespace IWParkingAPI.Services.Implementation
                 }
 
                 var existingplfromuser = _parkingLotRepository.GetAsQueryable(p => p.City == request.City && p.Address == request.Address
-                && p.Zone == request.Zone && p.WorkingHourFrom == request.WorkingHourFrom && p.WorkingHourTo == request.WorkingHourTo &&
+                && p.Zone == request.Zone && p.WorkingHourFrom == from && p.WorkingHourTo == to &&
                 p.Price == request.Price && p.CapacityCar == request.CapacityCar && p.CapacityAdaptedCar == request.CapacityAdaptedCar
                  && (p.UserId == userId || p.UserId != userId) && p.IsDeactivated == false && p.Name != request.Name, null, null).FirstOrDefault();
 
                 var existingplfromuser1 = _tempParkingLotRepository.GetAsQueryable(p => p.City == request.City && p.Address == request.Address
-                && p.Zone == request.Zone && p.WorkingHourFrom == request.WorkingHourFrom && p.WorkingHourTo == request.WorkingHourTo &&
+                && p.Zone == request.Zone && p.WorkingHourFrom == from && p.WorkingHourTo == to &&
                 p.Price == request.Price && p.CapacityCar == request.CapacityCar && p.CapacityAdaptedCar == request.CapacityAdaptedCar
                  && (p.UserId == userId || p.UserId != userId) && p.IsDeactivated == false && p.Name != request.Name, null, null).FirstOrDefault();
                 
@@ -329,7 +335,7 @@ namespace IWParkingAPI.Services.Implementation
 
                 _response.ParkingLot = parkingLotDTO;
                 _response.StatusCode = HttpStatusCode.OK;
-                _response.Message = "Parking Lot updated successfully";
+                _response.Message = "Request for updating the Parking Lot created successfully";
                 return _response;
             }
             catch (BadRequestException ex)

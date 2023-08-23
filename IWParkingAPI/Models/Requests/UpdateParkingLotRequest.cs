@@ -10,9 +10,9 @@
 
         public string Address { get; set; } = null!;
 
-        public TimeSpan WorkingHourFrom { get; set; }
+        public string WorkingHourFrom { get; set; }
 
-        public TimeSpan WorkingHourTo { get; set; }
+        public string WorkingHourTo { get; set; }
 
         public int CapacityCar { get; set; }
 
