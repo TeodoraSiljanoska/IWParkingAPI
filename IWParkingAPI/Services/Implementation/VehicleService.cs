@@ -11,7 +11,6 @@ using System.Net;
 using IWParkingAPI.CustomExceptions;
 using NLog;
 using Microsoft.EntityFrameworkCore;
-//using System.Data.Entity;
 using IWParkingAPI.Utilities;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.IdentityModel.Tokens;
@@ -29,25 +28,20 @@ namespace IWParkingAPI.Services.Implementation
         private readonly VehicleResponseDTO _responseDTO;
         private readonly GetVehiclesResponse _getResponse;
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
-        private readonly IHttpContextAccessor _httpContextAccessor;
-        private readonly IConfiguration _config;
         private readonly IJWTDecode _jWTDecode;
         private readonly GetAllVehiclesByUserIdResponse _vehiclesByUserIdResponse;
         private readonly MakeVehiclePrimaryResponse _makePrimaryResponse;
 
 
 
-        public VehicleService(IConfiguration configuration, IUnitOfWork<ParkingDbContext> unitOfWork, IUnitOfWork<ParkingDbContextCustom> custom, IHttpContextAccessor httpContextAccessor, IConfiguration config,
-            IJWTDecode jWTDecode)
+        public VehicleService(IUnitOfWork<ParkingDbContext> unitOfWork, IJWTDecode jWTDecode)
         {
-            _config = config;
             _mapper = MapperConfig.InitializeAutomapper();
             _unitOfWork = unitOfWork;
             _vehicleRepository = _unitOfWork.GetGenericRepository<Vehicle>();
             _userRepository = _unitOfWork.GetGenericRepository<AspNetUser>();
             _responseDTO = new VehicleResponseDTO();
             _getResponse = new GetVehiclesResponse();
-            _httpContextAccessor = httpContextAccessor;
             _jWTDecode = jWTDecode;
             _vehiclesByUserIdResponse = new GetAllVehiclesByUserIdResponse();
             _makePrimaryResponse = new MakeVehiclePrimaryResponse();
@@ -90,7 +84,7 @@ namespace IWParkingAPI.Services.Implementation
         {
             try
             {
-                var userId = Convert.ToInt32(_jWTDecode.ExtractUserIdFromToken());
+                var userId = Convert.ToInt32(_jWTDecode.ExtractClaimByType("Id"));
                 var existingUser = _userRepository.GetAsQueryable(u => u.Id == userId, null, null).FirstOrDefault();
 
                 if (existingUser == null || existingUser.IsDeactivated == true)
@@ -113,6 +107,7 @@ namespace IWParkingAPI.Services.Implementation
                 }
 
                 vehicle.TimeCreated = DateTime.Now;
+                vehicle.UserId = userId;
                 _vehicleRepository.Insert(vehicle);
                 _unitOfWork.Save();
 
@@ -316,7 +311,7 @@ namespace IWParkingAPI.Services.Implementation
         {
             try
             {
-                var userId = Convert.ToInt32(_jWTDecode.ExtractUserIdFromToken());
+                var userId = Convert.ToInt32(_jWTDecode.ExtractClaimByType("Id"));
                 var user = _userRepository.GetById(userId);
                 if (user == null || user.IsDeactivated == true)
                 {
@@ -366,7 +361,7 @@ namespace IWParkingAPI.Services.Implementation
         {
             try
             {
-                var userId = Convert.ToInt32(_jWTDecode.ExtractUserIdFromToken());
+                var userId = Convert.ToInt32(_jWTDecode.ExtractClaimByType("Id"));
                 if (vehicleId <= 0)
                 {
                     throw new BadRequestException("Vehicle Id is required");

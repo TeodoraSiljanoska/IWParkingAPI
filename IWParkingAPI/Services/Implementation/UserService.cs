@@ -70,7 +70,7 @@ public class UserService : IUserService
     {
         try
         {
-            var id = Convert.ToInt32(_jWTDecode.ExtractUserIdFromToken());
+            var id = Convert.ToInt32(_jWTDecode.ExtractClaimByType("Id"));
 
             var user = _userRepository.GetAsQueryable(u => u.Id == id, null, x => x.Include(y => y.Roles)).FirstOrDefault();
 
@@ -107,7 +107,7 @@ public class UserService : IUserService
     {
         try
         {
-            var id = Convert.ToInt32(_jWTDecode.ExtractUserIdFromToken());
+            var id = Convert.ToInt32(_jWTDecode.ExtractClaimByType("Id"));
             var user = _userRepository.GetAsQueryable(u => u.Id == id, null, x => x.Include(y => y.Roles)).FirstOrDefault();
             if (user == null || user.IsDeactivated == true)
             {
@@ -174,7 +174,7 @@ public class UserService : IUserService
     {
         try
         {
-            var id = Convert.ToInt32(_jWTDecode.ExtractUserIdFromToken());
+            var id = Convert.ToInt32(_jWTDecode.ExtractClaimByType("Id"));
             if (id <= 0)
             {
                 throw new BadRequestException("User Id is required");
