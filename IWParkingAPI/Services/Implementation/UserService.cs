@@ -11,6 +11,7 @@ using NLog;
 using Microsoft.EntityFrameworkCore;
 using IWParkingAPI.Mappers;
 using AutoMapper;
+using IWParkingAPI.Models;
 using IWParkingAPI.Utilities;
 
 public class UserService : IUserService

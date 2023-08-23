@@ -15,5 +15,17 @@ namespace IWParkingAPI.Models.Enums
             [Display(Name = "Declined")]
             Declined = 3,
         }
+
+        public enum RequestType
+        {
+            [Display(Name = "Activate")]
+            Activate = 1,
+
+            [Display(Name = "Deactivate")]
+            Deactivate = 2,
+
+            [Display(Name = "Update")]
+            Update = 3
+        }
     }
 }

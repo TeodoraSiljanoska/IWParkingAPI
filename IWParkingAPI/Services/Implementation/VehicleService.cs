@@ -12,6 +12,10 @@ using IWParkingAPI.CustomExceptions;
 using NLog;
 using Microsoft.EntityFrameworkCore;
 using IWParkingAPI.Utilities;
+using System.IdentityModel.Tokens.Jwt;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using IWParkingAPI.Models;
 
 namespace IWParkingAPI.Services.Implementation
 {

@@ -1,0 +1,2 @@
+ALTER TABLE [ParkingLotRequest]
+ADD [Type] INT NOT NULL DEFAULT 1;

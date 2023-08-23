@@ -21,7 +21,6 @@ namespace IWParkingAPI.Models.Requests
         public int CapacityAdaptedCar { get; set; }
 
         public int Price { get; set; }
-        public int UserId { get; set; }
 
     }
 }

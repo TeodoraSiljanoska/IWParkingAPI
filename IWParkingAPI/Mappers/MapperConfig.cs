@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using IWParkingAPI.Models;
 using IWParkingAPI.Models.Data;
 using IWParkingAPI.Models.Requests;
 using IWParkingAPI.Models.Responses;
@@ -36,11 +37,8 @@ namespace IWParkingAPI.Mappers
                 .ForMember(dest => dest.PhoneNumber, opt => opt.MapFrom(src => src.Phone));
 
                 cfg.CreateMap<VehicleRequest, Vehicle>()
-               //.ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.UserId))
                .ForMember(dest => dest.Type, opt => opt.MapFrom(src => src.Type))
                .ForMember(dest => dest.PlateNumber, opt => opt.MapFrom(src => src.PlateNumber));
-                //   .ForSourceMember(src => src.Type, opt => opt.DoNotValidate())
-                //   .ForSourceMember(src => src.PlateNumber, opt => opt.DoNotValidate()); ;
 
                 cfg.CreateMap<Vehicle, VehicleDTO>()
               .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
@@ -81,7 +79,7 @@ namespace IWParkingAPI.Mappers
                 .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.Email))
                 .ForMember(dest => dest.PhoneNumber, opt => opt.MapFrom(src => src.PhoneNumber));
 
-                cfg.CreateMap<ParkingLotReq, ParkingLot>()
+                cfg.CreateMap<ParkingLotReq, TempParkingLot>()
               .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name))
               .ForMember(dest => dest.City, opt => opt.MapFrom(src => src.City))
               .ForMember(dest => dest.Zone, opt => opt.MapFrom(src => src.Zone))
@@ -90,10 +88,9 @@ namespace IWParkingAPI.Mappers
               .ForMember(dest => dest.WorkingHourTo, opt => opt.MapFrom(src => src.WorkingHourTo))
               .ForMember(dest => dest.CapacityCar, opt => opt.MapFrom(src => src.CapacityCar))
               .ForMember(dest => dest.CapacityAdaptedCar, opt => opt.MapFrom(src => src.CapacityAdaptedCar))
-              .ForMember(dest => dest.Price, opt => opt.MapFrom(src => src.Price))
-              .ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.UserId));
+              .ForMember(dest => dest.Price, opt => opt.MapFrom(src => src.Price));
 
-                cfg.CreateMap<ParkingLot, ParkingLotDTO>()
+                cfg.CreateMap<TempParkingLot, ParkingLotDTO>()
              .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name))
              .ForMember(dest => dest.City, opt => opt.MapFrom(src => src.City))
              .ForMember(dest => dest.Zone, opt => opt.MapFrom(src => src.Zone))
@@ -109,7 +106,116 @@ namespace IWParkingAPI.Mappers
              .ForMember(dest => dest.TimeModified, opt => opt.MapFrom(src => src.TimeModified))
              .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status));
 
-                cfg.CreateMap<Models.Data.ParkingLotRequest, RequestDTO>()
+                cfg.CreateMap<UpdateParkingLotRequest, TempParkingLot>()
+             .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name))
+             .ForMember(dest => dest.City, opt => opt.MapFrom(src => src.City))
+             .ForMember(dest => dest.Zone, opt => opt.MapFrom(src => src.Zone))
+             .ForMember(dest => dest.Address, opt => opt.MapFrom(src => src.Address))
+             .ForMember(dest => dest.WorkingHourFrom, opt => opt.MapFrom(src => src.WorkingHourFrom))
+             .ForMember(dest => dest.WorkingHourTo, opt => opt.MapFrom(src => src.WorkingHourTo))
+             .ForMember(dest => dest.CapacityCar, opt => opt.MapFrom(src => src.CapacityCar))
+             .ForMember(dest => dest.CapacityAdaptedCar, opt => opt.MapFrom(src => src.CapacityAdaptedCar))
+             .ForMember(dest => dest.Price, opt => opt.MapFrom(src => src.Price));
+
+                cfg.CreateMap<TempParkingLot, TempParkingLotDTO>()
+                  .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name))
+                  .ForMember(dest => dest.City, opt => opt.MapFrom(src => src.City))
+                  .ForMember(dest => dest.Zone, opt => opt.MapFrom(src => src.Zone))
+                  .ForMember(dest => dest.Address, opt => opt.MapFrom(src => src.Address))
+                  .ForMember(dest => dest.WorkingHourFrom, opt => opt.MapFrom(src => src.WorkingHourFrom))
+                  .ForMember(dest => dest.WorkingHourTo, opt => opt.MapFrom(src => src.WorkingHourTo))
+                  .ForMember(dest => dest.CapacityCar, opt => opt.MapFrom(src => src.CapacityCar))
+                  .ForMember(dest => dest.CapacityAdaptedCar, opt => opt.MapFrom(src => src.CapacityAdaptedCar))
+                  .ForMember(dest => dest.Price, opt => opt.MapFrom(src => src.Price))
+                  .ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.UserId))
+                  .ForMember(dest => dest.IsDeactivated, opt => opt.MapFrom(src => src.IsDeactivated))
+                  .ForMember(dest => dest.TimeCreated, opt => opt.MapFrom(src => src.TimeCreated))
+                  .ForMember(dest => dest.TimeModified, opt => opt.MapFrom(src => src.TimeModified))
+                  .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status));
+
+                cfg.CreateMap<TempParkingLotDTO, ParkingLot>()
+                  .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name))
+                  .ForMember(dest => dest.City, opt => opt.MapFrom(src => src.City))
+                  .ForMember(dest => dest.Zone, opt => opt.MapFrom(src => src.Zone))
+                  .ForMember(dest => dest.Address, opt => opt.MapFrom(src => src.Address))
+                  .ForMember(dest => dest.WorkingHourFrom, opt => opt.MapFrom(src => src.WorkingHourFrom))
+                  .ForMember(dest => dest.WorkingHourTo, opt => opt.MapFrom(src => src.WorkingHourTo))
+                  .ForMember(dest => dest.CapacityCar, opt => opt.MapFrom(src => src.CapacityCar))
+                  .ForMember(dest => dest.CapacityAdaptedCar, opt => opt.MapFrom(src => src.CapacityAdaptedCar))
+                  .ForMember(dest => dest.Price, opt => opt.MapFrom(src => src.Price))
+                  .ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.UserId))
+                  .ForMember(dest => dest.IsDeactivated, opt => opt.MapFrom(src => src.IsDeactivated))
+                  .ForMember(dest => dest.TimeCreated, opt => opt.MapFrom(src => src.TimeCreated))
+                  .ForMember(dest => dest.TimeModified, opt => opt.MapFrom(src => src.TimeModified))
+                  .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status));
+
+                cfg.CreateMap<ParkingLot, TempParkingLotDTO>()
+                  .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name))
+                  .ForMember(dest => dest.City, opt => opt.MapFrom(src => src.City))
+                  .ForMember(dest => dest.Zone, opt => opt.MapFrom(src => src.Zone))
+                  .ForMember(dest => dest.Address, opt => opt.MapFrom(src => src.Address))
+                  .ForMember(dest => dest.WorkingHourFrom, opt => opt.MapFrom(src => src.WorkingHourFrom))
+                  .ForMember(dest => dest.WorkingHourTo, opt => opt.MapFrom(src => src.WorkingHourTo))
+                  .ForMember(dest => dest.CapacityCar, opt => opt.MapFrom(src => src.CapacityCar))
+                  .ForMember(dest => dest.CapacityAdaptedCar, opt => opt.MapFrom(src => src.CapacityAdaptedCar))
+                  .ForMember(dest => dest.Price, opt => opt.MapFrom(src => src.Price))
+                  .ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.UserId))
+                  .ForMember(dest => dest.IsDeactivated, opt => opt.MapFrom(src => src.IsDeactivated))
+                  .ForMember(dest => dest.TimeCreated, opt => opt.MapFrom(src => src.TimeCreated))
+                  .ForMember(dest => dest.TimeModified, opt => opt.MapFrom(src => src.TimeModified))
+                  .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status));
+
+                cfg.CreateMap<ParkingLot, ParkingLotDTO>()
+                 .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name))
+                 .ForMember(dest => dest.City, opt => opt.MapFrom(src => src.City))
+                 .ForMember(dest => dest.Zone, opt => opt.MapFrom(src => src.Zone))
+                 .ForMember(dest => dest.Address, opt => opt.MapFrom(src => src.Address))
+                 .ForMember(dest => dest.WorkingHourFrom, opt => opt.MapFrom(src => src.WorkingHourFrom))
+                 .ForMember(dest => dest.WorkingHourTo, opt => opt.MapFrom(src => src.WorkingHourTo))
+                 .ForMember(dest => dest.CapacityCar, opt => opt.MapFrom(src => src.CapacityCar))
+                 .ForMember(dest => dest.CapacityAdaptedCar, opt => opt.MapFrom(src => src.CapacityAdaptedCar))
+                 .ForMember(dest => dest.Price, opt => opt.MapFrom(src => src.Price))
+                 .ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.UserId))
+                 .ForMember(dest => dest.IsDeactivated, opt => opt.MapFrom(src => src.IsDeactivated))
+                 .ForMember(dest => dest.TimeCreated, opt => opt.MapFrom(src => src.TimeCreated))
+                 .ForMember(dest => dest.TimeModified, opt => opt.MapFrom(src => src.TimeModified))
+                 .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status));
+
+
+                cfg.CreateMap<ParkingLot, TempParkingLot>()
+                  .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name))
+                  .ForMember(dest => dest.City, opt => opt.MapFrom(src => src.City))
+                  .ForMember(dest => dest.Zone, opt => opt.MapFrom(src => src.Zone))
+                  .ForMember(dest => dest.Address, opt => opt.MapFrom(src => src.Address))
+                  .ForMember(dest => dest.WorkingHourFrom, opt => opt.MapFrom(src => src.WorkingHourFrom))
+                  .ForMember(dest => dest.WorkingHourTo, opt => opt.MapFrom(src => src.WorkingHourTo))
+                  .ForMember(dest => dest.CapacityCar, opt => opt.MapFrom(src => src.CapacityCar))
+                  .ForMember(dest => dest.CapacityAdaptedCar, opt => opt.MapFrom(src => src.CapacityAdaptedCar))
+                  .ForMember(dest => dest.Price, opt => opt.MapFrom(src => src.Price))
+                  .ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.UserId))
+                  .ForMember(dest => dest.IsDeactivated, opt => opt.MapFrom(src => src.IsDeactivated))
+                  .ForMember(dest => dest.TimeCreated, opt => opt.MapFrom(src => src.TimeCreated))
+                  .ForMember(dest => dest.TimeModified, opt => opt.MapFrom(src => src.TimeModified))
+                  .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status));
+
+                   cfg.CreateMap<TempParkingLotDTO, TempParkingLot>()
+                     .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name))
+                     .ForMember(dest => dest.City, opt => opt.MapFrom(src => src.City))
+                     .ForMember(dest => dest.Zone, opt => opt.MapFrom(src => src.Zone))
+                     .ForMember(dest => dest.Address, opt => opt.MapFrom(src => src.Address))
+                     .ForMember(dest => dest.WorkingHourFrom, opt => opt.MapFrom(src => src.WorkingHourFrom))
+                     .ForMember(dest => dest.WorkingHourTo, opt => opt.MapFrom(src => src.WorkingHourTo))
+                     .ForMember(dest => dest.CapacityCar, opt => opt.MapFrom(src => src.CapacityCar))
+                     .ForMember(dest => dest.CapacityAdaptedCar, opt => opt.MapFrom(src => src.CapacityAdaptedCar))
+                     .ForMember(dest => dest.Price, opt => opt.MapFrom(src => src.Price))
+                     .ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.UserId))
+                     .ForMember(dest => dest.IsDeactivated, opt => opt.MapFrom(src => src.IsDeactivated))
+                     .ForMember(dest => dest.TimeCreated, opt => opt.MapFrom(src => src.TimeCreated))
+                     .ForMember(dest => dest.TimeModified, opt => opt.MapFrom(src => src.TimeModified))
+                     .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status)); 
+
+
+                cfg.CreateMap<ParkingLotRequest, RequestDTO>()
                 .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
                 .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status))
                 .ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.UserId))
@@ -139,7 +245,6 @@ namespace IWParkingAPI.Mappers
                .ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.UserId))
                .ForMember(dest => dest.ParkingLotId, opt => opt.MapFrom(src => src.ParkingLotId))
                .ForMember(dest => dest.TimeCreated, opt => opt.MapFrom(src => src.TimeCreated))
-               .ForMember(dest => dest.ParkingLot, opt => opt.MapFrom(src => src.ParkingLot))
                .ForMember(dest => dest.User, opt => opt.MapFrom(src => src.User));
 
             }
