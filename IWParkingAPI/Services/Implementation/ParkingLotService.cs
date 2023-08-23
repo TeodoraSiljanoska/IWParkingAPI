@@ -511,7 +511,7 @@ namespace IWParkingAPI.Services.Implementation
 
                 var favouritesList = userWithParkingLots.ParkingLotsNavigation.ToList();
 
-                var approvedFromFavourites = favouritesList.Where(a => a.Status == (int)Status.Approved).ToList();
+                var approvedFromFavourites = favouritesList.Where(a => a.Status == (int)Status.Approved && a.IsDeactivated == false).ToList();
 
                 if (!approvedFromFavourites.Any())
                 {
