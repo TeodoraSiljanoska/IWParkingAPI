@@ -7,10 +7,7 @@ using IWParkingAPI.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using System.Net;
 using AutoMapper;
-//using ParkingLotRequest = IWParkingAPI.Models.Data.ParkingLotRequest;
-using IWParkingAPI.Models.Context;
 using static IWParkingAPI.Models.Enums.Enums;
-using IWParkingAPI.Models.Data;
 using IWParkingAPI.CustomExceptions;
 using NLog;
 using IWParkingAPI.Models;
@@ -116,7 +113,6 @@ namespace IWParkingAPI.Services.Implementation
                     pL.TimeCreated = DateTime.Now;
                     _parkingLotRepository.Insert(pL);
                     
-                    //req.ParkingLot = null;
                     _tempParkingLotRepository.Delete(tempParkingLot);
 
                     _requestRepository.Delete(req);
@@ -126,7 +122,6 @@ namespace IWParkingAPI.Services.Implementation
                 if ((int)enumValue == (int)Status.Declined && req.Type == (int)RequestType.Activate)
                 {
                     var tempParkingLot = _tempParkingLotRepository.GetAsQueryable(p => p.Id == req.ParkingLotId && p.UserId == req.UserId, null, x => x.Include(y => y.User)).FirstOrDefault();
-                   // req.ParkingLot = null;
                     _tempParkingLotRepository.Delete(tempParkingLot);
 
                     _requestRepository.Delete(req);
@@ -138,7 +133,6 @@ namespace IWParkingAPI.Services.Implementation
                     parkingLotToDeactivate.IsDeactivated = true;
                     parkingLotToDeactivate.TimeModified = DateTime.Now;
                     _parkingLotRepository.Update(_mapper.Map<ParkingLot>(parkingLotToDeactivate));
-                   // _unitOfWork.Save();
                     _requestRepository.Delete(req);
                     _unitOfWork.Save();
                 }
@@ -166,15 +160,11 @@ namespace IWParkingAPI.Services.Implementation
                     ParkingLot.CapacityCar = (ParkingLot.CapacityCar == tempParkingLot.CapacityCar) ? ParkingLot.CapacityCar : tempParkingLot.CapacityCar;
                     ParkingLot.CapacityAdaptedCar = (ParkingLot.CapacityAdaptedCar == tempParkingLot.CapacityAdaptedCar) ? ParkingLot.CapacityAdaptedCar : tempParkingLot.CapacityAdaptedCar;
                     ParkingLot.Price = (ParkingLot.Price == tempParkingLot.Price) ? ParkingLot.Price : tempParkingLot.Price;
-                   // ParkingLot.User = _userRepository.GetAsQueryable(u => u.Id == userId, null, null).FirstOrDefault();
                     ParkingLot.TimeModified = DateTime.Now;
-
-                  //  parkingLot.Status = (int)Status.Pending;
 
 
                     ParkingLot.Status = (int)Status.Approved;
                     _parkingLotRepository.Update(_mapper.Map<ParkingLot>(ParkingLot));
-                   // req.ParkingLot = null;
                     _tempParkingLotRepository.Delete(tempParkingLot);
 
                     _requestRepository.Delete(req);
@@ -184,20 +174,13 @@ namespace IWParkingAPI.Services.Implementation
                 if((int)enumValue == (int)Status.Declined && req.Type == (int)RequestType.Update)
                 {
                     var tempParkingLot = _tempParkingLotRepository.GetAsQueryable(p => p.Id == req.ParkingLotId && p.UserId == req.UserId, null, x => x.Include(y => y.User)).FirstOrDefault();
-
-                  //  req.ParkingLot = null;
                     _tempParkingLotRepository.Delete(tempParkingLot);
 
-                    //_requestRepository.Delete(req);
                     _requestRepository.Delete(req);
                     _unitOfWork.Save();
                 }    
-               // parkingLot.Status = (int)enumValue;
+               
                 parkingLotToDeactivate.TimeModified = DateTime.Now;
-
-               // _requestRepository.Update(req);
-              //  _parkingLotRepository.Update(parkingLot);
-              //  _unitOfWork.Save();
 
                 _response.StatusCode = HttpStatusCode.OK;
                 _response.Message = "Request modified successfully";
