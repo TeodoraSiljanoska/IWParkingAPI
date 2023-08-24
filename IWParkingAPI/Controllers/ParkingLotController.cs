@@ -76,11 +76,5 @@ namespace IWParkingAPI.Controllers
         {
             return _parkingLotService.GetUserFavouriteParkingLots();
         }
-
-      /*  [HttpGet("FilterParkingLots")]
-        public AllParkingLotsResponse FilterParkingLots(FilterParkingLotRequest request)
-        {
-            return _parkingLotService.FilterParkingLots(request);
-        } */
     }
 }

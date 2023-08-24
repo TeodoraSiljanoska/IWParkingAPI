@@ -13,6 +13,5 @@ namespace IWParkingAPI.Services.Interfaces
         public ParkingLotResponse MakeParkingLotFavorite(int parkingLotId);
         public ParkingLotResponse RemoveParkingLotFavourite(int parkingLotId);
         public AllParkingLotsResponse GetUserFavouriteParkingLots();
-     //   public AllParkingLotsResponse FilterParkingLots(FilterParkingLotRequest request);
     }
 }
