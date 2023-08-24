@@ -1,13 +1,12 @@
 ﻿using AutoMapper;
 using IWParkingAPI.CustomExceptions;
-using IWParkingAPI.Infrastructure.Repository;
-using IWParkingAPI.Infrastructure.UnitOfWork;
 using IWParkingAPI.Mappers;
 using IWParkingAPI.Models;
 using IWParkingAPI.Models.Context;
 using IWParkingAPI.Models.Data;
 using IWParkingAPI.Models.Requests;
 using IWParkingAPI.Models.Responses;
+using IWParkingAPI.Models.Responses.Dto;
 using IWParkingAPI.Services.Interfaces;
 using IWParkingAPI.Utilities;
 using Microsoft.AspNetCore.Identity;
@@ -20,33 +19,27 @@ namespace IWParkingAPI.Services.Implementation
     {
 
         private readonly IMapper _mapper;
-        private readonly UserRegisterResponse _registerResponse;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly RoleManager<ApplicationRole> _roleManager;
         private readonly IJwtUtils _jwtUtils;
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
-        private readonly UserDTOResponse _userDTOResponse;
-        private readonly IUnitOfWork<ParkingDbContext> _unitOfWork;
-        private readonly IGenericRepository<AspNetUser> _userRepository;
+        private readonly UserResponse _userDTOResponse;
         private readonly ResponseBase _responseBase;
 
         public AuthService(RoleManager<ApplicationRole> roleManager, UserManager<ApplicationUser> userManager,
-            IJwtUtils jwtUtils, SignInManager<ApplicationUser> signInManager, IUnitOfWork<ParkingDbContext> unitOfWork)
+            IJwtUtils jwtUtils, SignInManager<ApplicationUser> signInManager)
         {
             _mapper = MapperConfig.InitializeAutomapper();
-            _registerResponse = new UserRegisterResponse();
             _userManager = userManager;
             _signInManager = signInManager;
             _roleManager = roleManager;
             _jwtUtils = jwtUtils;
-            _userDTOResponse = new UserDTOResponse();
-            _unitOfWork = unitOfWork;
-            _userRepository = _unitOfWork.GetGenericRepository<AspNetUser>();
+            _userDTOResponse = new UserResponse();
             _responseBase = new ResponseBase();
         }
 
-        public async Task<UserRegisterResponse> RegisterUser(UserRegisterRequest request)
+        public async Task<UserResponse> RegisterUser(UserRegisterRequest request)
         {
             try
             {
@@ -68,18 +61,21 @@ namespace IWParkingAPI.Services.Implementation
 
                 var result = await _userManager.CreateAsync(newUser, request.Password);
 
+                var userDto = _mapper.Map<UserDTO>(newUser);
+                userDto.Role = request.Role;
+
                 if (result.Succeeded)
                 {
                     await _userManager.AddToRoleAsync(newUser, request.Role);
-                    _registerResponse.StatusCode = HttpStatusCode.OK;
-                    _registerResponse.Message = "User created successfully";
-                    _registerResponse.User = newUser;
+                    _userDTOResponse.StatusCode = HttpStatusCode.OK;
+                    _userDTOResponse.Message = "User created successfully";
+                    _userDTOResponse.User = userDto;
                 }
                 else
                 {
                     throw new BadRequestException("User creation failed! Please check User details and try again");
                 }
-                return _registerResponse;
+                return _userDTOResponse;
             }
             catch (BadRequestException ex)
             {
@@ -166,11 +162,6 @@ namespace IWParkingAPI.Services.Implementation
 
                 if (result.Succeeded)
                 {
-                   //userAspNet.TimeModified = DateTime.Now;
-                    //_userRepository.Update(userAspNet);
-                    //_unitOfWork.Save();
-                    //var userDto = _mapper.Map<UserDTO>(userAspNet);
-                    //_response.User = user;
                     _responseBase.Message = "User reset password successfully";
                     _responseBase.StatusCode = HttpStatusCode.OK;
                     return _responseBase;
@@ -224,7 +215,6 @@ namespace IWParkingAPI.Services.Implementation
                 user.UserName = model.NewEmail;
                 user.NormalizedUserName = model.NewEmail.ToUpper();
                 user.TimeModified = DateTime.Now;
-                // user.SecurityStamp = await _userManager.UpdateSecurityStampAsync(user);
                 var result = await _userManager.UpdateAsync(user);
                 if (result.Succeeded)
                 {

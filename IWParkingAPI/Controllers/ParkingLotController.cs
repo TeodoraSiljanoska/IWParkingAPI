@@ -21,7 +21,7 @@ namespace IWParkingAPI.Controllers
         }
 
         [HttpGet("GetAll")]
-        public GetParkingLotsResponse GetParkingLots()
+        public AllParkingLotsResponse GetParkingLots()
         {
             return _parkingLotService.GetAllParkingLots();
         }
@@ -49,6 +49,7 @@ namespace IWParkingAPI.Controllers
         {
             return _parkingLotService.UpdateParkingLot(id,request);
         }
+        [AuthorizeCustom(UserRoles.SuperAdmin)]
 
         [AuthorizeCustom(UserRoles.Owner)]
         [HttpDelete("Deactivate/{id}")]
@@ -73,7 +74,7 @@ namespace IWParkingAPI.Controllers
 
         [HttpGet("GetUserFavouriteParkingLots")]
         [AuthorizeCustom(UserRoles.User)]
-        public GetParkingLotsDTOResponse GetUsereFavouriteParkingLots()
+        public AllParkingLotsResponse GetUsereFavouriteParkingLots()
         {
             return _parkingLotService.GetUserFavouriteParkingLots();
         }

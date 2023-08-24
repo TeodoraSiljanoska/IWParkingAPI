@@ -6,6 +6,7 @@ using IWParkingAPI.Mappers;
 using IWParkingAPI.Models;
 using IWParkingAPI.Models.Requests;
 using IWParkingAPI.Models.Responses;
+using IWParkingAPI.Models.Responses.Dto;
 using IWParkingAPI.Services.Interfaces;
 using IWParkingAPI.Utilities;
 using Microsoft.EntityFrameworkCore;
@@ -24,8 +25,7 @@ namespace IWParkingAPI.Services.Implementation
         private readonly IGenericRepository<ParkingLotRequest> _parkingLotRequestRepository;
         private readonly IGenericRepository<AspNetUser> _userRepository;
         private readonly IGenericRepository<ParkingLotRequest> _requestRepository;
-        private readonly GetParkingLotsResponse _getResponse;
-        private readonly GetParkingLotsDTOResponse _getDTOResponse;
+        private readonly AllParkingLotsResponse _getDTOResponse;
         private readonly ParkingLotResponse _response;
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
         private readonly IJWTDecode _jWTDecode;
@@ -39,12 +39,11 @@ namespace IWParkingAPI.Services.Implementation
             _parkingLotRequestRepository = _unitOfWork.GetGenericRepository<ParkingLotRequest>();
             _userRepository = _unitOfWork.GetGenericRepository<AspNetUser>();
             _requestRepository = _unitOfWork.GetGenericRepository<ParkingLotRequest>();
-            _getResponse = new GetParkingLotsResponse();
             _response = new ParkingLotResponse();
-            _getDTOResponse = new GetParkingLotsDTOResponse();
+            _getDTOResponse = new AllParkingLotsResponse();
             _jWTDecode = jWTDecode;
         }
-        public GetParkingLotsResponse GetAllParkingLots()
+        public AllParkingLotsResponse GetAllParkingLots()
         {
             try
             {
@@ -55,7 +54,8 @@ namespace IWParkingAPI.Services.Implementation
                 List<ParkingLot> parkingLots;
                 if (userId == null || role.Equals(UserRoles.User) || role.Equals(UserRoles.SuperAdmin))
                 {
-                    parkingLots = _parkingLotRepository.GetAsQueryable(x => x.Status == ((int)Status.Approved)).ToList();
+                    parkingLots = _parkingLotRepository.GetAsQueryable(x => x.Status == ((int)Status.Approved)
+                    && x.IsDeactivated == false).ToList();
                 }
                 else if (role.Equals(UserRoles.Owner))
                 {
@@ -63,20 +63,27 @@ namespace IWParkingAPI.Services.Implementation
                 }
                 else
                 {
-                    parkingLots = _parkingLotRepository.GetAsQueryable(x => x.Status == ((int)Status.Approved)).ToList();
+                    parkingLots = _parkingLotRepository.GetAsQueryable(x => x.Status == ((int)Status.Approved)
+                    && x.IsDeactivated == false).ToList();
                 }
 
                 if (!parkingLots.Any())
                 {
-                    _getResponse.StatusCode = HttpStatusCode.OK;
-                    _getResponse.Message = "There aren't any parking lots.";
-                    _getResponse.ParkingLots = Enumerable.Empty<ParkingLot>();
-                    return _getResponse;
+                    _getDTOResponse.StatusCode = HttpStatusCode.OK;
+                    _getDTOResponse.Message = "There aren't any parking lots.";
+                    _getDTOResponse.ParkingLots = Enumerable.Empty<ParkingLotDTO>();
+                    return _getDTOResponse;
                 }
-                _getResponse.StatusCode = HttpStatusCode.OK;
-                _getResponse.Message = "Parking lots returned successfully";
-                _getResponse.ParkingLots = parkingLots;
-                return _getResponse;
+
+                List<ParkingLotDTO> parkingLotDTOs = new List<ParkingLotDTO>();
+                foreach (var p in parkingLots)
+                {
+                    parkingLotDTOs.Add(_mapper.Map<ParkingLotDTO>(p));
+                }
+                _getDTOResponse.StatusCode = HttpStatusCode.OK;
+                _getDTOResponse.Message = "Parking lots returned successfully";
+                _getDTOResponse.ParkingLots = parkingLotDTOs;
+                return _getDTOResponse;
             }
             catch (Exception ex)
             {
@@ -555,7 +562,7 @@ namespace IWParkingAPI.Services.Implementation
             }
         }
 
-        public GetParkingLotsDTOResponse GetUserFavouriteParkingLots()
+        public AllParkingLotsResponse GetUserFavouriteParkingLots()
         {
             try
             {
@@ -584,7 +591,7 @@ namespace IWParkingAPI.Services.Implementation
 
                 var favouritesList = userWithParkingLots.ParkingLotsNavigation.ToList();
 
-                var approvedFromFavourites = favouritesList.Where(a => a.Status == (int)Status.Approved).ToList();
+                var approvedFromFavourites = favouritesList.Where(a => a.Status == (int)Status.Approved && a.IsDeactivated == false).ToList();
 
                 if (!approvedFromFavourites.Any())
                 {

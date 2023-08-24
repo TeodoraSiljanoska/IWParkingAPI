@@ -7,6 +7,7 @@ using IWParkingAPI.Models.Context;
 using IWParkingAPI.Models.Data;
 using IWParkingAPI.Models.Requests;
 using IWParkingAPI.Models.Responses;
+using IWParkingAPI.Models.Responses.Dto;
 using IWParkingAPI.Services.Interfaces;
 using NLog;
 using System.Net;
@@ -19,7 +20,7 @@ namespace IWParkingAPI.Services.Implementation
         private readonly IUnitOfWork<ParkingDbContextCustom> _unitOfWork;
         private readonly IGenericRepository<ApplicationRole> _roleRepository;
         private readonly RoleResponse _response;
-        private readonly GetRolesResponse _getResponse;
+        private readonly AllRolesResponse _getResponse;
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
         public RoleService(IUnitOfWork<ParkingDbContextCustom> unitOfWork)
         {
@@ -27,9 +28,9 @@ namespace IWParkingAPI.Services.Implementation
             _roleRepository = _unitOfWork.GetGenericRepository<ApplicationRole>();
             _mapper = MapperConfig.InitializeAutomapper();
             _response = new RoleResponse();
-            _getResponse = new GetRolesResponse();
+            _getResponse = new AllRolesResponse();
         }
-        public GetRolesResponse GetAllRoles()
+        public AllRolesResponse GetAllRoles()
         {
             try
             {
@@ -38,11 +39,18 @@ namespace IWParkingAPI.Services.Implementation
                 {
                     _getResponse.StatusCode = HttpStatusCode.NoContent;
                     _getResponse.Message = "There aren't any roles.";
-                    _getResponse.Roles = Enumerable.Empty<ApplicationRole>();
+                    _getResponse.Roles = Enumerable.Empty<RoleDTO>();
                     return _getResponse;
                 }
 
-                _getResponse.Roles = roles;
+                List<RoleDTO> rolesDto = new List<RoleDTO>();
+
+                foreach(var r in roles)
+                {
+                    rolesDto.Add(_mapper.Map<RoleDTO>(r));
+                }
+
+                _getResponse.Roles = rolesDto;
                 _getResponse.StatusCode = HttpStatusCode.OK;
                 _getResponse.Message = "Roles returned successfully";
                 return _getResponse;
@@ -69,7 +77,9 @@ namespace IWParkingAPI.Services.Implementation
                     throw new NotFoundException("Role not found");
                 }
 
-                _response.Role = role;
+                var roleDto = _mapper.Map<RoleDTO>(role);
+
+                _response.Role = roleDto;
                 _response.StatusCode = HttpStatusCode.OK;
                 _response.Message = "Role returned successfully";
                 return _response;
@@ -106,7 +116,9 @@ namespace IWParkingAPI.Services.Implementation
                 _roleRepository.Insert(role);
                 _unitOfWork.Save();
 
-                _response.Role = role;
+                var roleDto = _mapper.Map<RoleDTO>(role);
+
+                _response.Role = roleDto;
                 _response.StatusCode = HttpStatusCode.OK;
                 _response.Message = "Role created successfully";
 
@@ -158,7 +170,9 @@ namespace IWParkingAPI.Services.Implementation
                 _roleRepository.Update(role);
                 _unitOfWork.Save();
 
-                _response.Role = role;
+                var roleDto = _mapper.Map<RoleDTO>(role);
+
+                _response.Role = roleDto;
                 _response.StatusCode = HttpStatusCode.OK;
                 _response.Message = "Role updated successfully";
 
@@ -199,7 +213,9 @@ namespace IWParkingAPI.Services.Implementation
                 _roleRepository.Delete(role);
                 _unitOfWork.Save();
 
-                _response.Role = role;
+                var roleDto = _mapper.Map<RoleDTO>(role);
+
+                _response.Role = roleDto;
                 _response.StatusCode = HttpStatusCode.OK;
                 _response.Message = "Role deleted successfully";
 

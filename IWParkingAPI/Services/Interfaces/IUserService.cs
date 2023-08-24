@@ -6,10 +6,10 @@ namespace IWParkingAPI.Services.Interfaces
 {
     public interface IUserService
     {
-        public GetUsersDTOResponse GetAllUsers();
-        public UserDTOResponse GetUserById();
-        public UserDTOResponse UpdateUser(UpdateUserRequest changes);
-        public UserDTOResponse DeactivateUser();
-        public UserDTOResponse DeactivateUserAdmin(int id);
+        public AllUsersResponse GetAllUsers();
+        public UserResponse GetUserById();
+        public UserResponse UpdateUser(UpdateUserRequest changes);
+        public UserResponse DeactivateUser();
+        public UserResponse DeactivateUserAdmin(int id);
     }
 }

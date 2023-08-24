@@ -1,8 +1,6 @@
-﻿using IWParkingAPI.Models.Data;
-
-namespace IWParkingAPI.Models.Responses
+﻿namespace IWParkingAPI.Models.Responses.Dto
 {
-    public class GetAllRequestsDTO
+    public class RequestDTO
     {
         public int Id { get; set; }
 
@@ -15,6 +13,7 @@ namespace IWParkingAPI.Models.Responses
         public DateTime TimeCreated { get; set; }
 
         public virtual ParkingLotDTO ParkingLot { get; set; } = null!;
+
         public virtual UserDTO User { get; set; } = null!;
     }
 }

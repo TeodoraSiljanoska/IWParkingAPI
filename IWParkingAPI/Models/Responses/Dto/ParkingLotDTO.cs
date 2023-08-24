@@ -1,4 +1,4 @@
-﻿namespace IWParkingAPI.Models.Responses
+﻿namespace IWParkingAPI.Models.Responses.Dto
 {
     public class ParkingLotDTO
     {

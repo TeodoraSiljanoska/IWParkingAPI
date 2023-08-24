@@ -1,7 +1,6 @@
 ﻿using IWParkingAPI.Infrastructure.Repository;
 using IWParkingAPI.Infrastructure.UnitOfWork;
 using IWParkingAPI.Mappers;
-using IWParkingAPI.Models.Requests;
 using IWParkingAPI.Models.Responses;
 using IWParkingAPI.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -10,6 +9,7 @@ using AutoMapper;
 using static IWParkingAPI.Models.Enums.Enums;
 using IWParkingAPI.CustomExceptions;
 using NLog;
+using IWParkingAPI.Models.Responses.Dto;
 using IWParkingAPI.Models;
 
 namespace IWParkingAPI.Services.Implementation
@@ -21,7 +21,7 @@ namespace IWParkingAPI.Services.Implementation
         private readonly IGenericRepository<ParkingLot> _parkingLotRepository;
         private readonly IGenericRepository<TempParkingLot> _tempParkingLotRepository;
         private readonly RequestResponse _response;
-        private readonly GetAllParkingLotRequestsResponse _allRequestsResponse;
+        private readonly AllRequestsResponse _allRequestsResponse;
         private readonly IMapper _mapper;
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
 
@@ -33,12 +33,12 @@ namespace IWParkingAPI.Services.Implementation
             _parkingLotRepository = _unitOfWork.GetGenericRepository<ParkingLot>();
             _tempParkingLotRepository = _unitOfWork.GetGenericRepository<TempParkingLot>();
             _response = new RequestResponse();
-            _allRequestsResponse = new GetAllParkingLotRequestsResponse();
+            _allRequestsResponse = new AllRequestsResponse();
             _mapper = MapperConfig.InitializeAutomapper();
 
         }
 
-        public GetAllParkingLotRequestsResponse GetAllRequests()
+        public AllRequestsResponse GetAllRequests()
         {
             try
             {
@@ -48,14 +48,14 @@ namespace IWParkingAPI.Services.Implementation
                 {
                     _allRequestsResponse.StatusCode = HttpStatusCode.OK;
                     _allRequestsResponse.Message = "There aren't any requests.";
-                    _allRequestsResponse.Requests = Enumerable.Empty<GetAllRequestsDTO>();
+                    _allRequestsResponse.Requests = Enumerable.Empty<RequestDTO>();
                     return _allRequestsResponse;
                 }
 
-                var GetAllRequestsDTOList = new List<GetAllRequestsDTO>();
+                var GetAllRequestsDTOList = new List<RequestDTO>();
                 foreach (var p in requests)
                 {
-                    GetAllRequestsDTOList.Add(_mapper.Map<GetAllRequestsDTO>(p));
+                    GetAllRequestsDTOList.Add(_mapper.Map<RequestDTO>(p));
                 }
                 _allRequestsResponse.StatusCode = HttpStatusCode.OK;
                 _allRequestsResponse.Message = "Requests returned successfully";
@@ -68,7 +68,7 @@ namespace IWParkingAPI.Services.Implementation
                 throw new InternalErrorException("Unexpected error while getting all Requests");
             }
         }
-        public RequestResponse ModifyRequest(int id, RequestRequest request)
+        public RequestResponse ModifyRequest(int id, Models.Requests.RequestRequest request)
         {
             try
             {
@@ -179,15 +179,15 @@ namespace IWParkingAPI.Services.Implementation
                     _requestRepository.Delete(req);
                     _unitOfWork.Save();
                 }    
-               
-                parkingLotToDeactivate.TimeModified = DateTime.Now;
 
                 _response.StatusCode = HttpStatusCode.OK;
                 _response.Message = "Request modified successfully";
 
+                
                 var reqDTO = _mapper.Map<RequestDTO>(req);
+                reqDTO.Status = (int)enumValue;
                 _response.Request = reqDTO;
-
+                
                 return _response;
             }
             catch (BadRequestException ex)

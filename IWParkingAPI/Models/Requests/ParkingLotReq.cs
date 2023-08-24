@@ -1,6 +1,4 @@
-﻿using System.Text.Json.Serialization;
-
-namespace IWParkingAPI.Models.Requests
+﻿namespace IWParkingAPI.Models.Requests
 {
     public class ParkingLotReq
     {

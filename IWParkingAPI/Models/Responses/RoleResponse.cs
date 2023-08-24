@@ -1,9 +1,10 @@
 ﻿using IWParkingAPI.Models.Data;
+using IWParkingAPI.Models.Responses.Dto;
 
 namespace IWParkingAPI.Models.Responses
 {
     public class RoleResponse : ResponseBase
     {
-        public ApplicationRole Role { get; set; } = new ApplicationRole();
+        public RoleDTO Role { get; set; } = new RoleDTO();
     }
 }
