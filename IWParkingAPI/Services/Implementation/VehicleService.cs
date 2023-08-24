@@ -155,15 +155,10 @@ namespace IWParkingAPI.Services.Implementation
                     throw new BadRequestException("Vehicle Id is required");
                 }
 
-                var vehicle = _vehicleRepository.GetAsQueryable(x => x.Id == id, null, x => x.Include(y => y.User)).FirstOrDefault();
+                var vehicle = _vehicleRepository.GetAsQueryable(x => x.Id == id && x.UserId == userId, null, x => x.Include(y => y.User)).FirstOrDefault();
                 if (vehicle == null)
                 {
                     throw new NotFoundException("Vehicle not found");
-                }
-
-                if (vehicle.UserId != userId)
-                {
-                    throw new BadRequestException("You do not own this vehicle");
                 }
 
                 if (vehicle.IsPrimary == true)
