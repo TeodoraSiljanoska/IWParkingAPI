@@ -18,10 +18,10 @@ namespace IWParkingAPI.Controllers
             _parkingLotService = parkingLotService;
         }
 
-        [HttpGet("GetAll")]
-        public AllParkingLotsResponse GetParkingLots(int pageNumber, int pageSize, string city)
+        [HttpPost("GetAll")]
+        public AllParkingLotsResponse GetParkingLots(int pageNumber, int pageSize, FilterParkingLotRequest request)
         {
-            return _parkingLotService.GetAllParkingLots(pageNumber, pageSize, city);
+            return _parkingLotService.GetAllParkingLots(pageNumber, pageSize, request);
         }
 
         [AuthorizeCustom(UserRoles.SuperAdmin)]
@@ -77,10 +77,10 @@ namespace IWParkingAPI.Controllers
             return _parkingLotService.GetUserFavouriteParkingLots();
         }
 
-        [HttpGet("FilterParkingLots")]
-        public GetParkingLotsDTOResponse FilterParkingLots(FilterParkingLotRequest request)
+      /*  [HttpGet("FilterParkingLots")]
+        public AllParkingLotsResponse FilterParkingLots(FilterParkingLotRequest request)
         {
             return _parkingLotService.FilterParkingLots(request);
-        }
+        } */
     }
 }
