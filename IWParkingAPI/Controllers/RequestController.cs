@@ -21,7 +21,7 @@ namespace IWParkingAPI.Controllers
 
         [AuthorizeCustom(UserRoles.SuperAdmin)]
         [HttpGet("GetAll")]
-        public GetAllParkingLotRequestsResponse GetRequests()
+        public AllRequestsResponse GetRequests()
         {
             return _requestService.GetAllRequests();
         }

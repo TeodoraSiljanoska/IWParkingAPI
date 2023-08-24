@@ -5,13 +5,14 @@ namespace IWParkingAPI.Services.Interfaces
 {
     public interface IParkingLotService
     {
-        public GetParkingLotsResponse GetAllParkingLots();
+        public AllParkingLotsResponse GetAllParkingLots(int pageNumber, int pageSize, string city);
         public ParkingLotResponse GetParkingLotById(int id);
         public ParkingLotResponse DeactivateParkingLot(int id);
         public ParkingLotResponse CreateParkingLot(ParkingLotReq request);
         public ParkingLotResponse UpdateParkingLot(int id, UpdateParkingLotRequest changes);
         public ParkingLotResponse MakeParkingLotFavorite(int parkingLotId);
         public ParkingLotResponse RemoveParkingLotFavourite(int parkingLotId);
+        public AllParkingLotsResponse GetUserFavouriteParkingLots();
         public GetParkingLotsDTOResponse GetUserFavouriteParkingLots();
         public GetParkingLotsDTOResponse FilterParkingLots(FilterParkingLotRequest request);
     }

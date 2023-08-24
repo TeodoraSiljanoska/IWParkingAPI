@@ -1,6 +1,4 @@
-﻿using AutoMapper.Configuration.Annotations;
-
-namespace IWParkingAPI.Models.Requests
+﻿namespace IWParkingAPI.Models.Requests
 {
     public class VehicleRequest
     {

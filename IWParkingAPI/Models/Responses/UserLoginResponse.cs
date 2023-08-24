@@ -1,10 +1,8 @@
-﻿using IWParkingAPI.Models.Data;
-
-namespace IWParkingAPI.Models.Responses
+﻿namespace IWParkingAPI.Models.Responses
 {
     public class UserLoginResponse : ResponseBase
     {
-        public string Token { get; set; }
-        public string Role { get; set; }
+        public string Token { get; set; } = null!;
+        public string Role { get; set; } = null!;
     }
 }
