@@ -1,11 +1,9 @@
 ﻿using IWParkingAPI.Fluent_Validations;
 using IWParkingAPI.Middleware.Authorization;
 using IWParkingAPI.Models;
-using IWParkingAPI.Models.Data;
 using IWParkingAPI.Models.Requests;
 using IWParkingAPI.Models.Responses;
 using IWParkingAPI.Services.Interfaces;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc;
 
 namespace IWParkingAPI.Controllers
@@ -21,9 +19,9 @@ namespace IWParkingAPI.Controllers
         }
 
         [HttpGet("GetAll")]
-        public AllParkingLotsResponse GetParkingLots()
+        public AllParkingLotsResponse GetParkingLots(int pageNumber, int pageSize, string city)
         {
-            return _parkingLotService.GetAllParkingLots();
+            return _parkingLotService.GetAllParkingLots(pageNumber, pageSize, city);
         }
 
         [AuthorizeCustom(UserRoles.SuperAdmin)]

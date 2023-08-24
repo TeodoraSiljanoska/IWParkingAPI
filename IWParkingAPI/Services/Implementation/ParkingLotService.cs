@@ -29,6 +29,8 @@ namespace IWParkingAPI.Services.Implementation
         private readonly ParkingLotResponse _response;
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
         private readonly IJWTDecode _jWTDecode;
+        private const int PageSize = 1;
+        private const int PageNumber = 10;
 
         public ParkingLotService(IUnitOfWork<ParkingDbContext> unitOfWork, IJWTDecode jWTDecode)
         {
@@ -43,7 +45,7 @@ namespace IWParkingAPI.Services.Implementation
             _getDTOResponse = new AllParkingLotsResponse();
             _jWTDecode = jWTDecode;
         }
-        public AllParkingLotsResponse GetAllParkingLots()
+        public AllParkingLotsResponse GetAllParkingLots(int pageNumber, int pageSize, string city)
         {
             try
             {
@@ -51,21 +53,45 @@ namespace IWParkingAPI.Services.Implementation
 
                 var role = _jWTDecode.ExtractClaimByType("Role");
 
-                List<ParkingLot> parkingLots;
-                if (userId == null || role.Equals(UserRoles.User) || role.Equals(UserRoles.SuperAdmin))
+                var parkingLots = _parkingLotRepository.GetAsQueryable();
+
+                if (userId == null || role.Equals(UserRoles.User))
                 {
-                    parkingLots = _parkingLotRepository.GetAsQueryable(x => x.Status == ((int)Status.Approved)
-                    && x.IsDeactivated == false).ToList();
+                    parkingLots.Where(x => x.Status == (int)Status.Approved && x.IsDeactivated == false);
                 }
                 else if (role.Equals(UserRoles.Owner))
                 {
-                    parkingLots = _parkingLotRepository.GetAsQueryable(x => x.UserId == int.Parse(userId)).ToList();
+                    parkingLots.Where(x => x.UserId == int.Parse(userId) && x.Status == (int)Status.Approved);
+                }
+                else if (role.Equals(UserRoles.SuperAdmin))
+                {
+                    parkingLots.Where(x => x.Status == (int)Status.Approved);
                 }
                 else
                 {
-                    parkingLots = _parkingLotRepository.GetAsQueryable(x => x.Status == ((int)Status.Approved)
-                    && x.IsDeactivated == false).ToList();
+                    parkingLots.Where(x => x.Status == (int)Status.Approved && x.IsDeactivated == false);
                 }
+
+                if (pageNumber == 0)
+                {
+                    pageNumber = PageSize;
+                }
+                if (pageSize == 0)
+                {
+                    pageSize = PageNumber;
+                }
+
+                /*if (city != null)
+                {
+                    parkingLots.Where(x => x.City == city);
+                }*/
+
+                // Field to be added
+                //parkingLots = parkingLots.OrderBy(x => x.);
+
+                var paginatedParkingLots = parkingLots.Skip((pageNumber - 1) * pageSize)
+                                                     .Take(pageSize)
+                                                     .ToList();
 
                 if (!parkingLots.Any())
                 {
@@ -76,7 +102,7 @@ namespace IWParkingAPI.Services.Implementation
                 }
 
                 List<ParkingLotDTO> parkingLotDTOs = new List<ParkingLotDTO>();
-                foreach (var p in parkingLots)
+                foreach (var p in paginatedParkingLots)
                 {
                     parkingLotDTOs.Add(_mapper.Map<ParkingLotDTO>(p));
                 }
