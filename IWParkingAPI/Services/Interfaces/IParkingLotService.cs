@@ -5,7 +5,7 @@ namespace IWParkingAPI.Services.Interfaces
 {
     public interface IParkingLotService
     {
-        public AllParkingLotsResponse GetAllParkingLots();
+        public AllParkingLotsResponse GetAllParkingLots(int pageNumber, int pageSize, string city);
         public ParkingLotResponse GetParkingLotById(int id);
         public ParkingLotResponse DeactivateParkingLot(int id);
         public ParkingLotResponse CreateParkingLot(ParkingLotReq request);

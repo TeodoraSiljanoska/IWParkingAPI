@@ -1,0 +1,2 @@
+ALTER table [ParkingLot] 
+ALTER COLUMN [Address] NVARCHAR (256) NOT NULL;
