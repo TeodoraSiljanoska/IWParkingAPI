@@ -621,5 +621,66 @@ namespace IWParkingAPI.Services.Implementation
                 throw new InternalErrorException("Unexpected error while getting all favourite Parking Lots");
             }
         }
+
+        public GetParkingLotsDTOResponse FilterParkingLots(FilterParkingLotRequest request)
+        {
+            try
+            {
+
+                IQueryable<ParkingLot> query = null;
+
+                query = _parkingLotRepository.GetAsQueryable(x => x.Status == (int)Status.Approved);
+                
+
+                if (!string.IsNullOrEmpty(request.Name))
+                {
+                    query = query.Where(x => x.Name == request.Name);
+                }
+                if (!string.IsNullOrEmpty(request.City))
+                {
+                    query = query.Where(x => x.City == request.City);
+                }
+                if (!string.IsNullOrEmpty(request.Zone))
+                {
+                    query = query.Where(x => x.Zone == request.Zone);
+                }
+                if (!string.IsNullOrEmpty(request.Address))
+                {
+                    query = query.Where(x => x.Address.Contains(request.Address));
+                }
+                if (request.WorkingHoursFrom != null)
+                {
+                    query = query.Where(x => x.WorkingHourFrom >= workingHoursFrom);
+                }
+                if (workingHoursTo != null)
+                {
+                    query = query.Where(x => x.WorkingHourTo <= workingHoursTo);
+                }
+                if (capacityCar != null)
+                {
+                    query = query.Where(x => x.CapacityCar >= capacityCar);
+                }
+                if (capacityAdaptedCar != null)
+                {
+                    query = query.Where(x => x.CapacityAdaptedCar >= capacityAdaptedCar);
+                }
+                if (price != null)
+                {
+                    query = query.Where(x => x.Price <= price);
+                }
+
+                var filteredParkingLots = query.ToList();
+
+                // Rest of your code to create and return the response
+                // ...
+            }
+            catch (Exception ex)
+            {
+                _logger.Error($"Unexpected error while filtering Parking Lots {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
+                throw new InternalErrorException("Unexpected error while filtering Parking Lots");
+            }
+        }
+
+
     }
 }
