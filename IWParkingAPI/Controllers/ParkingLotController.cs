@@ -77,5 +77,11 @@ namespace IWParkingAPI.Controllers
         {
             return _parkingLotService.GetUserFavouriteParkingLots();
         }
+
+        [HttpGet("FilterParkingLots")]
+        public GetParkingLotsDTOResponse FilterParkingLots(FilterParkingLotRequest request)
+        {
+            return _parkingLotService.FilterParkingLots(request);
+        }
     }
 }

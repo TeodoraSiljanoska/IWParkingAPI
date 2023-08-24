@@ -626,12 +626,10 @@ namespace IWParkingAPI.Services.Implementation
         {
             try
             {
-
                 IQueryable<ParkingLot> query = null;
 
-                query = _parkingLotRepository.GetAsQueryable(x => x.Status == (int)Status.Approved);
+                query = _parkingLotRepository.GetAsQueryable(x => x.Status == (int)Status.Approved && x.IsDeactivated == false);
                 
-
                 if (!string.IsNullOrEmpty(request.Name))
                 {
                     query = query.Where(x => x.Name == request.Name);
@@ -646,33 +644,29 @@ namespace IWParkingAPI.Services.Implementation
                 }
                 if (!string.IsNullOrEmpty(request.Address))
                 {
-                    query = query.Where(x => x.Address.Contains(request.Address));
+                    query = query.Where(x => x.Address == request.Address);
                 }
-                if (request.WorkingHoursFrom != null)
+                if (request.CapacityCar != null)
                 {
-                    query = query.Where(x => x.WorkingHourFrom >= workingHoursFrom);
+                    query = query.Where(x => x.CapacityCar >= request.CapacityCar);
                 }
-                if (workingHoursTo != null)
+                if (request.CapacityAdaptedCar != null)
                 {
-                    query = query.Where(x => x.WorkingHourTo <= workingHoursTo);
-                }
-                if (capacityCar != null)
-                {
-                    query = query.Where(x => x.CapacityCar >= capacityCar);
-                }
-                if (capacityAdaptedCar != null)
-                {
-                    query = query.Where(x => x.CapacityAdaptedCar >= capacityAdaptedCar);
-                }
-                if (price != null)
-                {
-                    query = query.Where(x => x.Price <= price);
+                    query = query.Where(x => x.CapacityAdaptedCar >= request.CapacityAdaptedCar);
                 }
 
                 var filteredParkingLots = query.ToList();
 
-                // Rest of your code to create and return the response
-                // ...
+                var filteredParkingLotsDTO = new List<ParkingLotDTO>();
+                foreach (var p in filteredParkingLots)
+                {
+                    filteredParkingLotsDTO.Add(_mapper.Map<ParkingLotDTO>(p));
+                }
+
+                _getDTOResponse.StatusCode = HttpStatusCode.OK;
+                _getDTOResponse.Message = "Filtered Parking Lots returned successfully";
+                _getDTOResponse.ParkingLots = filteredParkingLotsDTO;
+                return _getDTOResponse;
             }
             catch (Exception ex)
             {
