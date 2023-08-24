@@ -41,8 +41,6 @@ namespace IWParkingAPI.Services.Implementation
             _vehicleRepository = _unitOfWork.GetGenericRepository<Vehicle>();
             _userRepository = _unitOfWork.GetGenericRepository<AspNetUser>();
             _getResponse = new AllVehiclesWithUserResponse();
-            _responseDTO = new VehicleResponseDTO();
-            _getResponse = new GetVehiclesResponse();
             _jWTDecode = jWTDecode;
             _vehiclesByUserIdResponse = new AllVehiclesResponse();
             _makePrimaryResponse = new VehicleResponse();
@@ -145,7 +143,12 @@ namespace IWParkingAPI.Services.Implementation
         {
             try
             {
-                var userId = Convert.ToInt32(_jWTDecode.ExtractUserIdFromToken());
+                var strUserId = _jWTDecode.ExtractClaimByType("Id");
+                if (strUserId == null)
+                {
+                    throw new BadRequestException("Unexpected error while Creating the Parking Lot");
+                }
+                var userId = Convert.ToInt32(strUserId);
 
                 if (id <= 0)
                 {
@@ -220,7 +223,12 @@ namespace IWParkingAPI.Services.Implementation
                     throw new BadRequestException("Vehicle Id is required");
                 }
 
-                var userId = Convert.ToInt32(_jWTDecode.ExtractUserIdFromToken());
+                var strUserId = _jWTDecode.ExtractClaimByType("Id");
+                if (strUserId == null)
+                {
+                    throw new BadRequestException("Unexpected error while Creating the Parking Lot");
+                }
+                var userId = Convert.ToInt32(strUserId);
 
                 var vehicle = _vehicleRepository.GetAsQueryable(x => x.Id == id, null, x => x.Include(y => y.User)).FirstOrDefault();
                 if (vehicle == null)
@@ -287,7 +295,12 @@ namespace IWParkingAPI.Services.Implementation
         {
             try
             {
-                var userId = Convert.ToInt32(_jWTDecode.ExtractUserIdFromToken());
+                var strUserId = _jWTDecode.ExtractClaimByType("Id");
+                if (strUserId == null)
+                {
+                    throw new BadRequestException("Unexpected error while Creating the Parking Lot");
+                }
+                var userId = Convert.ToInt32(strUserId);
 
                 if (id <= 0)
                 {

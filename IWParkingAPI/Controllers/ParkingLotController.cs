@@ -74,8 +74,7 @@ namespace IWParkingAPI.Controllers
 
         [HttpGet("GetUserFavouriteParkingLots")]
         [AuthorizeCustom(UserRoles.User)]
-        public AllParkingLotsResponse GetUsereFavouriteParkingLots(int userId)
-        public GetParkingLotsDTOResponse GetUsereFavouriteParkingLots()
+        public AllParkingLotsResponse GetUsereFavouriteParkingLots()
         {
             return _parkingLotService.GetUserFavouriteParkingLots();
         }

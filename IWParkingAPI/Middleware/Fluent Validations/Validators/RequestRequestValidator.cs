@@ -10,8 +10,8 @@ namespace IWParkingAPI.Middleware.Fluent_Validations.Validators
         {
             RuleFor(x => x.Status)
                 .NotEmpty().WithMessage("Status is required")
-                .Must(x => x.Equals(Enums.Status.Pending.ToString()) || x.Equals(Enums.Status.Approved.ToString()) || x.Equals(Enums.Status.Declined.ToString()))
-                    .WithMessage("Status name must be either 'Pending', 'Approved' or 'Declined'");
+                .Must(x => x.Equals(Enums.Status.Approved.ToString()) || x.Equals(Enums.Status.Declined.ToString()))
+                    .WithMessage("Status name must be either 'Approved' or 'Declined'");
         }
     }
 }

@@ -562,7 +562,7 @@ namespace IWParkingAPI.Services.Implementation
             }
         }
 
-        public AllParkingLotsResponse GetUserFavouriteParkingLots(int userId)
+        public AllParkingLotsResponse GetUserFavouriteParkingLots()
         {
             try
             {

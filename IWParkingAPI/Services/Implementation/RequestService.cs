@@ -179,15 +179,15 @@ namespace IWParkingAPI.Services.Implementation
                     _requestRepository.Delete(req);
                     _unitOfWork.Save();
                 }    
-               
-                parkingLotToDeactivate.TimeModified = DateTime.Now;
 
                 _response.StatusCode = HttpStatusCode.OK;
                 _response.Message = "Request modified successfully";
 
+                
                 var reqDTO = _mapper.Map<RequestDTO>(req);
+                reqDTO.Status = (int)enumValue;
                 _response.Request = reqDTO;
-
+                
                 return _response;
             }
             catch (BadRequestException ex)
