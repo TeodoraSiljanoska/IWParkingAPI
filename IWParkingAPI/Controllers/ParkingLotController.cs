@@ -49,33 +49,35 @@ namespace IWParkingAPI.Controllers
         {
             return _parkingLotService.UpdateParkingLot(id,request);
         }
-        [AuthorizeCustom(UserRoles.SuperAdmin, UserRoles.Owner)]
+        [AuthorizeCustom(UserRoles.SuperAdmin)]
 
+        [AuthorizeCustom(UserRoles.Owner)]
         [HttpDelete("Deactivate/{id}")]
         public ParkingLotResponse DeactivateParkingLot(int id)
         {
             return _parkingLotService.DeactivateParkingLot(id);
         }
 
-        [HttpDelete("RemoveParkingLotFavourite/{userId},{parkingLotId}")]
+        [HttpDelete("RemoveParkingLotFavourite/{parkingLotId}")]
         [AuthorizeCustom(UserRoles.User)]
-        public ParkingLotResponse RemoveParkingLotFavourite(int userId, int parkingLotId)
+        public ParkingLotResponse RemoveParkingLotFavourite(int parkingLotId)
         {
-            return _parkingLotService.RemoveParkingLotFavourite(userId, parkingLotId);
+            return _parkingLotService.RemoveParkingLotFavourite(parkingLotId);
         }
 
-        [HttpPost("MakeParkingLotFavourite/{userId},{parkingLotId}")]
+        [HttpPost("MakeParkingLotFavourite/{parkingLotId}")]
         [AuthorizeCustom(UserRoles.User)]
-        public ParkingLotResponse MakeParkingLotFavorite(int userId, int parkingLotId)
+        public ParkingLotResponse MakeParkingLotFavorite(int parkingLotId)
         {
-            return _parkingLotService.MakeParkingLotFavorite(userId, parkingLotId);
+            return _parkingLotService.MakeParkingLotFavorite(parkingLotId);
         }
 
-        [HttpGet("GetUserFavouriteParkingLots/{userId}")]
+        [HttpGet("GetUserFavouriteParkingLots")]
         [AuthorizeCustom(UserRoles.User)]
         public AllParkingLotsResponse GetUsereFavouriteParkingLots(int userId)
+        public GetParkingLotsDTOResponse GetUsereFavouriteParkingLots()
         {
-            return _parkingLotService.GetUserFavouriteParkingLots(userId);
+            return _parkingLotService.GetUserFavouriteParkingLots();
         }
     }
 }

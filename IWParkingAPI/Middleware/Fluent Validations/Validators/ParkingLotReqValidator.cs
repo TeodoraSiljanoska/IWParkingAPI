@@ -35,7 +35,7 @@ namespace IWParkingAPI.Fluent_Validations.Validators
                 .NotEmpty().WithMessage("Adapted Car Capacity is required")
                 .GreaterThan(0).WithMessage("Capacity should be greater than 0");
 
-            RuleFor(x => x.WorkingHourFrom.Hours)
+          /*  RuleFor(x => x.WorkingHourFrom.Hours)
                 .Cascade(CascadeMode.StopOnFirstFailure)
                 .NotEmpty().WithMessage("Working Hours From are required")
                 .GreaterThanOrEqualTo(0)
@@ -71,11 +71,11 @@ namespace IWParkingAPI.Fluent_Validations.Validators
                 .Cascade(CascadeMode.StopOnFirstFailure)
                 .GreaterThanOrEqualTo(0)
                 .LessThan(60)
-                .WithMessage("Invalid WorkingHoursTo: Seconds should be greater than or equal to 0 and less than 60");
+                .WithMessage("Invalid WorkingHoursTo: Seconds should be greater than or equal to 0 and less than 60");*/
 
-            RuleFor(x => x.UserId)
+       /*     RuleFor(x => x.UserId)
                 .NotEmpty().WithMessage("UserId is required")
-                .GreaterThan(0).WithMessage("UserId should be greater than 0");
+                .GreaterThan(0).WithMessage("UserId should be greater than 0"); */
         }
     }
 }

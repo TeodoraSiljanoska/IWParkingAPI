@@ -1,6 +1,8 @@
 ﻿using AutoMapper;
 using IWParkingAPI.CustomExceptions;
 using IWParkingAPI.Mappers;
+using IWParkingAPI.Models;
+using IWParkingAPI.Models.Context;
 using IWParkingAPI.Models.Data;
 using IWParkingAPI.Models.Requests;
 using IWParkingAPI.Models.Responses;

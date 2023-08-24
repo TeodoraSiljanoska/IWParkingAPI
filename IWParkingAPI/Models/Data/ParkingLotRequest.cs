@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace IWParkingAPI.Models.Data;
+namespace IWParkingAPI.Models;
 
 public partial class ParkingLotRequest
 {
@@ -15,7 +15,7 @@ public partial class ParkingLotRequest
 
     public DateTime TimeCreated { get; set; }
 
-    public virtual ParkingLot ParkingLot { get; set; } = null!;
+    public int Type { get; set; }
 
     public virtual AspNetUser User { get; set; } = null!;
 }

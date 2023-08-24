@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace IWParkingAPI.Models;
 
-public partial class ParkingLot
+public partial class TempParkingLot
 {
     public int Id { get; set; }
 
@@ -35,9 +35,7 @@ public partial class ParkingLot
 
     public int Status { get; set; }
 
-    public virtual ICollection<Reservation> Reservations { get; set; } = new List<Reservation>();
+    public int? ParkingLotId { get; set; }
 
     public virtual AspNetUser User { get; set; } = null!;
-
-    public virtual ICollection<AspNetUser> Users { get; set; } = new List<AspNetUser>();
 }

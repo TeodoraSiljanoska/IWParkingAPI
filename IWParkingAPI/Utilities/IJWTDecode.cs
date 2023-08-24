@@ -1,8 +1,10 @@
-﻿namespace IWParkingAPI.Utilities
+﻿using System.Security.Claims;
+
+namespace IWParkingAPI.Utilities
 {
     public interface IJWTDecode
     {
-        public string ExtractUserIdFromToken();
-        public string ExtractRoleFromToken();
+        public List<Claim> ExtractClaims();
+        public string ExtractClaimByType(string claimType);
     }
 }

@@ -13,6 +13,10 @@ using NLog;
 using Microsoft.EntityFrameworkCore;
 using IWParkingAPI.Utilities;
 using IWParkingAPI.Models.Responses.Dto;
+using System.IdentityModel.Tokens.Jwt;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using IWParkingAPI.Models;
 
 namespace IWParkingAPI.Services.Implementation
 {
@@ -37,6 +41,8 @@ namespace IWParkingAPI.Services.Implementation
             _vehicleRepository = _unitOfWork.GetGenericRepository<Vehicle>();
             _userRepository = _unitOfWork.GetGenericRepository<AspNetUser>();
             _getResponse = new AllVehiclesWithUserResponse();
+            _responseDTO = new VehicleResponseDTO();
+            _getResponse = new GetVehiclesResponse();
             _jWTDecode = jWTDecode;
             _vehiclesByUserIdResponse = new AllVehiclesResponse();
             _makePrimaryResponse = new VehicleResponse();
@@ -79,7 +85,7 @@ namespace IWParkingAPI.Services.Implementation
         {
             try
             {
-                var userId = Convert.ToInt32(_jWTDecode.ExtractUserIdFromToken());
+                var userId = Convert.ToInt32(_jWTDecode.ExtractClaimByType("Id"));
                 var existingUser = _userRepository.GetAsQueryable(u => u.Id == userId, null, null).FirstOrDefault();
 
                 if (existingUser == null || existingUser.IsDeactivated == true)
@@ -328,7 +334,7 @@ namespace IWParkingAPI.Services.Implementation
         {
             try
             {
-                var userId = Convert.ToInt32(_jWTDecode.ExtractUserIdFromToken());
+                var userId = Convert.ToInt32(_jWTDecode.ExtractClaimByType("Id"));
                 var user = _userRepository.GetById(userId);
                 if (user == null || user.IsDeactivated == true)
                 {
@@ -378,7 +384,7 @@ namespace IWParkingAPI.Services.Implementation
         {
             try
             {
-                var userId = Convert.ToInt32(_jWTDecode.ExtractUserIdFromToken());
+                var userId = Convert.ToInt32(_jWTDecode.ExtractClaimByType("Id"));
                 if (vehicleId <= 0)
                 {
                     throw new BadRequestException("Vehicle Id is required");

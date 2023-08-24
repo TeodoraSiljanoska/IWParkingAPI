@@ -30,7 +30,7 @@ namespace IWParkingAPI.Controllers
             return _userService.GetAllUsers();
         }
 
-        [AuthorizeCustom(UserRoles.SuperAdmin, UserRoles.User)]
+        [AuthorizeCustom(UserRoles.SuperAdmin, UserRoles.User, UserRoles.Owner)]
         [HttpGet("Get")]
         public UserResponse GetUser()
         {
