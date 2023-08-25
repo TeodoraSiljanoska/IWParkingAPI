@@ -45,33 +45,59 @@ namespace IWParkingAPI.Services.Implementation
             _getDTOResponse = new AllParkingLotsResponse();
             _jWTDecode = jWTDecode;
         }
-        public AllParkingLotsResponse GetAllParkingLots(int pageNumber, int pageSize, string city)
+        public AllParkingLotsResponse GetAllParkingLots(int pageNumber, int pageSize, FilterParkingLotRequest request)
         {
             try
             {
+                IQueryable<ParkingLot> query = null;
+                query = _parkingLotRepository.GetAsQueryable();
+
                 var userId = _jWTDecode.ExtractClaimByType("Id");
-
                 var role = _jWTDecode.ExtractClaimByType("Role");
-
-                var parkingLots = _parkingLotRepository.GetAsQueryable();
 
                 if (userId == null || role.Equals(UserRoles.User))
                 {
-                    parkingLots.Where(x => x.Status == (int)Status.Approved && x.IsDeactivated == false);
+                    query = query.Where(x => x.Status == (int)Status.Approved && x.IsDeactivated == false);
                 }
                 else if (role.Equals(UserRoles.Owner))
                 {
-                    parkingLots.Where(x => x.UserId == int.Parse(userId) && x.Status == (int)Status.Approved);
+                    query = query.Where(x => x.UserId == int.Parse(userId) && x.Status == (int)Status.Approved);
                 }
                 else if (role.Equals(UserRoles.SuperAdmin))
                 {
-                    parkingLots.Where(x => x.Status == (int)Status.Approved);
+                    query = query.Where(x => x.Status == (int)Status.Approved);
                 }
                 else
                 {
-                    parkingLots.Where(x => x.Status == (int)Status.Approved && x.IsDeactivated == false);
+                    query = query.Where(x => x.Status == (int)Status.Approved && x.IsDeactivated == false);
                 }
 
+                if (!string.IsNullOrEmpty(request.Name))
+                {
+                    query = query.Where(x => x.Name.Contains(request.Name));
+                }
+                if (!string.IsNullOrEmpty(request.City))
+                {
+                    query = query.Where(x => x.City.Contains(request.City));
+                }
+                if (!string.IsNullOrEmpty(request.Zone))
+                {
+                    query = query.Where(x => x.Zone.Contains(request.Zone));
+                }
+                if (!string.IsNullOrEmpty(request.Address))
+                {
+                    query = query.Where(x => x.Address.Contains(request.Address));
+                }
+                if (request.CapacityCar != null)
+                {
+                    query = query.Where(x => x.CapacityCar >= request.CapacityCar);
+                }
+                if (request.CapacityAdaptedCar != null)
+                {
+                    query = query.Where(x => x.CapacityAdaptedCar >= request.CapacityAdaptedCar);
+                }
+
+                var filteredParkingLots = query;
                 if (pageNumber == 0)
                 {
                     pageNumber = PageSize;
@@ -81,19 +107,11 @@ namespace IWParkingAPI.Services.Implementation
                     pageSize = PageNumber;
                 }
 
-                /*if (city != null)
-                {
-                    parkingLots.Where(x => x.City == city);
-                }*/
-
-                // Field to be added
-                //parkingLots = parkingLots.OrderBy(x => x.);
-
-                var paginatedParkingLots = parkingLots.Skip((pageNumber - 1) * pageSize)
+                var paginatedParkingLots = filteredParkingLots.Skip((pageNumber - 1) * pageSize)
                                                      .Take(pageSize)
                                                      .ToList();
 
-                if (!parkingLots.Any())
+                if (!filteredParkingLots.Any())
                 {
                     _getDTOResponse.StatusCode = HttpStatusCode.OK;
                     _getDTOResponse.Message = "There aren't any parking lots.";
@@ -162,7 +180,7 @@ namespace IWParkingAPI.Services.Implementation
             try
             {
                 var strUserId = _jWTDecode.ExtractClaimByType("Id");
-                if(strUserId == null)
+                if (strUserId == null)
                 {
                     throw new BadRequestException("Unexpected error while Creating the Parking Lot");
                 }
@@ -190,7 +208,7 @@ namespace IWParkingAPI.Services.Implementation
                 && p.Zone == request.Zone && p.WorkingHourFrom == from && p.WorkingHourTo == to &&
                 p.Price == request.Price && p.CapacityCar == request.CapacityCar && p.CapacityAdaptedCar == request.CapacityAdaptedCar
                  && p.IsDeactivated == false && p.Name != request.Name, null, null).FirstOrDefault();
-               
+
 
                 var existingInTemp = _tempParkingLotRepository.GetAsQueryable(p => p.City == request.City && p.Address == request.Address
                 && p.Zone == request.Zone && p.WorkingHourFrom == from && p.WorkingHourTo == to &&
@@ -276,7 +294,7 @@ namespace IWParkingAPI.Services.Implementation
                 {
                     throw new NotFoundException("Parking Lot not found");
                 }
-              
+
                 if (parkingLot.Name != request.Name)
                 {
                     var expl = _tempParkingLotRepository.GetAsQueryable(p => p.Name == request.Name && p.City == request.City, null, null).FirstOrDefault();
@@ -315,7 +333,7 @@ namespace IWParkingAPI.Services.Implementation
                 && p.Zone == request.Zone && p.WorkingHourFrom == from && p.WorkingHourTo == to &&
                 p.Price == request.Price && p.CapacityCar == request.CapacityCar && p.CapacityAdaptedCar == request.CapacityAdaptedCar
                  && (p.UserId == userId || p.UserId != userId) && p.IsDeactivated == false && p.Name != request.Name, null, null).FirstOrDefault();
-                
+
                 if (existingplfromuser != null || existingplfromuser1 != null)
                 {
                     throw new BadRequestException("Parking Lot with that specifications already exists");
@@ -328,7 +346,7 @@ namespace IWParkingAPI.Services.Implementation
                 tempParkingLot.User = parkingLot.User;
                 tempParkingLot.ParkingLotId = parkingLot.Id;
                 _tempParkingLotRepository.Insert(tempParkingLot);
-               
+
                 _unitOfWork.Save();
 
                 var existingRequest = _requestRepository.GetAsQueryable(x => x.ParkingLotId == id && x.UserId == parkingLot.UserId, null, null).FirstOrDefault();
@@ -410,12 +428,12 @@ namespace IWParkingAPI.Services.Implementation
                 {
                     throw new NotFoundException("Parking Lot not found");
                 }
-              
+
                 if (parkingLot.IsDeactivated == true)
                 {
                     throw new BadRequestException("Parking Lot is already deactivated");
                 }
-                
+
                 var existingRequest = _requestRepository.GetAsQueryable(x => x.ParkingLotId == id && x.UserId == parkingLot.UserId, null, null).FirstOrDefault();
                 if (existingRequest != null)
                 {
@@ -437,7 +455,7 @@ namespace IWParkingAPI.Services.Implementation
                     _unitOfWork.Save();
                 }
 
-                 var parkingLotDTOResponse = _mapper.Map<ParkingLotDTO>(parkingLot);
+                var parkingLotDTOResponse = _mapper.Map<ParkingLotDTO>(parkingLot);
 
                 _response.ParkingLot = parkingLotDTOResponse;
                 _response.StatusCode = HttpStatusCode.OK;
@@ -654,5 +672,60 @@ namespace IWParkingAPI.Services.Implementation
                 throw new InternalErrorException("Unexpected error while getting all favourite Parking Lots");
             }
         }
+
+        /*    public IEnumerable<ParkingLotDTO> FilterParkingLots(FilterParkingLotRequest request)
+            {
+                try
+                {
+                    IQueryable<ParkingLot> query = null;
+
+                    query = _parkingLotRepository.GetAsQueryable(x => x.Status == (int)Status.Approved && x.IsDeactivated == false);
+
+                    if (!string.IsNullOrEmpty(request.Name))
+                    {
+                        query = query.Where(x => x.Name == request.Name);
+                    }
+                    if (!string.IsNullOrEmpty(request.City))
+                    {
+                        query = query.Where(x => x.City == request.City);
+                    }
+                    if (!string.IsNullOrEmpty(request.Zone))
+                    {
+                        query = query.Where(x => x.Zone == request.Zone);
+                    }
+                    if (!string.IsNullOrEmpty(request.Address))
+                    {
+                        query = query.Where(x => x.Address == request.Address);
+                    }
+                    if (request.CapacityCar != null)
+                    {
+                        query = query.Where(x => x.CapacityCar >= request.CapacityCar);
+                    }
+                    if (request.CapacityAdaptedCar != null)
+                    {
+                        query = query.Where(x => x.CapacityAdaptedCar >= request.CapacityAdaptedCar);
+                    }
+
+                    var filteredParkingLots = query.ToList();
+
+                    var filteredParkingLotsDTO = new List<ParkingLotDTO>();
+                    foreach (var p in filteredParkingLots)
+                    {
+                        filteredParkingLotsDTO.Add(_mapper.Map<ParkingLotDTO>(p));
+                    }
+
+                    _getDTOResponse.StatusCode = HttpStatusCode.OK;
+                    _getDTOResponse.Message = "Filtered Parking Lots returned successfully";
+                    _getDTOResponse.ParkingLots = filteredParkingLotsDTO;
+                    return _getDTOResponse;
+                }
+                catch (Exception ex)
+                {
+                    _logger.Error($"Unexpected error while filtering Parking Lots {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
+                    throw new InternalErrorException("Unexpected error while filtering Parking Lots");
+                }
+            } */
+
+
     }
 }
