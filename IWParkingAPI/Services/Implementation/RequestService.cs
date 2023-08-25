@@ -10,8 +10,9 @@ using static IWParkingAPI.Models.Enums.Enums;
 using IWParkingAPI.CustomExceptions;
 using NLog;
 using IWParkingAPI.Models.Responses.Dto;
-using IWParkingAPI.Models;
 using IWParkingAPI.Utilities;
+using IWParkingAPI.Models.Data;
+using IWParkingAPI.Models.Context;
 
 namespace IWParkingAPI.Services.Implementation
 {
@@ -51,7 +52,7 @@ namespace IWParkingAPI.Services.Implementation
                 var requests = _requestRepository.GetAsQueryable(x => x.Status == (int)Status.Pending,
                     null, x => x.Include(y => y.User));
 
-                if (role.Equals(UserRoles.Owner))
+                if (role.Equals(Models.UserRoles.Owner))
                 {
                     requests = requests.Where(x => x.UserId == int.Parse(userId));
                 }

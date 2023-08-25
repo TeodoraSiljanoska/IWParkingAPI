@@ -1,0 +1,5 @@
+CREATE TABLE [Zone] (
+	[Id] INT IDENTITY(1,1),
+	[Name] NVARCHAR(256) NOT NULL,
+	PRIMARY KEY ([Id])
+);

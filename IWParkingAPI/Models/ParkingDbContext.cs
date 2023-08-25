@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using IWParkingAPI.Models.Data;
 using Microsoft.EntityFrameworkCore;
 
-namespace IWParkingAPI.Models.Context;
+namespace IWParkingAPI.Models;
 
 public partial class ParkingDbContext : DbContext
 {

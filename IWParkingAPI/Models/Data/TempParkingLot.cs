@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace IWParkingAPI.Models;
+namespace IWParkingAPI.Models.Data;
 
 public partial class TempParkingLot
 {
@@ -9,9 +9,9 @@ public partial class TempParkingLot
 
     public string Name { get; set; } = null!;
 
-    public string City { get; set; } = null!;
+    public int CityId { get; set; }
 
-    public string Zone { get; set; } = null!;
+    public int ZoneId { get; set; }
 
     public string Address { get; set; } = null!;
 
@@ -37,5 +37,9 @@ public partial class TempParkingLot
 
     public int? ParkingLotId { get; set; }
 
+    public virtual City City { get; set; } = null!;
+
     public virtual AspNetUser User { get; set; } = null!;
+
+    public virtual Zone Zone { get; set; } = null!;
 }

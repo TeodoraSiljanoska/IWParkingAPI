@@ -4,7 +4,6 @@ using IWParkingAPI.Infrastructure.Repository;
 using IWParkingAPI.Infrastructure.UnitOfWork;
 using IWParkingAPI.Middleware.Authentication;
 using IWParkingAPI.Middleware.Exceptions;
-using IWParkingAPI.Models;
 using IWParkingAPI.Models.Context;
 using IWParkingAPI.Models.Data;
 using IWParkingAPI.Services.Implementation;
@@ -44,6 +43,7 @@ namespace IWParkingAPI
             services.AddScoped<IVehicleService, VehicleService>();
             services.AddScoped<IParkingLotService, ParkingLotService>();
             services.AddScoped<IRequestService, RequestService>();
+            services.AddScoped<ICityService, CityService>();
             services.AddAutoMapper(typeof(Startup));
             services.AddControllers();
 
