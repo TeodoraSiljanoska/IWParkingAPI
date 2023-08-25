@@ -61,7 +61,7 @@ namespace IWParkingAPI.Services.Implementation
                 }
                 else if (role.Equals(UserRoles.Owner))
                 {
-                    parkingLots.Where(x => x.UserId == int.Parse(userId) && x.Status == (int)Status.Approved);
+                    parkingLots.Where(x => x.UserId == int.Parse(userId));
                 }
                 else if (role.Equals(UserRoles.SuperAdmin))
                 {

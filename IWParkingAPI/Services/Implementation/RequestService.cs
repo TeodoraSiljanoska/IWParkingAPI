@@ -11,6 +11,7 @@ using IWParkingAPI.CustomExceptions;
 using NLog;
 using IWParkingAPI.Models.Responses.Dto;
 using IWParkingAPI.Models;
+using IWParkingAPI.Utilities;
 
 namespace IWParkingAPI.Services.Implementation
 {
@@ -24,9 +25,10 @@ namespace IWParkingAPI.Services.Implementation
         private readonly AllRequestsResponse _allRequestsResponse;
         private readonly IMapper _mapper;
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
+        private readonly IJWTDecode _jWTDecode;
 
 
-        public RequestService(IUnitOfWork<ParkingDbContext> unitOfWork)
+        public RequestService(IUnitOfWork<ParkingDbContext> unitOfWork, IJWTDecode jWTDecode)
         {
             _unitOfWork = unitOfWork;
             _requestRepository = _unitOfWork.GetGenericRepository<ParkingLotRequest>();
@@ -35,15 +37,26 @@ namespace IWParkingAPI.Services.Implementation
             _response = new RequestResponse();
             _allRequestsResponse = new AllRequestsResponse();
             _mapper = MapperConfig.InitializeAutomapper();
-
+            _jWTDecode = jWTDecode;
         }
 
         public AllRequestsResponse GetAllRequests()
         {
             try
             {
+                var userId = _jWTDecode.ExtractClaimByType("Id");
+
+                var role = _jWTDecode.ExtractClaimByType("Role");
+
                 var requests = _requestRepository.GetAsQueryable(x => x.Status == (int)Status.Pending,
-                    null, x => x.Include(y => y.User)).ToList();
+                    null, x => x.Include(y => y.User));
+
+                if (role.Equals(UserRoles.Owner))
+                {
+                    requests = requests.Where(x => x.UserId == int.Parse(userId));
+                }
+
+                requests.ToList();
 
                 if (requests.Count() == 0)
                 {
