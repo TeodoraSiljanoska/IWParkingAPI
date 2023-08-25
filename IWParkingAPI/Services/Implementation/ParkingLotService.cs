@@ -60,7 +60,7 @@ namespace IWParkingAPI.Services.Implementation
                 var userId = _jWTDecode.ExtractClaimByType("Id");
                 var role = _jWTDecode.ExtractClaimByType("Role");
 
-                if (userId == null || role.Equals(UserRoles.User))
+                if (userId == null || role.Equals(Models.UserRoles.User))
                 {
                     query = query.Where(x => x.Status == (int)Status.Approved && x.IsDeactivated == false);
                 }
@@ -81,14 +81,14 @@ namespace IWParkingAPI.Services.Implementation
                 {
                     query = query.Where(x => x.Name.Contains(request.Name));
                 }
-                if (!string.IsNullOrEmpty(request.City))
+                /*if (!string.IsNullOrEmpty(request.City))
                 {
                     query = query.Where(x => x.City.Contains(request.City));
                 }
                 if (!string.IsNullOrEmpty(request.Zone))
                 {
                     query = query.Where(x => x.Zone.Contains(request.Zone));
-                }
+                }*/
                 if (!string.IsNullOrEmpty(request.Address))
                 {
                     query = query.Where(x => x.Address.Contains(request.Address));
