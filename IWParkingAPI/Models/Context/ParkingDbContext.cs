@@ -27,6 +27,8 @@ public partial class ParkingDbContext : DbContext
 
     public virtual DbSet<AspNetUserToken> AspNetUserTokens { get; set; }
 
+    public virtual DbSet<City> Cities { get; set; }
+
     public virtual DbSet<ParkingLot> ParkingLots { get; set; }
 
     public virtual DbSet<ParkingLotRequest> ParkingLotRequests { get; set; }
@@ -38,6 +40,8 @@ public partial class ParkingDbContext : DbContext
     public virtual DbSet<TempParkingLot> TempParkingLots { get; set; }
 
     public virtual DbSet<Vehicle> Vehicles { get; set; }
+
+    public virtual DbSet<Zone> Zones { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         => optionsBuilder.UseSqlServer("Name=DefaultConnection");
@@ -132,6 +136,15 @@ public partial class ParkingDbContext : DbContext
             entity.Property(e => e.Name).HasMaxLength(128);
 
             entity.HasOne(d => d.User).WithMany(p => p.AspNetUserTokens).HasForeignKey(d => d.UserId);
+        });
+
+        modelBuilder.Entity<City>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__City__3214EC07A65C02A0");
+
+            entity.ToTable("City");
+
+            entity.Property(e => e.Name).HasMaxLength(256);
         });
 
         modelBuilder.Entity<ParkingLot>(entity =>
@@ -279,6 +292,15 @@ public partial class ParkingDbContext : DbContext
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Vehicle.User_Id");
+        });
+
+        modelBuilder.Entity<Zone>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__Zone__3214EC07F7CF4616");
+
+            entity.ToTable("Zone");
+
+            entity.Property(e => e.Name).HasMaxLength(256);
         });
 
         OnModelCreatingPartial(modelBuilder);
