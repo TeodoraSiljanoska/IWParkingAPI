@@ -359,7 +359,7 @@ namespace IWParkingAPI.Services.Implementation
                 var existingPLFromUser = _parkingLotRepository.GetAsQueryable(p => p.Id != parkingLot.Id && p.Name != request.Name && p.City == request.City && p.Address == request.Address
                 && p.Zone == request.Zone && p.WorkingHourFrom == from && p.WorkingHourTo == to &&
                 p.Price == request.Price && p.CapacityCar == request.CapacityCar && p.CapacityAdaptedCar == request.CapacityAdaptedCar
-                 && (p.UserId == userId || p.UserId != userId) && p.IsDeactivated == false && p.Name != request.Name, null, null).FirstOrDefault();
+                 && (p.UserId == userId || p.UserId != userId) && p.IsDeactivated == false, null, null).FirstOrDefault();
 
                 var existingPLFromUser1 = _tempParkingLotRepository.GetAsQueryable(p => p.ParkingLotId != id && p.Name != request.Name && p.City == request.City && p.Address == request.Address
                 && p.Zone == request.Zone && p.WorkingHourFrom == from && p.WorkingHourTo == to &&
@@ -392,7 +392,6 @@ namespace IWParkingAPI.Services.Implementation
                 }
                 else
                 {
-
                     var tempParkingLot = _mapper.Map<TempParkingLot>(request);
                     tempParkingLot.Status = (int)Status.Pending;
                     tempParkingLot.TimeCreated = DateTime.Now;
@@ -420,7 +419,6 @@ namespace IWParkingAPI.Services.Implementation
                     {
                         throw new BadRequestException("There is already a request for this Parking Lot. Please wait until it is processed");
                     }
-
                 }
 
                 if (existingRequest == null)
@@ -460,7 +458,6 @@ namespace IWParkingAPI.Services.Implementation
             }
         }
 
-
         public ParkingLotResponse DeactivateParkingLot(int id)
         {
             try
@@ -496,9 +493,7 @@ namespace IWParkingAPI.Services.Implementation
 
                 if (existingRequest == null)
                 {
-
                     ParkingLotRequest plrequest = new ParkingLotRequest();
-
                     plrequest.ParkingLotId = parkingLot.Id;
                     plrequest.UserId = parkingLot.UserId;
                     plrequest.TimeCreated = DateTime.Now;
@@ -736,59 +731,6 @@ namespace IWParkingAPI.Services.Implementation
                 throw new InternalErrorException("Unexpected error while getting all favourite Parking Lots");
             }
         }
-
-        /*    public IEnumerable<ParkingLotDTO> FilterParkingLots(FilterParkingLotRequest request)
-            {
-                try
-                {
-                    IQueryable<ParkingLot> query = null;
-
-                    query = _parkingLotRepository.GetAsQueryable(x => x.Status == (int)Status.Approved && x.IsDeactivated == false);
-
-                    if (!string.IsNullOrEmpty(request.Name))
-                    {
-                        query = query.Where(x => x.Name == request.Name);
-                    }
-                    if (!string.IsNullOrEmpty(request.City))
-                    {
-                        query = query.Where(x => x.City == request.City);
-                    }
-                    if (!string.IsNullOrEmpty(request.Zone))
-                    {
-                        query = query.Where(x => x.Zone == request.Zone);
-                    }
-                    if (!string.IsNullOrEmpty(request.Address))
-                    {
-                        query = query.Where(x => x.Address == request.Address);
-                    }
-                    if (request.CapacityCar != null)
-                    {
-                        query = query.Where(x => x.CapacityCar >= request.CapacityCar);
-                    }
-                    if (request.CapacityAdaptedCar != null)
-                    {
-                        query = query.Where(x => x.CapacityAdaptedCar >= request.CapacityAdaptedCar);
-                    }
-
-                    var filteredParkingLots = query.ToList();
-
-                    var filteredParkingLotsDTO = new List<ParkingLotDTO>();
-                    foreach (var p in filteredParkingLots)
-                    {
-                        filteredParkingLotsDTO.Add(_mapper.Map<ParkingLotDTO>(p));
-                    }
-
-                    _getDTOResponse.StatusCode = HttpStatusCode.OK;
-                    _getDTOResponse.Message = "Filtered Parking Lots returned successfully";
-                    _getDTOResponse.ParkingLots = filteredParkingLotsDTO;
-                    return _getDTOResponse;
-                }
-                catch (Exception ex)
-                {
-                    _logger.Error($"Unexpected error while filtering Parking Lots {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
-                    throw new InternalErrorException("Unexpected error while filtering Parking Lots");
-                }
-            } */
 
 
     }
