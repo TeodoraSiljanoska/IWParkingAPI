@@ -321,7 +321,7 @@ namespace IWParkingAPI.Services.Implementation
 
                 if (parkingLot.Name != request.Name)
                 {
-                    var expl = _tempParkingLotRepository.GetAsQueryable(p => p.Name == request.Name && p.City == request.City, null, null).FirstOrDefault();
+                    var expl = _tempParkingLotRepository.GetAsQueryable(p => p.Name == request.Name && p.City == request.City && p.ParkingLotId != id, null, null).FirstOrDefault();
                     var existingpl = _parkingLotRepository.GetAsQueryable(p => p.Name == request.Name && p.City == request.City, null, null).FirstOrDefault();
                     if (existingpl != null || expl != null)
                     {
@@ -350,31 +350,53 @@ namespace IWParkingAPI.Services.Implementation
                     throw new BadRequestException("No updates were entered. Please enter the updates");
                 }
 
-                var existingplfromuser = _parkingLotRepository.GetAsQueryable(p => p.City == request.City && p.Address == request.Address
+                var existingplfromuser = _parkingLotRepository.GetAsQueryable(p => p.Id != parkingLot.Id && p.Name != request.Name && p.City == request.City && p.Address == request.Address
                 && p.Zone == request.Zone && p.WorkingHourFrom == from && p.WorkingHourTo == to &&
                 p.Price == request.Price && p.CapacityCar == request.CapacityCar && p.CapacityAdaptedCar == request.CapacityAdaptedCar
-                 && (p.UserId == userId || p.UserId != userId) && p.IsDeactivated == false && p.Name != request.Name, null, null).FirstOrDefault();
+                 && (p.UserId == userId || p.UserId != userId) && p.IsDeactivated == false, null, null).FirstOrDefault();
 
-                var existingplfromuser1 = _tempParkingLotRepository.GetAsQueryable(p => p.City == request.City && p.Address == request.Address
+                var existingplfromuser1 = _tempParkingLotRepository.GetAsQueryable(p => p.ParkingLotId != id && p.Name != request.Name && p.City == request.City && p.Address == request.Address
                 && p.Zone == request.Zone && p.WorkingHourFrom == from && p.WorkingHourTo == to &&
                 p.Price == request.Price && p.CapacityCar == request.CapacityCar && p.CapacityAdaptedCar == request.CapacityAdaptedCar
-                 && (p.UserId == userId || p.UserId != userId) && p.IsDeactivated == false && p.Name != request.Name, null, null).FirstOrDefault();
+                 && (p.UserId == userId || p.UserId != userId) && p.IsDeactivated == false, null, null).FirstOrDefault();
 
                 if (existingplfromuser != null || existingplfromuser1 != null)
                 {
                     throw new BadRequestException("Parking Lot with that specifications already exists");
                 }
 
-                var tempParkingLot = _mapper.Map<TempParkingLot>(request);
-                tempParkingLot.Status = (int)Status.Pending;
-                tempParkingLot.TimeCreated = DateTime.Now;
-                tempParkingLot.UserId = parkingLot.UserId;
-                tempParkingLot.User = parkingLot.User;
-                tempParkingLot.ParkingLotId = parkingLot.Id;
-                _tempParkingLotRepository.Insert(tempParkingLot);
+                var existingPlFromUser2 = _tempParkingLotRepository.GetAsQueryable(p => p.ParkingLotId == id, null, null).FirstOrDefault();
+                if (existingPlFromUser2 != null)
+                {
+                    existingPlFromUser2.Name = (existingPlFromUser2.Name == request.Name) ? existingPlFromUser2.Name : request.Name;
+                    existingPlFromUser2.City = (existingPlFromUser2.City == request.City) ? existingPlFromUser2.City : request.City;
+                    existingPlFromUser2.Zone = (existingPlFromUser2.Zone == request.Zone) ? existingPlFromUser2.Zone : request.Zone;
+                    existingPlFromUser2.Address = (existingPlFromUser2.Address == request.Address) ? existingPlFromUser2.Address : request.Address;
+                    existingPlFromUser2.City = (existingPlFromUser2.City == request.City) ? existingPlFromUser2.City : request.City;
+                    existingPlFromUser2.WorkingHourFrom = (existingPlFromUser2.WorkingHourFrom == from) ? existingPlFromUser2.WorkingHourFrom : from;
+                    existingPlFromUser2.WorkingHourTo = (existingPlFromUser2.WorkingHourTo == to) ? existingPlFromUser2.WorkingHourTo : to;
+                    existingPlFromUser2.CapacityCar = (existingPlFromUser2.CapacityCar == request.CapacityCar) ? existingPlFromUser2.CapacityCar : request.CapacityCar;
+                    existingPlFromUser2.CapacityAdaptedCar = (existingPlFromUser2.CapacityAdaptedCar == request.CapacityAdaptedCar) ? existingPlFromUser2.CapacityAdaptedCar : request.CapacityAdaptedCar;
+                    existingPlFromUser2.Price = (existingPlFromUser2.Price == request.Price) ? existingPlFromUser2.Price : request.Price;
+                    existingPlFromUser2.TimeModified = DateTime.Now;
 
-                _unitOfWork.Save();
 
+                    existingPlFromUser2.Status = (int)Status.Pending;
+                    _tempParkingLotRepository.Update(_mapper.Map<TempParkingLot>(existingPlFromUser2));
+                }
+                else
+                {
+
+                    var tempParkingLot = _mapper.Map<TempParkingLot>(request);
+                    tempParkingLot.Status = (int)Status.Pending;
+                    tempParkingLot.TimeCreated = DateTime.Now;
+                    tempParkingLot.UserId = parkingLot.UserId;
+                    tempParkingLot.User = parkingLot.User;
+                    tempParkingLot.ParkingLotId = parkingLot.Id;
+                    _tempParkingLotRepository.Insert(tempParkingLot);
+
+                    _unitOfWork.Save();
+                }
                 var existingRequest = _requestRepository.GetAsQueryable(x => x.ParkingLotId == id && x.UserId == parkingLot.UserId, null, null).FirstOrDefault();
                 if (existingRequest != null)
                 {
