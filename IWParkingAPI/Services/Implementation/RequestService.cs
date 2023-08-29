@@ -71,15 +71,27 @@ namespace IWParkingAPI.Services.Implementation
                 var GetAllRequestsDTOList = new List<RequestDTO>();
                 foreach (var p in requests)
                 {
-                    var tempPL = _tempParkingLotRepository.GetAsQueryable(x => x.Id == p.ParkingLotId).FirstOrDefault();
-                    if (tempPL == null)
+                    RequestDTO plDTO; 
+                    if (p.Type == (int)Enums.RequestType.Update)
                     {
-                        throw new BadRequestException("Temporary parking lot id not found");
+                        var oldPl = _parkingLotRepository.GetAsQueryable(x => x.Id == p.ParkingLotId).FirstOrDefault();
+                        var pl = _tempParkingLotRepository.GetAsQueryable(x => x.ParkingLotId == p.ParkingLotId).FirstOrDefault();    
+                        var tempDTO = _mapper.Map<TempParkingLotDTO>(pl);
+                        var oldDTO = _mapper.Map<TempParkingLotDTO>(oldPl);
+                        plDTO = _mapper.Map<RequestDTO>(p);
+                        plDTO.ParkingLot = tempDTO;
+                        plDTO.OldParkingLot = oldDTO;
+                        
+                    } else
+                    {
+                        var tempPL = _tempParkingLotRepository.GetAsQueryable(x => x.Id == p.ParkingLotId).FirstOrDefault();
+                        var tempDTO = _mapper.Map<TempParkingLotDTO>(tempPL);
+                        plDTO = _mapper.Map<RequestDTO>(p);
+                        plDTO.ParkingLot = tempDTO;
                     }
-                    var plDTO = _mapper.Map<RequestDTO>(p);
-                    var tempDTO = _mapper.Map<TempParkingLotDTO>(tempPL);
-                    plDTO.ParkingLot = tempDTO;
+                    
                     GetAllRequestsDTOList.Add(plDTO);
+
                 }
                 _allRequestsResponse.StatusCode = HttpStatusCode.OK;
                 _allRequestsResponse.Message = "Requests returned successfully";
@@ -124,7 +136,7 @@ namespace IWParkingAPI.Services.Implementation
                 var parkingLotToCreate = _tempParkingLotRepository.GetAsQueryable(p => p.Id == req.ParkingLotId && p.UserId == req.UserId, null, null).FirstOrDefault();
                 var parkingLotToUpdate = _tempParkingLotRepository.GetAsQueryable(p => p.ParkingLotId == req.ParkingLotId && p.UserId == req.UserId, null, null).FirstOrDefault();
 
-                if (parkingLotToDeactivate == null && (parkingLotToCreate == null || parkingLotToUpdate == null))
+                if (parkingLotToDeactivate == null && parkingLotToCreate == null && parkingLotToUpdate == null)
                 {
                     throw new NotFoundException("Parking lot not found");
                 }
