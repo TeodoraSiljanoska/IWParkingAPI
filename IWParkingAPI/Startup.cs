@@ -44,6 +44,7 @@ namespace IWParkingAPI
             services.AddScoped<IVehicleService, VehicleService>();
             services.AddScoped<IParkingLotService, ParkingLotService>();
             services.AddScoped<IRequestService, RequestService>();
+            services.AddScoped<IZoneService, ZoneService>();
             services.AddAutoMapper(typeof(Startup));
             services.AddControllers();
 
