@@ -45,6 +45,7 @@ namespace IWParkingAPI
             services.AddScoped<IParkingLotService, ParkingLotService>();
             services.AddScoped<IRequestService, RequestService>();
             services.AddScoped<IZoneService, ZoneService>();
+            services.AddScoped<ICityService, CityService>();
             services.AddAutoMapper(typeof(Startup));
             services.AddControllers();
 
@@ -123,6 +124,7 @@ namespace IWParkingAPI
                 app.UseDeveloperExceptionPage();
                 app.UseSwagger();
                 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "IWParkingRestApi v1"));
+                app.UseCors();
             }
             app.UseHttpsRedirection();
             app.UseRouting();
@@ -137,7 +139,6 @@ namespace IWParkingAPI
                 endpoints.MapControllers();
             });
             app.UseStaticFiles();
-            app.UseCors();
         }
     }
 }

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace IWParkingAPI.Models;
+namespace IWParkingAPI.Models.Data;
 
 public partial class AspNetRoleClaim
 {

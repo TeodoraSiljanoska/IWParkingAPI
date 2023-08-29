@@ -43,6 +43,7 @@ namespace IWParkingAPI.Fluent_Validations
             services.AddSingleton<IValidator<UserResetPasswordRequest>, UserResetPasswordRequestValidator>();
             services.AddSingleton<IValidator<UserChangeEmailRequest>, UserResetEmailRequestValidator>();
             services.AddSingleton<IValidator<ZoneRequest>, ZoneRequestValidator>();
+            services.AddSingleton<IValidator<CityRequest>, CityRequestValidator>();
             return services;
         }
     }
