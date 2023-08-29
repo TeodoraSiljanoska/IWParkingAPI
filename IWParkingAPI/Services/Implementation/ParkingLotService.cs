@@ -627,7 +627,7 @@ namespace IWParkingAPI.Services.Implementation
             }
         }
 
-        public AllParkingLotsResponse GetUserFavouriteParkingLots()
+        public AllParkingLotsResponse GetUserFavouriteParkingLots(int pageNumber, int pageSize)
         {
             try
             {
@@ -644,19 +644,28 @@ namespace IWParkingAPI.Services.Implementation
                     throw new NotFoundException("User not found");
                 }
 
-                var userWithParkingLots = _userRepository.GetAsQueryable(x => x.Id == userId, null, x => x.Include(y => y.ParkingLotsNavigation)).FirstOrDefault();
+                var userWithParkingLots = _userRepository.
+                    GetAsQueryable(x => x.Id == userId, null, x => x.Include(y => y.ParkingLotsNavigation)).FirstOrDefault();
 
                 if (!userWithParkingLots.ParkingLotsNavigation.Any())
                 {
                     _getDTOResponse.StatusCode = HttpStatusCode.OK;
                     _getDTOResponse.Message = "User doesn't have any favourite parking lots";
                     _getDTOResponse.ParkingLots = Enumerable.Empty<ParkingLotDTO>();
+                    _getDTOResponse.NumPages = 0;
                     return _getDTOResponse;
                 }
 
                 var favouritesList = userWithParkingLots.ParkingLotsNavigation.ToList();
 
-                var approvedFromFavourites = favouritesList.Where(a => a.Status == (int)Status.Approved && a.IsDeactivated == false).ToList();
+                var approvedFromFavourites = favouritesList.Where(a => a.Status == (int)Status.Approved && a.IsDeactivated == false);
+
+                var totalCount = approvedFromFavourites.Count();
+                var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+
+                var paginatedParkingLots = approvedFromFavourites.Skip((pageNumber - 1) * pageSize)
+                                                     .Take(pageSize)
+                                                     .ToList();
 
                 if (!approvedFromFavourites.Any())
                 {
@@ -667,7 +676,7 @@ namespace IWParkingAPI.Services.Implementation
                 }
 
                 var ParkingLotDTOList = new List<ParkingLotDTO>();
-                foreach (var p in approvedFromFavourites)
+                foreach (var p in paginatedParkingLots)
                 {
                     ParkingLotDTOList.Add(_mapper.Map<ParkingLotDTO>(p));
                 }
@@ -675,6 +684,7 @@ namespace IWParkingAPI.Services.Implementation
                 _getDTOResponse.StatusCode = HttpStatusCode.OK;
                 _getDTOResponse.Message = "Favourite parking lots returned successfully";
                 _getDTOResponse.ParkingLots = ParkingLotDTOList;
+                _getDTOResponse.NumPages = totalPages;
                 return _getDTOResponse;
             }
             catch (BadRequestException ex)
