@@ -112,6 +112,9 @@ namespace IWParkingAPI.Services.Implementation
                     pageSize = PageNumber;
                 }
 
+                var totalCount = filteredParkingLots.Count();
+                var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+
                 var paginatedParkingLots = filteredParkingLots.Skip((pageNumber - 1) * pageSize)
                                                      .Take(pageSize)
                                                      .ToList();
@@ -121,6 +124,7 @@ namespace IWParkingAPI.Services.Implementation
                     _getDTOResponse.StatusCode = HttpStatusCode.OK;
                     _getDTOResponse.Message = "There aren't any parking lots.";
                     _getDTOResponse.ParkingLots = Enumerable.Empty<ParkingLotDTO>();
+                    _getDTOResponse.NumPages = 0;
                     return _getDTOResponse;
                 }
 
@@ -132,6 +136,7 @@ namespace IWParkingAPI.Services.Implementation
                 _getDTOResponse.StatusCode = HttpStatusCode.OK;
                 _getDTOResponse.Message = "Parking lots returned successfully";
                 _getDTOResponse.ParkingLots = parkingLotDTOs;
+                _getDTOResponse.NumPages = totalPages;
                 return _getDTOResponse;
             }
             catch (Exception ex)
