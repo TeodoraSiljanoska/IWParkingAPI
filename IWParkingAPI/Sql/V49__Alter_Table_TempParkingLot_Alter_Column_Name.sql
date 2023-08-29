@@ -1,0 +1,2 @@
+ALTER table [TempParkingLot] 
+ALTER COLUMN [Name] NVARCHAR (256) NOT NULL;

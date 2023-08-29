@@ -160,7 +160,7 @@ public partial class ParkingDbContext : DbContext
             entity.Property(e => e.IsDeactivated)
                 .IsRequired()
                 .HasDefaultValueSql("('False')");
-            entity.Property(e => e.Name).HasMaxLength(20);
+            entity.Property(e => e.Name).HasMaxLength(256);
             entity.Property(e => e.Status).HasDefaultValueSql("((1))");
             entity.Property(e => e.TimeCreated).HasColumnType("datetime");
             entity.Property(e => e.TimeModified).HasColumnType("datetime");
@@ -248,14 +248,14 @@ public partial class ParkingDbContext : DbContext
 
             entity.ToTable("TempParkingLot");
 
-            entity.Property(e => e.Address).HasMaxLength(20);
+            entity.Property(e => e.Address).HasMaxLength(256);
             entity.Property(e => e.CapacityAdaptedCar).HasColumnName("Capacity_Adapted_Car");
             entity.Property(e => e.CapacityCar).HasColumnName("Capacity_Car");
             entity.Property(e => e.City).HasMaxLength(20);
             entity.Property(e => e.IsDeactivated)
                 .IsRequired()
                 .HasDefaultValueSql("('False')");
-            entity.Property(e => e.Name).HasMaxLength(20);
+            entity.Property(e => e.Name).HasMaxLength(256);
             entity.Property(e => e.ParkingLotId).HasColumnName("ParkingLot_Id");
             entity.Property(e => e.Status).HasDefaultValueSql("((1))");
             entity.Property(e => e.TimeCreated).HasColumnType("datetime");
