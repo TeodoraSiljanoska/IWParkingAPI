@@ -10,7 +10,6 @@ using NLog;
 using Microsoft.EntityFrameworkCore;
 using IWParkingAPI.Mappers;
 using AutoMapper;
-using IWParkingAPI.Models;
 using IWParkingAPI.Utilities;
 using IWParkingAPI.Models.Responses.Dto;
 using IWParkingAPI.Models.Responses;

@@ -37,7 +37,7 @@ namespace IWParkingAPI.Controllers
             return _userService.GetUserById();
         }
 
-        [AuthorizeCustom(UserRoles.User)]
+        [AuthorizeCustom(UserRoles.User, UserRoles.SuperAdmin)]
         [HttpPut("Update")]
         [Validate]
         public UserResponse Update(UpdateUserRequest changes)

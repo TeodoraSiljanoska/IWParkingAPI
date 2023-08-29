@@ -1,5 +1,4 @@
 ﻿using AutoMapper;
-using IWParkingAPI.Models;
 using IWParkingAPI.Models.Data;
 using IWParkingAPI.Models.Requests;
 using IWParkingAPI.Models.Responses.Dto;
@@ -147,8 +146,8 @@ namespace IWParkingAPI.Mappers
 
                 cfg.CreateMap<ParkingLotReq, TempParkingLot>()
              .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name))
-             .ForMember(dest => dest.City, opt => opt.MapFrom(src => src.City))
-             .ForMember(dest => dest.Zone, opt => opt.MapFrom(src => src.Zone))
+             //.ForMember(dest => dest.City, opt => opt.MapFrom(src => src.City))
+             //.ForMember(dest => dest.Zone, opt => opt.MapFrom(src => src.Zone))
              .ForMember(dest => dest.Address, opt => opt.MapFrom(src => src.Address))
              .ForMember(dest => dest.WorkingHourFrom, opt => opt.MapFrom(src => src.WorkingHourFrom))
              .ForMember(dest => dest.WorkingHourTo, opt => opt.MapFrom(src => src.WorkingHourTo))
@@ -280,6 +279,13 @@ namespace IWParkingAPI.Mappers
                   .ForMember(dest => dest.TimeModified, opt => opt.MapFrom(src => src.TimeModified))
                   .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status));
 
+
+                ///CITY
+                ///
+
+                //Create
+                cfg.CreateMap<CityRequest, City>()
+                .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name));
             }
             );
             var mapper = new Mapper(config);

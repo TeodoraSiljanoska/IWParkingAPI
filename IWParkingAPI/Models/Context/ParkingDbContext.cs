@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using IWParkingAPI.Models.Data;
 using Microsoft.EntityFrameworkCore;
 
-namespace IWParkingAPI.Models;
+namespace IWParkingAPI.Models.Context;
 
 public partial class ParkingDbContext : DbContext
 {
@@ -273,7 +274,7 @@ public partial class ParkingDbContext : DbContext
 
         modelBuilder.Entity<Vehicle>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Vehicle__3214EC07E1039730");
+            entity.HasKey(e => e.Id).HasName("PK__Vehicle__3214EC07CE7B2E42");
 
             entity.ToTable("Vehicle");
 

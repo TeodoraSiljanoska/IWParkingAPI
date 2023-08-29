@@ -19,7 +19,7 @@ namespace IWParkingAPI.Controllers
             _requestService = requestService;
         }
 
-        [AuthorizeCustom(UserRoles.SuperAdmin)]
+        [AuthorizeCustom(UserRoles.SuperAdmin, UserRoles.Owner)]
         [HttpGet("GetAll")]
         public AllRequestsResponse GetRequests()
         {

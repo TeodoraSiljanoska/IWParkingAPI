@@ -1,4 +1,6 @@
-﻿namespace IWParkingAPI.Models.Responses
+﻿using IWParkingAPI.Models.Data;
+
+namespace IWParkingAPI.Models.Responses
 {
     public class ZoneResponse : ResponseBase
     {
