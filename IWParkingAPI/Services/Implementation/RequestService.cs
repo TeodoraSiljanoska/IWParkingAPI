@@ -121,9 +121,10 @@ namespace IWParkingAPI.Services.Implementation
                 }
 
                 var parkingLotToDeactivate = _parkingLotRepository.GetAsQueryable(p => p.Id == req.ParkingLotId && p.UserId == req.UserId, null, null).FirstOrDefault();
-                var parkingLotToCreateOrUpdate = _tempParkingLotRepository.GetAsQueryable(p => p.Id == req.ParkingLotId && p.UserId == req.UserId, null, null).FirstOrDefault();
+                var parkingLotToCreate = _tempParkingLotRepository.GetAsQueryable(p => p.Id == req.ParkingLotId && p.UserId == req.UserId, null, null).FirstOrDefault();
+                var parkingLotToUpdate = _tempParkingLotRepository.GetAsQueryable(p => p.ParkingLotId == req.ParkingLotId && p.UserId == req.UserId, null, null).FirstOrDefault();
 
-                if (parkingLotToDeactivate == null && parkingLotToCreateOrUpdate == null)
+                if (parkingLotToDeactivate == null && (parkingLotToCreate == null || parkingLotToUpdate == null))
                 {
                     throw new NotFoundException("Parking lot not found");
                 }
@@ -197,7 +198,7 @@ namespace IWParkingAPI.Services.Implementation
 
                 if ((int)enumValue == (int)Status.Declined && req.Type == (int)RequestType.Update)
                 {
-                    var tempParkingLot = _tempParkingLotRepository.GetAsQueryable(p => p.Id == req.ParkingLotId && p.UserId == req.UserId, null, x => x.Include(y => y.User)).FirstOrDefault();
+                    var tempParkingLot = _tempParkingLotRepository.GetAsQueryable(p => p.ParkingLotId == req.ParkingLotId && p.UserId == req.UserId, null, x => x.Include(y => y.User)).FirstOrDefault();
                     _tempParkingLotRepository.Delete(tempParkingLot);
 
                     _requestRepository.Delete(req);

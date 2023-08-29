@@ -22,6 +22,8 @@ namespace IWParkingAPI.Services.Implementation
         private readonly IMapper _mapper;
         private readonly IUnitOfWork<ParkingDbContext> _unitOfWork;
         private readonly IGenericRepository<ParkingLot> _parkingLotRepository;
+        private readonly IGenericRepository<City> _cityRepository;
+        private readonly IGenericRepository<Zone> _zoneRepository;
         private readonly IGenericRepository<TempParkingLot> _tempParkingLotRepository;
         private readonly IGenericRepository<ParkingLotRequest> _parkingLotRequestRepository;
         private readonly IGenericRepository<City> _cityRepository;
@@ -40,6 +42,8 @@ namespace IWParkingAPI.Services.Implementation
             _mapper = MapperConfig.InitializeAutomapper();
             _unitOfWork = unitOfWork;
             _parkingLotRepository = _unitOfWork.GetGenericRepository<ParkingLot>();
+            _cityRepository = _unitOfWork.GetGenericRepository<City>();
+            _zoneRepository = _unitOfWork.GetGenericRepository<Zone>();
             _tempParkingLotRepository = _unitOfWork.GetGenericRepository<TempParkingLot>();
             _parkingLotRequestRepository = _unitOfWork.GetGenericRepository<ParkingLotRequest>();
             _cityRepository = _unitOfWork.GetGenericRepository<City>();
@@ -205,7 +209,16 @@ namespace IWParkingAPI.Services.Implementation
                 TimeSpan to;
                 var resFrom = TimeSpan.TryParse(request.WorkingHourFrom, out from);
                 var resTo = TimeSpan.TryParse(request.WorkingHourTo, out to);
-
+                var city = _cityRepository.GetAsQueryable(c => c.Name == request.City, null, null).FirstOrDefault();
+                if (city == null)
+                {
+                    throw new BadRequestException("City with that name doesn't exist");
+                }
+                var zone = _zoneRepository.GetAsQueryable(z => z.Name == request.Zone, null, null).FirstOrDefault();
+                if (zone == null)
+                {
+                    throw new BadRequestException("Zone with that name doesn't exist");
+                }
 
                 var city = _cityRepository.GetAsQueryable(x => x.Name == request.City).FirstOrDefault();
                 if (city == null)
@@ -305,7 +318,7 @@ namespace IWParkingAPI.Services.Implementation
                 var strUserId = _jWTDecode.ExtractClaimByType("Id");
                 if (strUserId == null)
                 {
-                    throw new BadRequestException("Unexpected error while Creating the Parking Lot");
+                    throw new BadRequestException("Unexpected error while updating the Parking Lot");
                 }
                 var userId = Convert.ToInt32(strUserId);
 
@@ -314,6 +327,17 @@ namespace IWParkingAPI.Services.Implementation
                 if (parkingLot == null)
                 {
                     throw new NotFoundException("Parking Lot not found");
+                }
+
+                var city = _cityRepository.GetAsQueryable(c => c.Name == request.City, null, null).FirstOrDefault();
+                if (city == null)
+                {
+                    throw new BadRequestException("City with that name doesn't exist");
+                }
+                var zone = _zoneRepository.GetAsQueryable(z => z.Name == request.Zone, null, null).FirstOrDefault();
+                if (zone == null)
+                {
+                    throw new BadRequestException("Zone with that name doesn't exist");
                 }
 
                 if (parkingLot.Name != request.Name)
@@ -325,6 +349,8 @@ namespace IWParkingAPI.Services.Implementation
                         throw new BadRequestException("Parking Lot with that name already exists");
                     }
                 }
+
+
 
                 TimeSpan from;
                 TimeSpan to;

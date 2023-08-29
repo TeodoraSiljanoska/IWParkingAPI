@@ -141,7 +141,7 @@ public partial class ParkingDbContext : DbContext
 
         modelBuilder.Entity<City>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__City__3214EC07E968CC48");
+            entity.HasKey(e => e.Id).HasName("PK__City__3214EC07A65C02A0");
 
             entity.ToTable("City");
 
@@ -150,25 +150,25 @@ public partial class ParkingDbContext : DbContext
 
         modelBuilder.Entity<ParkingLot>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Parking __3214EC071BD0950E");
+            entity.HasKey(e => e.Id).HasName("PK__Parking __3214EC07B58A9194");
 
             entity.ToTable("ParkingLot");
 
             entity.Property(e => e.Address).HasMaxLength(256);
             entity.Property(e => e.CapacityAdaptedCar).HasColumnName("Capacity_Adapted_Car");
             entity.Property(e => e.CapacityCar).HasColumnName("Capacity_Car");
-            entity.Property(e => e.City).HasMaxLength(256);
+            entity.Property(e => e.City).HasMaxLength(20);
             entity.Property(e => e.IsDeactivated)
                 .IsRequired()
                 .HasDefaultValueSql("('False')");
-            entity.Property(e => e.Name).HasMaxLength(20);
+            entity.Property(e => e.Name).HasMaxLength(256);
             entity.Property(e => e.Status).HasDefaultValueSql("((1))");
             entity.Property(e => e.TimeCreated).HasColumnType("datetime");
             entity.Property(e => e.TimeModified).HasColumnType("datetime");
             entity.Property(e => e.UserId).HasColumnName("User_Id");
             entity.Property(e => e.WorkingHourFrom).HasColumnName("Working_Hour_From");
             entity.Property(e => e.WorkingHourTo).HasColumnName("Working_Hour_To");
-            entity.Property(e => e.Zone).HasMaxLength(256);
+            entity.Property(e => e.Zone).HasMaxLength(20);
 
             entity.HasOne(d => d.User).WithMany(p => p.ParkingLots)
                 .HasForeignKey(d => d.UserId)
@@ -178,7 +178,7 @@ public partial class ParkingDbContext : DbContext
 
         modelBuilder.Entity<ParkingLotRequest>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Request__3214EC07DC5C8037");
+            entity.HasKey(e => e.Id).HasName("PK__Request__3214EC071844DB1C");
 
             entity.ToTable("ParkingLotRequest");
 
@@ -195,7 +195,7 @@ public partial class ParkingDbContext : DbContext
 
         modelBuilder.Entity<Payment>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Payment__3214EC07A67200A6");
+            entity.HasKey(e => e.Id).HasName("PK__Payment__3214EC07B044856B");
 
             entity.ToTable("Payment");
 
@@ -213,7 +213,7 @@ public partial class ParkingDbContext : DbContext
 
         modelBuilder.Entity<Reservation>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Reservat__3214EC07E6E4DA8B");
+            entity.HasKey(e => e.Id).HasName("PK__Reservat__3214EC07333DC35F");
 
             entity.ToTable("Reservation");
 
@@ -245,18 +245,18 @@ public partial class ParkingDbContext : DbContext
 
         modelBuilder.Entity<TempParkingLot>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__TempPark__3214EC07C2EAA1CD");
+            entity.HasKey(e => e.Id).HasName("PK__TempPark__3214EC07F64E9621");
 
             entity.ToTable("TempParkingLot");
 
-            entity.Property(e => e.Address).HasMaxLength(20);
+            entity.Property(e => e.Address).HasMaxLength(256);
             entity.Property(e => e.CapacityAdaptedCar).HasColumnName("Capacity_Adapted_Car");
             entity.Property(e => e.CapacityCar).HasColumnName("Capacity_Car");
-            entity.Property(e => e.City).HasMaxLength(256);
+            entity.Property(e => e.City).HasMaxLength(20);
             entity.Property(e => e.IsDeactivated)
                 .IsRequired()
                 .HasDefaultValueSql("('False')");
-            entity.Property(e => e.Name).HasMaxLength(20);
+            entity.Property(e => e.Name).HasMaxLength(256);
             entity.Property(e => e.ParkingLotId).HasColumnName("ParkingLot_Id");
             entity.Property(e => e.Status).HasDefaultValueSql("((1))");
             entity.Property(e => e.TimeCreated).HasColumnType("datetime");
@@ -264,7 +264,7 @@ public partial class ParkingDbContext : DbContext
             entity.Property(e => e.UserId).HasColumnName("User_Id");
             entity.Property(e => e.WorkingHourFrom).HasColumnName("Working_Hour_From");
             entity.Property(e => e.WorkingHourTo).HasColumnName("Working_Hour_To");
-            entity.Property(e => e.Zone).HasMaxLength(256);
+            entity.Property(e => e.Zone).HasMaxLength(20);
 
             entity.HasOne(d => d.User).WithMany(p => p.TempParkingLots)
                 .HasForeignKey(d => d.UserId)
@@ -297,7 +297,7 @@ public partial class ParkingDbContext : DbContext
 
         modelBuilder.Entity<Zone>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Zone__3214EC07435A2BC6");
+            entity.HasKey(e => e.Id).HasName("PK__Zone__3214EC07F7CF4616");
 
             entity.ToTable("Zone");
 

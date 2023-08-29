@@ -134,6 +134,13 @@ namespace IWParkingAPI.Mappers
                 .ForMember(dest => dest.IsPrimary, opt => opt.MapFrom(src => src.IsPrimary));
 
 
+                ///ZONE
+
+                //Create
+                cfg.CreateMap<ZoneRequest, Zone>()
+               .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name));
+
+
 
 
 
