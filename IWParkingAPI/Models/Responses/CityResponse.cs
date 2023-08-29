@@ -1,9 +1,9 @@
-﻿using IWParkingAPI.Models.Responses.Dto;
+﻿using IWParkingAPI.Models.Data;
 
 namespace IWParkingAPI.Models.Responses
 {
     public class CityResponse : ResponseBase
     {
-        public CityDTO City { get; set; } = new CityDTO();
+        public City City { get; set; } = new City();
     }
 }

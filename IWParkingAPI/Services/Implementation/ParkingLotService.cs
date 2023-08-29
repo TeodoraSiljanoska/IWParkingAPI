@@ -26,8 +26,6 @@ namespace IWParkingAPI.Services.Implementation
         private readonly IGenericRepository<Zone> _zoneRepository;
         private readonly IGenericRepository<TempParkingLot> _tempParkingLotRepository;
         private readonly IGenericRepository<ParkingLotRequest> _parkingLotRequestRepository;
-        private readonly IGenericRepository<City> _cityRepository;
-        private readonly IGenericRepository<Zone> _zoneRepository;
         private readonly IGenericRepository<AspNetUser> _userRepository;
         private readonly IGenericRepository<ParkingLotRequest> _requestRepository;
         private readonly AllParkingLotsResponse _getDTOResponse;
@@ -219,15 +217,6 @@ namespace IWParkingAPI.Services.Implementation
                 {
                     throw new BadRequestException("Zone with that name doesn't exist");
                 }
-
-                var city = _cityRepository.GetAsQueryable(x => x.Name == request.City).FirstOrDefault();
-                if (city == null)
-                {
-                    throw new BadRequestException("City with that name doesn't exist");
-                }
-
-                var zone = _zoneRepository.GetById(1);
-
 
                 var existingPL = _parkingLotRepository.GetAsQueryable(p => p.Name == request.Name && p.City.Equals(city.Name), null, null).FirstOrDefault();
                 var expl = _tempParkingLotRepository.GetAsQueryable(p => p.Name == request.Name && p.City.Equals(city.Name), null, null).FirstOrDefault();

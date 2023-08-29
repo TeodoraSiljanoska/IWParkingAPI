@@ -12,6 +12,6 @@ namespace IWParkingAPI.Services.Interfaces
         public ParkingLotResponse UpdateParkingLot(int id, UpdateParkingLotRequest changes);
         public ParkingLotResponse MakeParkingLotFavorite(int parkingLotId);
         public ParkingLotResponse RemoveParkingLotFavourite(int parkingLotId);
-        public AllParkingLotsResponse GetUserFavouriteParkingLots();
+        public AllParkingLotsResponse GetUserFavouriteParkingLots(int pageNumber, int pageSize);
     }
 }

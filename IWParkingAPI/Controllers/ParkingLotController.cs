@@ -72,9 +72,9 @@ namespace IWParkingAPI.Controllers
 
         [HttpGet("GetUserFavouriteParkingLots")]
         [AuthorizeCustom(UserRoles.User)]
-        public AllParkingLotsResponse GetUsereFavouriteParkingLots()
+        public AllParkingLotsResponse GetUsereFavouriteParkingLots(int pageNumber, int pageSize)
         {
-            return _parkingLotService.GetUserFavouriteParkingLots();
+            return _parkingLotService.GetUserFavouriteParkingLots(pageNumber, pageSize);
         }
     }
 }

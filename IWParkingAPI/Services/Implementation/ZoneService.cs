@@ -5,6 +5,7 @@ using IWParkingAPI.Infrastructure.UnitOfWork;
 using IWParkingAPI.Mappers;
 using IWParkingAPI.Models;
 using IWParkingAPI.Models.Context;
+using IWParkingAPI.Models.Data;
 using IWParkingAPI.Models.Requests;
 using IWParkingAPI.Models.Responses;
 using IWParkingAPI.Services.Interfaces;
@@ -37,7 +38,7 @@ namespace IWParkingAPI.Services.Implementation
                 if (zones.Count() == 0)
                 {
                     _getResponse.StatusCode = HttpStatusCode.NoContent;
-                    _getResponse.Message = "There aren't any roles.";
+                    _getResponse.Message = "There aren't any zones.";
                     _getResponse.Zones = Enumerable.Empty<Zone>();
                     return _getResponse;
                 }
@@ -51,7 +52,6 @@ namespace IWParkingAPI.Services.Implementation
             {
                 _logger.Error($"Unexpected error while getting all Zones {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
                 throw new InternalErrorException("Unexpected error while getting all Zones");
-
             }
         }
         public ZoneResponse GetZoneById(int id)

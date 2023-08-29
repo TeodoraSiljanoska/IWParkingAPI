@@ -286,12 +286,6 @@ namespace IWParkingAPI.Mappers
                 //Create
                 cfg.CreateMap<CityRequest, City>()
                 .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name));
-
-                //Create
-                cfg.CreateMap<City, CityDTO>()
-                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
-                .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name));
-
             }
             );
             var mapper = new Mapper(config);
