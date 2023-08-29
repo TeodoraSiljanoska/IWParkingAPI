@@ -9,14 +9,13 @@ namespace IWParkingAPI.Models.Responses.Dto
         public int Status { get; set; }
 
         public int UserId { get; set; }
+        public string Type { get; set; }
 
         public int ParkingLotId { get; set; }
 
         public DateTime TimeCreated { get; set; }
 
-        public virtual ParkingLotDTO ParkingLot { get; set; } = null!;
-
-        public TempParkingLotDTO ParkingLotTemp { get; set; }
+        public TempParkingLotDTO ParkingLot { get; set; }
 
         public virtual UserDTO User { get; set; } = null!;
     }

@@ -13,6 +13,7 @@ using IWParkingAPI.Models.Responses.Dto;
 using IWParkingAPI.Utilities;
 using IWParkingAPI.Models.Data;
 using IWParkingAPI.Models.Context;
+using IWParkingAPI.Models.Enums;
 
 namespace IWParkingAPI.Services.Implementation
 {
@@ -77,7 +78,7 @@ namespace IWParkingAPI.Services.Implementation
                     }
                     var plDTO = _mapper.Map<RequestDTO>(p);
                     var tempDTO = _mapper.Map<TempParkingLotDTO>(tempPL);
-                    plDTO.ParkingLotTemp = tempDTO;
+                    plDTO.ParkingLot = tempDTO;
                     GetAllRequestsDTOList.Add(plDTO);
                 }
                 _allRequestsResponse.StatusCode = HttpStatusCode.OK;
@@ -174,10 +175,10 @@ namespace IWParkingAPI.Services.Implementation
 
 
                     ParkingLot.Name = (ParkingLot.Name == tempParkingLot.Name) ? ParkingLot.Name : tempParkingLot.Name;
-                    ParkingLot.City = (ParkingLot.City == tempParkingLot.City) ? ParkingLot.City : tempParkingLot.City;
-                    ParkingLot.Zone = (ParkingLot.Zone == tempParkingLot.Zone) ? ParkingLot.Zone : tempParkingLot.Zone;
+                    ParkingLot.City = (ParkingLot.City.Equals(tempParkingLot.City)) ? ParkingLot.City : tempParkingLot.City;
+                    ParkingLot.Zone = (ParkingLot.Zone.Equals(tempParkingLot.Zone)) ? ParkingLot.Zone : tempParkingLot.Zone;
                     ParkingLot.Address = (ParkingLot.Address == tempParkingLot.Address) ? ParkingLot.Address : tempParkingLot.Address;
-                    ParkingLot.City = (ParkingLot.City == tempParkingLot.City) ? ParkingLot.City : tempParkingLot.City;
+                    ParkingLot.City = (ParkingLot.City.Equals(tempParkingLot.City)) ? ParkingLot.City : tempParkingLot.City;
                     ParkingLot.WorkingHourFrom = (ParkingLot.WorkingHourFrom == tempParkingLot.WorkingHourFrom) ? ParkingLot.WorkingHourFrom : tempParkingLot.WorkingHourFrom;
                     ParkingLot.WorkingHourTo = (ParkingLot.WorkingHourTo == tempParkingLot.WorkingHourTo) ? ParkingLot.WorkingHourTo : tempParkingLot.WorkingHourTo;
                     ParkingLot.CapacityCar = (ParkingLot.CapacityCar == tempParkingLot.CapacityCar) ? ParkingLot.CapacityCar : tempParkingLot.CapacityCar;

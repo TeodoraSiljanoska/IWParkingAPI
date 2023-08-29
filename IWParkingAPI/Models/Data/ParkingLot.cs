@@ -9,9 +9,9 @@ public partial class ParkingLot
 
     public string Name { get; set; } = null!;
 
-    public int CityId { get; set; }
+    public string City { get; set; } = null!;
 
-    public int ZoneId { get; set; }
+    public string Zone { get; set; } = null!;
 
     public string Address { get; set; } = null!;
 
@@ -35,13 +35,9 @@ public partial class ParkingLot
 
     public int Status { get; set; }
 
-    public virtual City City { get; set; } = null!;
-
     public virtual ICollection<Reservation> Reservations { get; set; } = new List<Reservation>();
 
     public virtual AspNetUser User { get; set; } = null!;
-
-    public virtual Zone Zone { get; set; } = null!;
 
     public virtual ICollection<AspNetUser> Users { get; set; } = new List<AspNetUser>();
 }

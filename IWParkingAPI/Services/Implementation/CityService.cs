@@ -46,7 +46,9 @@ namespace IWParkingAPI.Services.Implementation
                 _cityRepository.Insert(createdCity);
                 _unitOfWork.Save();
 
-                _cityResponse.City = createdCity;
+                var cityDto = _mapper.Map<CityDTO>(createdCity);
+
+                _cityResponse.City = cityDto;
                 _cityResponse.StatusCode = HttpStatusCode.OK;
                 _cityResponse.Message = "City created successfully";
                 return _cityResponse;

@@ -157,7 +157,7 @@ public partial class ParkingDbContext : DbContext
             entity.Property(e => e.Address).HasMaxLength(256);
             entity.Property(e => e.CapacityAdaptedCar).HasColumnName("Capacity_Adapted_Car");
             entity.Property(e => e.CapacityCar).HasColumnName("Capacity_Car");
-            entity.Property(e => e.CityId).HasColumnName("City_Id");
+            entity.Property(e => e.City).HasMaxLength(256);
             entity.Property(e => e.IsDeactivated)
                 .IsRequired()
                 .HasDefaultValueSql("('False')");
@@ -168,22 +168,12 @@ public partial class ParkingDbContext : DbContext
             entity.Property(e => e.UserId).HasColumnName("User_Id");
             entity.Property(e => e.WorkingHourFrom).HasColumnName("Working_Hour_From");
             entity.Property(e => e.WorkingHourTo).HasColumnName("Working_Hour_To");
-            entity.Property(e => e.ZoneId).HasColumnName("Zone_Id");
-
-            entity.HasOne(d => d.City).WithMany(p => p.ParkingLots)
-                .HasForeignKey(d => d.CityId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_ParkingLot.City_Id");
+            entity.Property(e => e.Zone).HasMaxLength(256);
 
             entity.HasOne(d => d.User).WithMany(p => p.ParkingLots)
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Parking Lot.User_Id");
-
-            entity.HasOne(d => d.Zone).WithMany(p => p.ParkingLots)
-                .HasForeignKey(d => d.ZoneId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_ParkingLot.Zone_Id");
         });
 
         modelBuilder.Entity<ParkingLotRequest>(entity =>
@@ -262,7 +252,7 @@ public partial class ParkingDbContext : DbContext
             entity.Property(e => e.Address).HasMaxLength(20);
             entity.Property(e => e.CapacityAdaptedCar).HasColumnName("Capacity_Adapted_Car");
             entity.Property(e => e.CapacityCar).HasColumnName("Capacity_Car");
-            entity.Property(e => e.CityId).HasColumnName("City_Id");
+            entity.Property(e => e.City).HasMaxLength(256);
             entity.Property(e => e.IsDeactivated)
                 .IsRequired()
                 .HasDefaultValueSql("('False')");
@@ -274,22 +264,12 @@ public partial class ParkingDbContext : DbContext
             entity.Property(e => e.UserId).HasColumnName("User_Id");
             entity.Property(e => e.WorkingHourFrom).HasColumnName("Working_Hour_From");
             entity.Property(e => e.WorkingHourTo).HasColumnName("Working_Hour_To");
-            entity.Property(e => e.ZoneId).HasColumnName("Zone_Id");
-
-            entity.HasOne(d => d.City).WithMany(p => p.TempParkingLots)
-                .HasForeignKey(d => d.CityId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_TempParkingLot.City_Id");
+            entity.Property(e => e.Zone).HasMaxLength(256);
 
             entity.HasOne(d => d.User).WithMany(p => p.TempParkingLots)
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_TempParking Lot.User_Id");
-
-            entity.HasOne(d => d.Zone).WithMany(p => p.TempParkingLots)
-                .HasForeignKey(d => d.ZoneId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_TempParkingLot.Zone_Id");
         });
 
         modelBuilder.Entity<Vehicle>(entity =>
