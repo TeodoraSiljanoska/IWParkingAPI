@@ -10,7 +10,6 @@ namespace IWParkingAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [AuthorizeCustom(UserRoles.SuperAdmin)]
     public class CityController : ControllerBase
     {
         private readonly ICityService _cityService;
@@ -19,18 +18,21 @@ namespace IWParkingAPI.Controllers
             _cityService = cityService;
         }
 
+        [AuthorizeCustom(UserRoles.SuperAdmin, UserRoles.Owner, UserRoles.User)]
         [HttpGet("GetAll")]
         public AllCitiesResponse GetAll()
         {
             return _cityService.GetAllCities();
         }
 
+        [AuthorizeCustom(UserRoles.SuperAdmin)]
         [HttpGet("Get/{id}")]
         public CityResponse GetById(int id)
         {
             return _cityService.GetCityById(id);
         }
 
+        [AuthorizeCustom(UserRoles.SuperAdmin)]
         [HttpPost("Create")]
         [Validate]
         public CityResponse CreateCity(CityRequest request)
@@ -38,6 +40,7 @@ namespace IWParkingAPI.Controllers
             return _cityService.CreateCity(request);
         }
 
+        [AuthorizeCustom(UserRoles.SuperAdmin)]
         [HttpPut("Update/{id}")]
         [Validate]
         public CityResponse Update(int id, CityRequest changes)
@@ -45,6 +48,7 @@ namespace IWParkingAPI.Controllers
             return _cityService.UpdateCity(id, changes);
         }
 
+        [AuthorizeCustom(UserRoles.SuperAdmin)]
         [HttpDelete("Delete/{id}")]
         public CityResponse Delete(int id)
         {
