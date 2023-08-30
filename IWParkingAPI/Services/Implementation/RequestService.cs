@@ -82,7 +82,15 @@ namespace IWParkingAPI.Services.Implementation
                         plDTO.ParkingLot = tempDTO;
                         plDTO.OldParkingLot = oldDTO;
                         
-                    } else
+                    }
+                    else if (p.Type == (int)Enums.RequestType.Deactivate)
+                    {
+                        var pl = _parkingLotRepository.GetAsQueryable(x => x.Id == p.ParkingLotId).FirstOrDefault();
+                        var tempDTO = _mapper.Map<TempParkingLotDTO>(pl);
+                        plDTO = _mapper.Map<RequestDTO>(p);
+                        plDTO.ParkingLot = tempDTO;
+                    }
+                    else
                     {
                         var tempPL = _tempParkingLotRepository.GetAsQueryable(x => x.Id == p.ParkingLotId).FirstOrDefault();
                         var tempDTO = _mapper.Map<TempParkingLotDTO>(tempPL);
