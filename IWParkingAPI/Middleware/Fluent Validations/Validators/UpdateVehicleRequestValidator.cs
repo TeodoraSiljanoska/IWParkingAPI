@@ -1,5 +1,6 @@
 ﻿using FluentValidation;
 using IWParkingAPI.Models.Requests;
+using static IWParkingAPI.Models.Enums.Enums;
 
 namespace IWParkingAPI.Middleware.Fluent_Validations.Validators
 {
@@ -9,12 +10,11 @@ namespace IWParkingAPI.Middleware.Fluent_Validations.Validators
         {
             RuleFor(x => x.PlateNumber)
                .NotEmpty().WithMessage("PlateNumber is required")
-               .Matches("^(?=.*[A-Z])(?=.*[0-9])[A-Z0-9]+$");
+               .Matches("^(?=.*[A-Z])(?=.*[0-9])[A-Z0-9]+$").WithMessage("Plate number is invalid");
 
             RuleFor(x => x.Type)
             .NotEmpty().WithMessage("Type is required")
-            .Must(type => type == "Car" || type == "Adapted Car")
-            .WithMessage("Car type must be either 'Car' or 'Adapted Car'");
+            .Must(type => Enum.IsDefined(typeof(VehicleTypes), type)).WithMessage("Type is invalid");
         }
     }
 }

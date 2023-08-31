@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 
 namespace IWParkingAPI.Models.Enums
 {
@@ -35,6 +36,18 @@ namespace IWParkingAPI.Models.Enums
 
             [Display(Name = "Deactivated")]
             Deactivated = 2,
+        }
+
+        public enum VehicleTypes
+        {
+            [Display(Name = "Car")]
+            Car = 1,
+
+            [Display(Name = "Adapted Car")]
+            AdaptedCar = 2,
+
+            [Display(Name = "Truck")]
+            Truck = 3
         }
     }
 }
