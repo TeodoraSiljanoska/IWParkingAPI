@@ -72,11 +72,11 @@ namespace IWParkingAPI.Services.Implementation
                 var totalCount = requests.Count();
                 var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
 
-                var paginatedParkingLots = requests.Skip((pageNumber - 1) * pageSize)
+                var paginatedRequests = requests.Skip((pageNumber - 1) * pageSize)
                                                      .Take(pageSize)
                                                      .ToList();
 
-                if (paginatedParkingLots.Count() == 0)
+                if (paginatedRequests.Count() == 0)
                 {
                     _allRequestsResponse.StatusCode = HttpStatusCode.OK;
                     _allRequestsResponse.Message = "There aren't any requests.";
@@ -85,7 +85,7 @@ namespace IWParkingAPI.Services.Implementation
                 }
 
                 var GetAllRequestsDTOList = new List<RequestDTO>();
-                foreach (var p in paginatedParkingLots)
+                foreach (var p in paginatedRequests)
                 {
                     RequestDTO plDTO; 
                     if (p.Type == (int)Enums.RequestType.Update)
