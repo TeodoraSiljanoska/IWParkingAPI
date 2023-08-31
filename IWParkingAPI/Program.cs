@@ -6,24 +6,21 @@ public class Program
 {
     public static void Main(string[] args)
     {
-        var pathToExe = Process.GetCurrentProcess().MainModule.FileName;
-        var pathToContentRoot = Path.GetDirectoryName(pathToExe);
-
-       // NLog.LogManager.Configuration = new NLog.Config.XmlLoggingConfiguration(Path.Combine(pathToContentRoot, "nlog.config"));
-      //  var logger = NLog.Web.NLogBuilder.ConfigureNLog(NLog.LogManager.Configuration).GetCurrentClassLogger();
-        //var logger = NLogBuilder.ConfigureNLog("nlog.config").GetCurrentClassLogger();
+        var logger = NLog.Web.NLogBuilder.ConfigureNLog("nlog.config").GetCurrentClassLogger();
         try
         {
-          //  logger.Debug("init main");
+            logger.Debug("init main");
             CreateHostBuilder(args).Build().Run();
         }
-        catch (Exception ex)
+        catch (Exception exception)
         {
-           // logger.Error(ex, "Program stopped because of an exception");
+            //NLog: catch setup errors
+            logger.Error(exception, "Stopped program because of exception");
             throw;
         }
         finally
         {
+            // Ensure to flush and stop internal timers/threads before application-exit (Avoid segmentation fault on Linux)
             NLog.LogManager.Shutdown();
         }
     }
@@ -37,7 +34,7 @@ public class Program
         .ConfigureLogging(logging =>
         {
             logging.ClearProviders();
-            logging.SetMinimumLevel(LogLevel.Information);
+            logging.SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Information);
         })
         .UseNLog();
 }
