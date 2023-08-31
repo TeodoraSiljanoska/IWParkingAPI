@@ -16,6 +16,8 @@ using IWParkingAPI.Models.Responses.Dto;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using IWParkingAPI.Models.Enums;
+using static IWParkingAPI.Models.Enums.Enums;
 
 namespace IWParkingAPI.Services.Implementation
 {
@@ -30,6 +32,7 @@ namespace IWParkingAPI.Services.Implementation
         private readonly IJWTDecode _jWTDecode;
         private readonly AllVehiclesResponse _vehiclesByUserIdResponse;
         private readonly VehicleResponse _makePrimaryResponse;
+        private readonly VehicleTypesResponse _vehicleTypeResponse;
 
 
 
@@ -43,6 +46,7 @@ namespace IWParkingAPI.Services.Implementation
             _jWTDecode = jWTDecode;
             _vehiclesByUserIdResponse = new AllVehiclesResponse();
             _makePrimaryResponse = new VehicleResponse();
+            _vehicleTypeResponse = new VehicleTypesResponse();
         }
 
         public AllVehiclesWithUserResponse GetAllVehicles()
@@ -387,6 +391,30 @@ namespace IWParkingAPI.Services.Implementation
 
         }
 
+        public VehicleTypesResponse GetVehicleTypes()
+        {
+            try
+            {
+                var enumValues = Enum.GetValues(typeof(VehicleTypes));
+                List<string> vehicleTypes = new List<string>();
+                foreach(var t in enumValues)
+                {
+                    vehicleTypes.Add(t.ToString());
+                }
+
+                _vehicleTypeResponse.StatusCode = HttpStatusCode.OK;
+                _vehicleTypeResponse.Message = "Vehicle Types returned successfully";
+                _vehicleTypeResponse.VehicleTypes = vehicleTypes;
+                return _vehicleTypeResponse;
+            }
+            catch (Exception ex)
+            {
+                _logger.Error($"Unexpected error while getting the Vehicle types {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
+                throw new InternalErrorException("Unexpected error while getting the Vehicle types");
+            }
+
+        }
+
         public VehicleResponse MakeVehiclePrimary(int vehicleId)
         {
             try
@@ -455,6 +483,8 @@ namespace IWParkingAPI.Services.Implementation
                 throw new InternalErrorException("Unexpected error while making Vehicle primary");
             }
         }
+
+
 
     }
 }

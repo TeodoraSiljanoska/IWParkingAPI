@@ -68,6 +68,13 @@ namespace IWParkingAPI.Controllers
         {
             return _vehicleService.GetVehiclesByUserId();
         }
+
+        [AuthorizeCustom(UserRoles.SuperAdmin, UserRoles.Owner, UserRoles.User)]
+        [HttpGet("GetVehicleTypes")]
+        public VehicleTypesResponse GetVehicleTypes()
+        {
+            return _vehicleService.GetVehicleTypes();
+        }
     }
 }
 
