@@ -14,6 +14,7 @@ using Microsoft.EntityFrameworkCore;
 using NLog;
 using System.Net;
 using static IWParkingAPI.Models.Enums.Enums;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace IWParkingAPI.Services.Implementation
 {
@@ -704,6 +705,15 @@ namespace IWParkingAPI.Services.Implementation
                 var favouritesList = userWithParkingLots.ParkingLotsNavigation.ToList();
 
                 var approvedFromFavourites = favouritesList.Where(a => a.Status == (int)Status.Approved && a.IsDeactivated == false);
+
+                if (pageNumber == 0)
+                {
+                    pageNumber = PageSize;
+                }
+                if (pageSize == 0)
+                {
+                    pageSize = PageNumber;
+                }
 
                 var totalCount = approvedFromFavourites.Count();
                 var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
