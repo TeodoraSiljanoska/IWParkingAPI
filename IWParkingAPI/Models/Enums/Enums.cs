@@ -27,5 +27,14 @@ namespace IWParkingAPI.Models.Enums
             [Display(Name = "Update")]
             Update = 3
         }
+
+        public enum ParkingLotStatus
+        {
+            [Display(Name = "Activated")]
+            Activated = 1,
+
+            [Display(Name = "Deactivated")]
+            Deactivated = 2,
+        }
     }
 }

@@ -69,10 +69,26 @@ namespace IWParkingAPI.Services.Implementation
                 else if (role.Equals(Models.UserRoles.Owner))
                 {
                     query = query.Where(x => x.UserId == int.Parse(userId) && x.Status == (int)Status.Approved);
+                    if (!string.IsNullOrEmpty(request.Status))
+                    {
+                        ParkingLotStatus enumValue = (ParkingLotStatus)Enum.Parse(typeof(ParkingLotStatus), request.Status);
+                        if ((int)enumValue == (int)ParkingLotStatus.Activated)
+                            query = query.Where(x => x.IsDeactivated == false);
+                        else
+                            query = query.Where(x => x.IsDeactivated == true);
+                    }
                 }
                 else if (role.Equals(Models.UserRoles.SuperAdmin))
                 {
                     query = query.Where(x => x.Status == (int)Status.Approved);
+                    if (!string.IsNullOrEmpty(request.Status))
+                    {
+                        ParkingLotStatus enumValue = (ParkingLotStatus)Enum.Parse(typeof(ParkingLotStatus), request.Status);
+                        if ((int)enumValue == (int)ParkingLotStatus.Activated)
+                            query = query.Where(x => x.IsDeactivated == false);
+                        else
+                            query = query.Where(x => x.IsDeactivated == true);
+                    }
                 }
                 else
                 {
@@ -103,6 +119,7 @@ namespace IWParkingAPI.Services.Implementation
                 {
                     query = query.Where(x => x.CapacityAdaptedCar >= request.CapacityAdaptedCar);
                 }
+                
 
                 var filteredParkingLots = query;
                 if (pageNumber == 0)

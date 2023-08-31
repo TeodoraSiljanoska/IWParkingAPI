@@ -13,6 +13,7 @@
         public int? CapacityCar { get; set; }
 
         public int? CapacityAdaptedCar { get; set; }
+        public string? Status { get; set; }
 
     }
 }

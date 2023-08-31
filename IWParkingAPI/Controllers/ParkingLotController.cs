@@ -47,9 +47,8 @@ namespace IWParkingAPI.Controllers
         {
             return _parkingLotService.UpdateParkingLot(id,request);
         }
-        [AuthorizeCustom(UserRoles.SuperAdmin)]
 
-        [AuthorizeCustom(UserRoles.Owner)]
+        [AuthorizeCustom(UserRoles.Owner, UserRoles.SuperAdmin)]
         [HttpDelete("Deactivate/{id}")]
         public ParkingLotResponse DeactivateParkingLot(int id)
         {
