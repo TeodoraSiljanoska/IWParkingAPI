@@ -25,8 +25,8 @@ public class UserService : IUserService
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
     private readonly IMapper _mapper;
     private readonly IJWTDecode _jWTDecode;
-    private const int PageSize = 1;
-    private const int PageNumber = 10;
+    private const int PageSize = 5;
+    private const int PageNumber = 1;
 
     public UserService(IUnitOfWork<ParkingDbContext> unitOfWork, IJWTDecode jWTDecode)
     {
@@ -44,25 +44,23 @@ public class UserService : IUserService
         {
             var users = _userRepository.GetAsQueryable(null, null, x => x.Include(y => y.Roles)).ToList();
 
-            IEnumerable<AspNetUser> paginatedUsers = null;
-
-            if (pageNumber != 0 && pageSize != 0)
+            if (pageNumber == 0)
             {
-                paginatedUsers = users.Skip((pageNumber - 1) * pageSize).Take(pageSize);
-            }
-            else
-            {
-                paginatedUsers = users;
-                pageSize = PageSize;
                 pageNumber = PageNumber;
+            }
+            if (pageSize == 0)
+            {
+                pageSize = PageSize;
             }
 
             var totalCount = users.Count();
             var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
 
-            var result = paginatedUsers.ToList();
+            var paginatedUsers = users.Skip((pageNumber - 1) * pageSize)
+                                                 .Take(pageSize)
+                                                 .ToList();
 
-            if (!result.Any())
+            if (!paginatedUsers.Any())
             {
                 _getResponse.StatusCode = HttpStatusCode.OK;
                 _getResponse.Message = "There aren't any users";
@@ -71,7 +69,7 @@ public class UserService : IUserService
             }
 
             var UserDTOList = new List<UserDTO>();
-            foreach (var user in result)
+            foreach (var user in paginatedUsers)
             {
                 UserDTOList.Add(_mapper.Map<UserDTO>(user));
             }
@@ -79,7 +77,7 @@ public class UserService : IUserService
             _getResponse.StatusCode = HttpStatusCode.OK;
             _getResponse.Message = "Users returned successfully";
             _getResponse.Users = UserDTOList;
-            _getResponse.NumPages = totalCount;
+            _getResponse.NumPages = totalPages;
             return _getResponse;
         }
         catch (Exception ex)

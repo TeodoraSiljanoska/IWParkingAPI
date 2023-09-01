@@ -14,6 +14,7 @@ using Microsoft.EntityFrameworkCore;
 using NLog;
 using System.Net;
 using static IWParkingAPI.Models.Enums.Enums;
+using static Microsoft.ApplicationInsights.MetricDimensionNames.TelemetryContext;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace IWParkingAPI.Services.Implementation
@@ -33,8 +34,8 @@ namespace IWParkingAPI.Services.Implementation
         private readonly ParkingLotResponse _response;
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
         private readonly IJWTDecode _jWTDecode;
-        private const int PageSize = 1;
-        private const int PageNumber = 10;
+        private const int PageSize = 5;
+        private const int PageNumber = 1;
 
         public ParkingLotService(IUnitOfWork<ParkingDbContext> unitOfWork, IJWTDecode jWTDecode)
         {
@@ -63,9 +64,20 @@ namespace IWParkingAPI.Services.Implementation
                 var userId = _jWTDecode.ExtractClaimByType("Id");
                 var role = _jWTDecode.ExtractClaimByType("Role");
 
-                if (userId == null || role.Equals(Models.UserRoles.User))
+                var userFavouritesList = new List<ParkingLot>();
+
+                if (userId == null)
                 {
                     query = query.Where(x => x.Status == (int)Status.Approved && x.IsDeactivated == false);
+                }
+                else if (role.Equals(Models.UserRoles.User))
+                {
+                    query = query.Where(x => x.Status == (int)Status.Approved && x.IsDeactivated == false);
+
+                    var userWithParkingLots = _userRepository.GetAsQueryable(x => x.Id == int.Parse(userId),
+                        null, x => x.Include(y => y.ParkingLotsNavigation)).FirstOrDefault();
+
+                    userFavouritesList = userWithParkingLots.ParkingLotsNavigation.ToList();
                 }
                 else if (role.Equals(Models.UserRoles.Owner))
                 {
@@ -120,38 +132,45 @@ namespace IWParkingAPI.Services.Implementation
                 {
                     query = query.Where(x => x.CapacityAdaptedCar >= request.CapacityAdaptedCar);
                 }
-                
+
 
                 var filteredParkingLots = query;
+
+                IEnumerable<ParkingLot> paginatedParkingLots = null;
                 if (pageNumber == 0)
                 {
-                    pageNumber = PageSize;
+                    pageNumber = PageNumber;
                 }
                 if (pageSize == 0)
                 {
-                    pageSize = PageNumber;
+                    pageSize = PageSize;
                 }
+                paginatedParkingLots = filteredParkingLots.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
 
                 var totalCount = filteredParkingLots.Count();
                 var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
 
-                var paginatedParkingLots = filteredParkingLots.Skip((pageNumber - 1) * pageSize)
-                                                     .Take(pageSize)
-                                                     .ToList();
-
-                if (!filteredParkingLots.Any())
+                if (!paginatedParkingLots.Any())
                 {
                     _getDTOResponse.StatusCode = HttpStatusCode.OK;
                     _getDTOResponse.Message = "There aren't any parking lots.";
-                    _getDTOResponse.ParkingLots = Enumerable.Empty<ParkingLotDTO>();
-                    _getDTOResponse.NumPages = 0;
+                    _getDTOResponse.ParkingLots = Enumerable.Empty<ParkingLotWithFavouritesDTO>();
                     return _getDTOResponse;
                 }
 
-                List<ParkingLotDTO> parkingLotDTOs = new List<ParkingLotDTO>();
+                List<ParkingLotWithFavouritesDTO> parkingLotDTOs = new List<ParkingLotWithFavouritesDTO>();
                 foreach (var p in paginatedParkingLots)
                 {
-                    parkingLotDTOs.Add(_mapper.Map<ParkingLotDTO>(p));
+                    var mappedObject = _mapper.Map<ParkingLotWithFavouritesDTO>(p);
+                    if (role != null && role.Equals(Models.UserRoles.User))
+                    {
+                        if (userFavouritesList.Contains(p))
+                        {
+                            mappedObject.IsFavourite = true;
+                        }
+                    }
+                    parkingLotDTOs.Add(mappedObject);
+
                 }
                 _getDTOResponse.StatusCode = HttpStatusCode.OK;
                 _getDTOResponse.Message = "Parking lots returned successfully";
@@ -697,7 +716,7 @@ namespace IWParkingAPI.Services.Implementation
                 {
                     _getDTOResponse.StatusCode = HttpStatusCode.OK;
                     _getDTOResponse.Message = "User doesn't have any favourite parking lots";
-                    _getDTOResponse.ParkingLots = Enumerable.Empty<ParkingLotDTO>();
+                    _getDTOResponse.ParkingLots = Enumerable.Empty<ParkingLotWithFavouritesDTO>();
                     _getDTOResponse.NumPages = 0;
                     return _getDTOResponse;
                 }
@@ -706,34 +725,53 @@ namespace IWParkingAPI.Services.Implementation
 
                 var approvedFromFavourites = favouritesList.Where(a => a.Status == (int)Status.Approved && a.IsDeactivated == false);
 
-                if (pageNumber == 0)
+
+                List<ParkingLot> paginatedParkingLots = new List<ParkingLot>();
+                if (pageNumber == 0 && pageSize == 0)
                 {
-                    pageNumber = PageSize;
+                    pageNumber = PageNumber;
+                    pageSize = PageSize;
+                    paginatedParkingLots = approvedFromFavourites.ToList();
                 }
-                if (pageSize == 0)
+                else if (pageNumber == 0)
                 {
-                    pageSize = PageNumber;
+                    pageNumber = PageNumber;
+                    paginatedParkingLots = approvedFromFavourites.Skip((pageNumber - 1) * pageSize)
+                                                     .Take(pageSize)
+                                                     .ToList();
                 }
+                else if (pageSize == 0)
+                {
+                    pageSize = PageSize;
+                    paginatedParkingLots = approvedFromFavourites.Skip((pageNumber - 1) * pageSize)
+                                                     .Take(pageSize)
+                                                     .ToList();
+                }
+                else
+                {
+                    paginatedParkingLots = approvedFromFavourites.Skip((pageNumber - 1) * pageSize)
+                                                     .Take(pageSize)
+                                                     .ToList();
+                }
+   
 
                 var totalCount = approvedFromFavourites.Count();
                 var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
 
-                var paginatedParkingLots = approvedFromFavourites.Skip((pageNumber - 1) * pageSize)
-                                                     .Take(pageSize)
-                                                     .ToList();
-
-                if (!approvedFromFavourites.Any())
+                if (!paginatedParkingLots.Any())
                 {
                     _getDTOResponse.StatusCode = HttpStatusCode.OK;
                     _getDTOResponse.Message = "User doesn't have any favourite parking lots";
-                    _getDTOResponse.ParkingLots = Enumerable.Empty<ParkingLotDTO>();
+                    _getDTOResponse.ParkingLots = Enumerable.Empty<ParkingLotWithFavouritesDTO>();
                     return _getDTOResponse;
                 }
 
-                var ParkingLotDTOList = new List<ParkingLotDTO>();
+                var ParkingLotDTOList = new List<ParkingLotWithFavouritesDTO>();
                 foreach (var p in paginatedParkingLots)
                 {
-                    ParkingLotDTOList.Add(_mapper.Map<ParkingLotDTO>(p));
+                    var mappedObject = _mapper.Map<ParkingLotWithFavouritesDTO>(p);
+                    mappedObject.IsFavourite = true;
+                    ParkingLotDTOList.Add(mappedObject);
                 }
 
                 _getDTOResponse.StatusCode = HttpStatusCode.OK;

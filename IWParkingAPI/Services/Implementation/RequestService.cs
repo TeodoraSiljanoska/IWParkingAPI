@@ -29,8 +29,8 @@ namespace IWParkingAPI.Services.Implementation
         private readonly IMapper _mapper;
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
         private readonly IJWTDecode _jWTDecode;
-        private const int PageSize = 1;
-        private const int PageNumber = 10;
+        private const int PageSize = 5;
+        private const int PageNumber = 1;
 
         public RequestService(IUnitOfWork<ParkingDbContext> unitOfWork, IJWTDecode jWTDecode)
         {
@@ -62,11 +62,11 @@ namespace IWParkingAPI.Services.Implementation
 
                 if (pageNumber == 0)
                 {
-                    pageNumber = PageSize;
+                    pageNumber = PageNumber;
                 }
                 if (pageSize == 0)
                 {
-                    pageSize = PageNumber;
+                    pageSize = PageSize;
                 }
 
                 var totalCount = requests.Count();
@@ -120,7 +120,7 @@ namespace IWParkingAPI.Services.Implementation
                 _allRequestsResponse.StatusCode = HttpStatusCode.OK;
                 _allRequestsResponse.Message = "Requests returned successfully";
                 _allRequestsResponse.Requests = GetAllRequestsDTOList;
-                _allRequestsResponse.NumPages = totalCount;
+                _allRequestsResponse.NumPages = totalPages;
                 return _allRequestsResponse;
             }
             catch (Exception ex)

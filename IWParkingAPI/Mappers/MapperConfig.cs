@@ -66,6 +66,23 @@ namespace IWParkingAPI.Mappers
                 .ForMember(dest => dest.Price, opt => opt.MapFrom(src => src.Price))
                 .ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.UserId));*/
 
+                //GetAll
+                cfg.CreateMap<ParkingLot, ParkingLotWithFavouritesDTO>()
+                .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name))
+                .ForMember(dest => dest.City, opt => opt.MapFrom(src => src.City))
+                .ForMember(dest => dest.Zone, opt => opt.MapFrom(src => src.Zone))
+                .ForMember(dest => dest.Address, opt => opt.MapFrom(src => src.Address))
+                .ForMember(dest => dest.WorkingHourFrom, opt => opt.MapFrom(src => src.WorkingHourFrom))
+                .ForMember(dest => dest.WorkingHourTo, opt => opt.MapFrom(src => src.WorkingHourTo))
+                .ForMember(dest => dest.CapacityCar, opt => opt.MapFrom(src => src.CapacityCar))
+                .ForMember(dest => dest.CapacityAdaptedCar, opt => opt.MapFrom(src => src.CapacityAdaptedCar))
+                .ForMember(dest => dest.Price, opt => opt.MapFrom(src => src.Price))
+                .ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.UserId))
+                .ForMember(dest => dest.IsDeactivated, opt => opt.MapFrom(src => src.IsDeactivated))
+                .ForMember(dest => dest.TimeCreated, opt => opt.MapFrom(src => src.TimeCreated))
+                .ForMember(dest => dest.TimeModified, opt => opt.MapFrom(src => src.TimeModified))
+                .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status));
+
 
                 ///REQUEST
 

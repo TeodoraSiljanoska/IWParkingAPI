@@ -4,7 +4,7 @@ namespace IWParkingAPI.Models.Responses
 {
     public class AllParkingLotsResponse : ResponseBase
     {
-        public IEnumerable<ParkingLotDTO>? ParkingLots { get; set; } = new List<ParkingLotDTO>();
+        public IEnumerable<ParkingLotWithFavouritesDTO>? ParkingLots { get; set; } = new List<ParkingLotWithFavouritesDTO>();
         public int NumPages { get; set; }
     }
 }
