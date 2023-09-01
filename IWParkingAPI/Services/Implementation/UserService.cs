@@ -44,22 +44,25 @@ public class UserService : IUserService
         {
             var users = _userRepository.GetAsQueryable(null, null, x => x.Include(y => y.Roles)).ToList();
 
-            if (pageNumber == 0)
+            IEnumerable<AspNetUser> paginatedUsers = null;
+
+            if (pageNumber != 0 && pageSize != 0)
             {
-                pageNumber = PageSize;
+                paginatedUsers = users.Skip((pageNumber - 1) * pageSize).Take(pageSize);
             }
-            if (pageSize == 0)
+            else
             {
-                pageSize = PageNumber;
+                paginatedUsers = users;
+                pageSize = PageSize;
+                pageNumber = PageNumber;
             }
 
             var totalCount = users.Count();
             var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
-            var paginatedUsers = users.Skip((pageNumber - 1) * pageSize)
-                                                 .Take(pageSize)
-                                                 .ToList();
 
-            if (!paginatedUsers.Any())
+            var result = paginatedUsers.ToList();
+
+            if (!result.Any())
             {
                 _getResponse.StatusCode = HttpStatusCode.OK;
                 _getResponse.Message = "There aren't any users";
@@ -68,7 +71,7 @@ public class UserService : IUserService
             }
 
             var UserDTOList = new List<UserDTO>();
-            foreach (var user in paginatedUsers)
+            foreach (var user in result)
             {
                 UserDTOList.Add(_mapper.Map<UserDTO>(user));
             }
