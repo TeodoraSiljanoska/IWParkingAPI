@@ -21,9 +21,9 @@ namespace IWParkingAPI.Controllers
 
         [AuthorizeCustom(UserRoles.SuperAdmin, UserRoles.Owner)]
         [HttpGet("GetAll")]
-        public AllRequestsResponse GetRequests()
+        public AllRequestsResponse GetRequests(int pageNumber, int pageSize)
         {
-            return _requestService.GetAllRequests();
+            return _requestService.GetAllRequests(pageNumber, pageSize);
         }
 
         [AuthorizeCustom(UserRoles.SuperAdmin)]

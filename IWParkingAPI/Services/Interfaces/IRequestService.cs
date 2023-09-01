@@ -5,7 +5,7 @@ namespace IWParkingAPI.Services.Interfaces
 {
     public interface IRequestService
     {
-        public AllRequestsResponse GetAllRequests();
+        public AllRequestsResponse GetAllRequests(int pageNumber, int pageSize);
         public RequestResponse ModifyRequest(int id, RequestRequest request);
     }
 }
