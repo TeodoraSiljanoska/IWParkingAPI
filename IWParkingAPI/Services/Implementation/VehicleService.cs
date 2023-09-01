@@ -18,6 +18,11 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using IWParkingAPI.Models.Enums;
 using static IWParkingAPI.Models.Enums.Enums;
+using Newtonsoft.Json.Linq;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel;
+using System.Reflection;
+using System;
 
 namespace IWParkingAPI.Services.Implementation
 {
@@ -395,11 +400,16 @@ namespace IWParkingAPI.Services.Implementation
         {
             try
             {
-                var enumValues = Enum.GetValues(typeof(VehicleTypes));
+                VehicleTypes[] enumValues = Enum.GetValues(typeof(VehicleTypes))
+                                                .Cast<VehicleTypes>()
+                                                .ToArray();
+
+                string[] displayNames = GetDisplayNames(enumValues);
                 List<string> vehicleTypes = new List<string>();
-                foreach(var t in enumValues)
+
+                foreach (string displayName in displayNames)
                 {
-                    vehicleTypes.Add(t.ToString());
+                    vehicleTypes.Add(displayName);
                 }
 
                 _vehicleTypeResponse.StatusCode = HttpStatusCode.OK;
@@ -484,7 +494,19 @@ namespace IWParkingAPI.Services.Implementation
             }
         }
 
+        ///Additional method to get display names for the method GetVehicleTypes()
+        public static string[] GetDisplayNames(Enums.VehicleTypes[] enumValues)
+        {
+            return enumValues.Select(enumValue =>
+            {
+                var displayAttribute = enumValue.GetType()
+                                                .GetField(enumValue.ToString())
+                                                .GetCustomAttributes(typeof(DisplayAttribute), false)
+                                                .FirstOrDefault() as DisplayAttribute;
 
+                return displayAttribute?.Name ?? enumValue.ToString();
+            }).ToArray();
+        }
 
     }
 }
