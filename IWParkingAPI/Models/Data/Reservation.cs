@@ -29,9 +29,13 @@ public partial class Reservation
 
     public DateTime? TimeModified { get; set; }
 
+    public int VehicleId { get; set; }
+
     public virtual ParkingLot ParkingLot { get; set; } = null!;
 
     public virtual ICollection<Payment> Payments { get; set; } = new List<Payment>();
 
     public virtual AspNetUser User { get; set; } = null!;
+
+    public virtual Vehicle Vehicle { get; set; } = null!;
 }

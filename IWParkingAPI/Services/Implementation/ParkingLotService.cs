@@ -5,6 +5,7 @@ using IWParkingAPI.Infrastructure.UnitOfWork;
 using IWParkingAPI.Mappers;
 using IWParkingAPI.Models.Context;
 using IWParkingAPI.Models.Data;
+using IWParkingAPI.Models.Enums;
 using IWParkingAPI.Models.Requests;
 using IWParkingAPI.Models.Responses;
 using IWParkingAPI.Models.Responses.Dto;
@@ -14,8 +15,6 @@ using Microsoft.EntityFrameworkCore;
 using NLog;
 using System.Net;
 using static IWParkingAPI.Models.Enums.Enums;
-using static Microsoft.ApplicationInsights.MetricDimensionNames.TelemetryContext;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace IWParkingAPI.Services.Implementation
 {
@@ -29,15 +28,18 @@ namespace IWParkingAPI.Services.Implementation
         private readonly IGenericRepository<TempParkingLot> _tempParkingLotRepository;
         private readonly IGenericRepository<ParkingLotRequest> _parkingLotRequestRepository;
         private readonly IGenericRepository<AspNetUser> _userRepository;
+        private readonly IGenericRepository<Vehicle> _vehicleRepository;
         private readonly IGenericRepository<ParkingLotRequest> _requestRepository;
-        private readonly AllParkingLotsResponse _getDTOResponse;
+        private readonly AllFavouriteParkingLotsResponse _getDTOResponse;
+        private readonly AllParkingLotResponse _allDTOResponse;
         private readonly ParkingLotResponse _response;
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
+        private readonly ICalculateCapacityExtension _calculateCapacityExtension;
         private readonly IJWTDecode _jWTDecode;
         private const int PageSize = 5;
         private const int PageNumber = 1;
 
-        public ParkingLotService(IUnitOfWork<ParkingDbContext> unitOfWork, IJWTDecode jWTDecode)
+        public ParkingLotService(IUnitOfWork<ParkingDbContext> unitOfWork, IJWTDecode jWTDecode, ICalculateCapacityExtension calculateCapacityExtension)
         {
             _mapper = MapperConfig.InitializeAutomapper();
             _unitOfWork = unitOfWork;
@@ -49,12 +51,16 @@ namespace IWParkingAPI.Services.Implementation
             _cityRepository = _unitOfWork.GetGenericRepository<City>();
             _zoneRepository = _unitOfWork.GetGenericRepository<Zone>();
             _userRepository = _unitOfWork.GetGenericRepository<AspNetUser>();
+            _vehicleRepository = _unitOfWork.GetGenericRepository<Vehicle>();
             _requestRepository = _unitOfWork.GetGenericRepository<ParkingLotRequest>();
+            _calculateCapacityExtension = calculateCapacityExtension;
             _response = new ParkingLotResponse();
-            _getDTOResponse = new AllParkingLotsResponse();
+            _getDTOResponse = new AllFavouriteParkingLotsResponse();
+            _allDTOResponse = new AllParkingLotResponse();
             _jWTDecode = jWTDecode;
         }
-        public AllParkingLotsResponse GetAllParkingLots(int pageNumber, int pageSize, FilterParkingLotRequest request)
+
+        public AllParkingLotResponse GetAllParkingLots(int pageNumber, int pageSize, FilterParkingLotRequest request)
         {
             try
             {
@@ -152,31 +158,81 @@ namespace IWParkingAPI.Services.Implementation
 
                 if (!paginatedParkingLots.Any())
                 {
-                    _getDTOResponse.StatusCode = HttpStatusCode.OK;
-                    _getDTOResponse.Message = "There aren't any parking lots.";
-                    _getDTOResponse.ParkingLots = Enumerable.Empty<ParkingLotWithFavouritesDTO>();
-                    return _getDTOResponse;
+                    _allDTOResponse.StatusCode = HttpStatusCode.OK;
+                    _allDTOResponse.Message = "There aren't any parking lots.";
+                    _allDTOResponse.ParkingLots = Enumerable.Empty<ParkingLotWithAvailableCapacityDTO>();
+                    return _allDTOResponse;
                 }
 
-                List<ParkingLotWithFavouritesDTO> parkingLotDTOs = new List<ParkingLotWithFavouritesDTO>();
+                var date = DateTime.Now;
+                TimeSpan parsedTime;
+                var resTo = TimeSpan.TryParse(date.TimeOfDay.ToString(), out parsedTime);
+
+                List<ParkingLotWithAvailableCapacityDTO> parkingLotDTOs = new List<ParkingLotWithAvailableCapacityDTO>();
                 foreach (var p in paginatedParkingLots)
                 {
-                    var mappedObject = _mapper.Map<ParkingLotWithFavouritesDTO>(p);
+                    var mappedObject = _mapper.Map<ParkingLotWithAvailableCapacityDTO>(p);
                     if (role != null && role.Equals(Models.UserRoles.User))
                     {
                         if (userFavouritesList.Contains(p))
                         {
                             mappedObject.IsFavourite = true;
                         }
+                        var Vehicle = _vehicleRepository.GetAsQueryable(x => x.UserId == int.Parse(userId)).Where(x => x.IsPrimary == true).FirstOrDefault();
+
+                        if (Vehicle == null)
+                        {
+                            throw new BadRequestException("User doesn't have a primary vehicle");
+                        }
+
+                        var vehicleType = Vehicle.Type;
+                        var madeReservations = _calculateCapacityExtension.AvailableCapacity(int.Parse(userId), vehicleType, p.Id,
+                            date.Date, parsedTime, date.Date, parsedTime);
+
+                        if (madeReservations == 0)
+                        {
+                            if (vehicleType.Equals(Enums.VehicleTypes.Car.ToString()))
+                                mappedObject.AvailableCapacity = mappedObject.CapacityCar;
+                            else
+                                mappedObject.AvailableCapacity = mappedObject.CapacityAdaptedCar;
+                        }
+                        else
+                        {
+                            var freeAdapted = (mappedObject.CapacityAdaptedCar - madeReservations);
+                            if(freeAdapted == 0)
+                            {
+                                var carAvailableCapacity = _calculateCapacityExtension.AvailableCapacity(0, Enums.VehicleTypes.Car.ToString(), p.Id,
+                                    date.Date, parsedTime, date.Date, parsedTime);
+                                mappedObject.AvailableCapacity = (mappedObject.CapacityCar - carAvailableCapacity);
+                            }    
+                            else
+                                mappedObject.AvailableCapacity = (mappedObject.CapacityCar - madeReservations);
+                        }
                     }
+                    else
+                    {
+                        var madeReservations = _calculateCapacityExtension.AvailableCapacity(0, Enums.VehicleTypes.Car.ToString(), p.Id,
+                            date.Date, parsedTime, date.Date, parsedTime);
+
+                        if (madeReservations == 0)
+                        {
+                            mappedObject.AvailableCapacity = mappedObject.CapacityCar;
+                        }
+                        else
+                        {
+                            mappedObject.AvailableCapacity = (mappedObject.CapacityCar - madeReservations);
+                        }
+                    }
+
+
                     parkingLotDTOs.Add(mappedObject);
 
                 }
-                _getDTOResponse.StatusCode = HttpStatusCode.OK;
-                _getDTOResponse.Message = "Parking lots returned successfully";
-                _getDTOResponse.ParkingLots = parkingLotDTOs;
-                _getDTOResponse.NumPages = totalPages;
-                return _getDTOResponse;
+                _allDTOResponse.StatusCode = HttpStatusCode.OK;
+                _allDTOResponse.Message = "Parking lots returned successfully";
+                _allDTOResponse.ParkingLots = parkingLotDTOs;
+                _allDTOResponse.NumPages = totalPages;
+                return _allDTOResponse;
             }
             catch (Exception ex)
             {
@@ -692,7 +748,7 @@ namespace IWParkingAPI.Services.Implementation
             }
         }
 
-        public AllParkingLotsResponse GetUserFavouriteParkingLots(int pageNumber, int pageSize)
+        public AllFavouriteParkingLotsResponse GetUserFavouriteParkingLots(int pageNumber, int pageSize)
         {
             try
             {
@@ -753,7 +809,7 @@ namespace IWParkingAPI.Services.Implementation
                                                      .Take(pageSize)
                                                      .ToList();
                 }
-   
+
 
                 var totalCount = approvedFromFavourites.Count();
                 var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);

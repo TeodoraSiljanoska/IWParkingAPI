@@ -19,5 +19,7 @@ public partial class Vehicle
 
     public bool? IsPrimary { get; set; }
 
+    public virtual ICollection<Reservation> Reservations { get; set; } = new List<Reservation>();
+
     public virtual AspNetUser User { get; set; } = null!;
 }

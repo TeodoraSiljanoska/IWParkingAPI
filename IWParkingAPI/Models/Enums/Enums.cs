@@ -49,5 +49,14 @@ namespace IWParkingAPI.Models.Enums
             [Display(Name = "Truck")]
             Truck = 3
         }
+
+        public enum ReservationTypes
+        {
+            [Display(Name = "Successful")]
+            Successful = 1,
+
+            [Display(Name = "Cancelled")]
+            Cancelled = 2
+        }
     }
 }
