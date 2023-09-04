@@ -19,7 +19,7 @@ namespace IWParkingAPI.Controllers
         }
 
         [HttpPost("GetAll")]
-        public AllParkingLotsResponse GetParkingLots(int pageNumber, int pageSize, FilterParkingLotRequest request)
+        public AllParkingLotResponse GetParkingLots(int pageNumber, int pageSize, FilterParkingLotRequest request)
         {
             return _parkingLotService.GetAllParkingLots(pageNumber, pageSize, request);
         }
@@ -71,7 +71,7 @@ namespace IWParkingAPI.Controllers
 
         [HttpGet("GetUserFavouriteParkingLots")]
         [AuthorizeCustom(UserRoles.User)]
-        public AllParkingLotsResponse GetUsereFavouriteParkingLots(int pageNumber, int pageSize)
+        public AllFavouriteParkingLotsResponse GetUsereFavouriteParkingLots(int pageNumber, int pageSize)
         {
             return _parkingLotService.GetUserFavouriteParkingLots(pageNumber, pageSize);
         }
