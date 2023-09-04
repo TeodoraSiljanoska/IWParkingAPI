@@ -1,5 +1,6 @@
 ﻿using FluentValidation;
 using IWParkingAPI.Models.Requests;
+using System.ComponentModel.DataAnnotations;
 using static IWParkingAPI.Models.Enums.Enums;
 
 namespace IWParkingAPI.Middleware.Fluent_Validations.Validators
@@ -14,7 +15,25 @@ namespace IWParkingAPI.Middleware.Fluent_Validations.Validators
 
             RuleFor(x => x.Type)
             .NotEmpty().WithMessage("Type is required")
-            .Must(type => Enum.IsDefined(typeof(VehicleTypes), type)).WithMessage("Type is invalid");
+            .Must(typeDisplayName =>
+            {
+                var enumType = typeof(VehicleTypes);
+                foreach (var field in enumType.GetFields())
+                {
+                    if (field.IsStatic)
+                    {
+                        var displayAttribute = field.GetCustomAttributes(typeof(DisplayAttribute), false)
+                            .FirstOrDefault() as DisplayAttribute;
+
+                        if (displayAttribute != null && displayAttribute.Name == typeDisplayName)
+                        {
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            })
+            .WithMessage("Type is invalid");
         }
     }
 }
