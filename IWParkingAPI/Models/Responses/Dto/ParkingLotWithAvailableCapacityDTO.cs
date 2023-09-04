@@ -1,4 +1,6 @@
-﻿namespace IWParkingAPI.Models.Responses.Dto
+﻿using System.Text.Json.Serialization;
+
+namespace IWParkingAPI.Models.Responses.Dto
 {
     public class ParkingLotWithAvailableCapacityDTO
     {
@@ -16,10 +18,13 @@
 
         public TimeSpan WorkingHourTo { get; set; }
 
-        public int CapacityCar { get; set; }
+        [JsonIgnore]
+       public int CapacityCar { get; set; }
 
+        [JsonIgnore]
         public int CapacityAdaptedCar { get; set; }
 
+        public int Capacity { get; set; }
         public int Price { get; set; }
 
         public int UserId { get; set; }
