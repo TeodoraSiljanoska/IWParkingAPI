@@ -192,21 +192,31 @@ namespace IWParkingAPI.Services.Implementation
                         if (madeReservations == 0)
                         {
                             if (vehicleType.Equals(Enums.VehicleTypes.Car.ToString()))
-                                mappedObject.AvailableCapacity = mappedObject.CapacityCar;
+                            {
+                                mappedObject.AvailableCapacity = (int)mappedObject.CapacityCar;
+                                mappedObject.Capacity = p.CapacityCar;
+                            }
                             else
-                                mappedObject.AvailableCapacity = mappedObject.CapacityAdaptedCar;
+                            {
+                                mappedObject.AvailableCapacity = (int)mappedObject.CapacityAdaptedCar;
+                                mappedObject.Capacity = p.CapacityAdaptedCar;
+                            }
                         }
                         else
                         {
                             var freeAdapted = (mappedObject.CapacityAdaptedCar - madeReservations);
-                            if(freeAdapted == 0)
+                            if (freeAdapted == 0)
                             {
                                 var carAvailableCapacity = _calculateCapacityExtension.AvailableCapacity(0, Enums.VehicleTypes.Car.ToString(), p.Id,
                                     date.Date, parsedTime, date.Date, parsedTime);
-                                mappedObject.AvailableCapacity = (mappedObject.CapacityCar - carAvailableCapacity);
-                            }    
+                                mappedObject.AvailableCapacity = ((int)(mappedObject.CapacityCar - carAvailableCapacity));
+                                mappedObject.Capacity = p.CapacityCar;  
+                            }
                             else
-                                mappedObject.AvailableCapacity = (mappedObject.CapacityCar - madeReservations);
+                            {
+                                mappedObject.AvailableCapacity = ((int)(mappedObject.CapacityCar - madeReservations));
+                                mappedObject.Capacity = p.CapacityAdaptedCar;
+                            }
                         }
                     }
                     else
@@ -216,14 +226,15 @@ namespace IWParkingAPI.Services.Implementation
 
                         if (madeReservations == 0)
                         {
-                            mappedObject.AvailableCapacity = mappedObject.CapacityCar;
+                            mappedObject.AvailableCapacity = (int)mappedObject.CapacityCar;
+                            mappedObject.Capacity = p.CapacityCar;
                         }
                         else
                         {
-                            mappedObject.AvailableCapacity = (mappedObject.CapacityCar - madeReservations);
+                            mappedObject.AvailableCapacity = ((int)(mappedObject.CapacityCar - madeReservations));
+                            mappedObject.Capacity = p.CapacityCar;
                         }
                     }
-
 
                     parkingLotDTOs.Add(mappedObject);
 
