@@ -176,6 +176,51 @@ namespace IWParkingAPI.Mappers
                .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name));
 
 
+                ///CITY
+
+                //Create
+                cfg.CreateMap<CityRequest, City>()
+                .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name));
+
+
+                ///RESERVATION
+
+                //MakeReservation
+                cfg.CreateMap<MakeReservationRequest, ReservationDTO>()
+                .ForMember(dest => dest.StartDate, opt => opt.MapFrom(src => src.StartTime))
+                .ForMember(dest => dest.StartTime, opt => opt.MapFrom(src => src.StartTime))
+                .ForMember(dest => dest.EndDate, opt => opt.MapFrom(src => src.EndDate))
+                .ForMember(dest => dest.EndTime, opt => opt.MapFrom(src => src.EndTime));
+
+                //MakeReservation
+                cfg.CreateMap<ReservationDTO, Reservation>()
+                .ForMember(dest => dest.Type, opt => opt.MapFrom(src => src.Type))
+                .ForMember(dest => dest.StartDate, opt => opt.MapFrom(src => src.StartDate))
+                .ForMember(dest => dest.StartTime, opt => opt.MapFrom(src => src.StartTime))
+                .ForMember(dest => dest.EndDate, opt => opt.MapFrom(src => src.EndDate))
+                .ForMember(dest => dest.EndTime, opt => opt.MapFrom(src => src.EndTime))
+                .ForMember(dest => dest.Amount, opt => opt.MapFrom(src => src.Amount))
+                .ForMember(dest => dest.IsPaid, opt => opt.MapFrom(src => src.IsPaid))
+                .ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.UserId))
+                .ForMember(dest => dest.ParkingLotId, opt => opt.MapFrom(src => src.ParkingLotId))
+                .ForMember(dest => dest.TimeCreated, opt => opt.MapFrom(src => src.TimeCreated))
+                .ForMember(dest => dest.TimeModified, opt => opt.MapFrom(src => src.TimeModified))
+                .ForMember(dest => dest.VehicleId, opt => opt.MapFrom(src => src.VehicleId));
+
+                //MakeReservation
+                cfg.CreateMap<Reservation, ReservationDTO>()
+                .ForMember(dest => dest.Type, opt => opt.MapFrom(src => src.Type))
+                .ForMember(dest => dest.StartDate, opt => opt.MapFrom(src => src.StartDate))
+                .ForMember(dest => dest.StartTime, opt => opt.MapFrom(src => src.StartTime))
+                .ForMember(dest => dest.EndDate, opt => opt.MapFrom(src => src.EndDate))
+                .ForMember(dest => dest.EndTime, opt => opt.MapFrom(src => src.EndTime))
+                .ForMember(dest => dest.Amount, opt => opt.MapFrom(src => src.Amount))
+                .ForMember(dest => dest.IsPaid, opt => opt.MapFrom(src => src.IsPaid))
+                .ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.UserId))
+                .ForMember(dest => dest.ParkingLotId, opt => opt.MapFrom(src => src.ParkingLotId))
+                .ForMember(dest => dest.TimeCreated, opt => opt.MapFrom(src => src.TimeCreated))
+                .ForMember(dest => dest.TimeModified, opt => opt.MapFrom(src => src.TimeModified))
+                .ForMember(dest => dest.VehicleId, opt => opt.MapFrom(src => src.VehicleId));
 
 
 
@@ -315,12 +360,7 @@ namespace IWParkingAPI.Mappers
                   .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status));
 
 
-                ///CITY
-                ///
-
-                //Create
-                cfg.CreateMap<CityRequest, City>()
-                .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name));
+                
             }
             );
             var mapper = new Mapper(config);

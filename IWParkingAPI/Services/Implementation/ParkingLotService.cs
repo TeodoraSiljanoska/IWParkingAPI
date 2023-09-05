@@ -189,7 +189,7 @@ namespace IWParkingAPI.Services.Implementation
                         var madeReservations = _calculateCapacityExtension.AvailableCapacity(int.Parse(userId), vehicleType, p.Id,
                             date.Date, parsedTime, date.Date, parsedTime);
 
-                        if (madeReservations == 0)
+                   /*     if (madeReservations == 0)
                         {
                             if (vehicleType.Equals(Enums.VehicleTypes.Car.ToString()))
                             {
@@ -203,7 +203,7 @@ namespace IWParkingAPI.Services.Implementation
                             }
                         }
                         else
-                        {
+                        { */
                             var freeAdapted = (mappedObject.CapacityAdaptedCar - madeReservations);
                             if (freeAdapted == 0)
                             {
@@ -217,23 +217,23 @@ namespace IWParkingAPI.Services.Implementation
                                 mappedObject.AvailableCapacity = ((int)(mappedObject.CapacityCar - madeReservations));
                                 mappedObject.Capacity = p.CapacityAdaptedCar;
                             }
-                        }
+                        //}
                     }
                     else
                     {
                         var madeReservations = _calculateCapacityExtension.AvailableCapacity(0, Enums.VehicleTypes.Car.ToString(), p.Id,
                             date.Date, parsedTime, date.Date, parsedTime);
 
-                        if (madeReservations == 0)
+                       /* if (madeReservations == 0)
                         {
                             mappedObject.AvailableCapacity = (int)mappedObject.CapacityCar;
                             mappedObject.Capacity = p.CapacityCar;
                         }
                         else
-                        {
+                        { */
                             mappedObject.AvailableCapacity = ((int)(mappedObject.CapacityCar - madeReservations));
                             mappedObject.Capacity = p.CapacityCar;
-                        }
+                       // }
                     }
 
                     parkingLotDTOs.Add(mappedObject);
