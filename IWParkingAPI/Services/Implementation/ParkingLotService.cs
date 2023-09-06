@@ -172,6 +172,7 @@ namespace IWParkingAPI.Services.Implementation
                 foreach (var p in paginatedParkingLots)
                 {
                     var mappedObject = _mapper.Map<ParkingLotWithAvailableCapacityDTO>(p);
+                    //if the User is logged in capacity and available capacity is returned according to the primary Vehicle Type
                     if (role != null && role.Equals(Models.UserRoles.User))
                     {
                         if (userFavouritesList.Contains(p))
@@ -188,52 +189,40 @@ namespace IWParkingAPI.Services.Implementation
                         var vehicleType = Vehicle.Type;
                         var madeReservations = _calculateCapacityExtension.AvailableCapacity(int.Parse(userId), vehicleType, p.Id,
                             date.Date, parsedTime, date.Date, parsedTime);
-
-                   /*     if (madeReservations == 0)
+                        
+                        //if the User's primary Vehicle is AdaptedCar
+                        if (vehicleType == Enums.VehicleTypes.AdaptedCar.ToString())
                         {
-                            if (vehicleType.Equals(Enums.VehicleTypes.Car.ToString()))
-                            {
-                                mappedObject.AvailableCapacity = (int)mappedObject.CapacityCar;
-                                mappedObject.Capacity = p.CapacityCar;
-                            }
-                            else
-                            {
-                                mappedObject.AvailableCapacity = (int)mappedObject.CapacityAdaptedCar;
-                                mappedObject.Capacity = p.CapacityAdaptedCar;
-                            }
-                        }
-                        else
-                        { */
-                            var freeAdapted = (mappedObject.CapacityAdaptedCar - madeReservations);
+                            int freeAdapted = (mappedObject.CapacityAdaptedCar - madeReservations);
+                          //if there aren't free adapted car spaces
                             if (freeAdapted == 0)
                             {
                                 var carAvailableCapacity = _calculateCapacityExtension.AvailableCapacity(0, Enums.VehicleTypes.Car.ToString(), p.Id,
                                     date.Date, parsedTime, date.Date, parsedTime);
                                 mappedObject.AvailableCapacity = ((int)(mappedObject.CapacityCar - carAvailableCapacity));
-                                mappedObject.Capacity = p.CapacityCar;  
+                                mappedObject.Capacity = p.CapacityCar;
                             }
+                            //there are free adapted car spaces
                             else
                             {
-                                mappedObject.AvailableCapacity = ((int)(mappedObject.CapacityCar - madeReservations));
+                                mappedObject.AvailableCapacity = freeAdapted;       //((int)(mappedObject.CapacityAdaptedCar - madeReservations));
                                 mappedObject.Capacity = p.CapacityAdaptedCar;
                             }
-                        //}
+                        }
+                        //if the User's primary Vehicle is Car
+                        if (vehicleType.Equals(Enums.VehicleTypes.Car.ToString()))
+                        {
+                            mappedObject.AvailableCapacity = (int)mappedObject.CapacityCar - madeReservations;
+                            mappedObject.Capacity = p.CapacityCar;
+                        }
                     }
+                    //if the User isn't logged in, then capacity and available capacity is returned accordint to type Car
                     else
                     {
                         var madeReservations = _calculateCapacityExtension.AvailableCapacity(0, Enums.VehicleTypes.Car.ToString(), p.Id,
                             date.Date, parsedTime, date.Date, parsedTime);
-
-                       /* if (madeReservations == 0)
-                        {
-                            mappedObject.AvailableCapacity = (int)mappedObject.CapacityCar;
-                            mappedObject.Capacity = p.CapacityCar;
-                        }
-                        else
-                        { */
-                            mappedObject.AvailableCapacity = ((int)(mappedObject.CapacityCar - madeReservations));
-                            mappedObject.Capacity = p.CapacityCar;
-                       // }
+                        mappedObject.AvailableCapacity = ((int)(mappedObject.CapacityCar - madeReservations));
+                        mappedObject.Capacity = p.CapacityCar;
                     }
 
                     parkingLotDTOs.Add(mappedObject);

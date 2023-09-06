@@ -15,31 +15,70 @@ namespace IWParkingAPI.Services.Implementation
         private readonly IUnitOfWork<ParkingDbContext> _unitOfWork;
         private readonly IGenericRepository<Reservation> _reservationRepository;
         private readonly IGenericRepository<AspNetUser> _userRepository;
+        private readonly IGenericRepository<ParkingLot> _parkingLotRepository;
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
-
         public CalculateCapacityExtension(IUnitOfWork<ParkingDbContext> unitOfWork)
         {
             _unitOfWork = unitOfWork;
             _reservationRepository = _unitOfWork.GetGenericRepository<Reservation>();
             _userRepository = _unitOfWork.GetGenericRepository<AspNetUser>();
+            _parkingLotRepository = _unitOfWork.GetGenericRepository<ParkingLot>();
         }
         public int AvailableCapacity(int? id, string? vehicleType, int parkingLotId,
-            DateTime startDate, TimeSpan startTime, DateTime endDate, TimeSpan endTime)
+                   DateTime startDate, TimeSpan startTime, DateTime endDate, TimeSpan endTime)
         {
             try
             {
+                List<Reservation> Reservations = new List<Reservation>();
+                double overlap = (endTime - startTime).TotalHours;
+                List<Reservation> reservationTest = _reservationRepository.GetAsQueryable(null, null, x => x.Include(y => y.Vehicle)).ToList();
+
                 if (id == 0)
                 {
-
-                    var Reservations = _reservationRepository.GetAsQueryable(
-                        x => x.Type.Equals(Enums.ReservationTypes.Successful.ToString()) && x.ParkingLotId == parkingLotId &&
-                        (startDate >= x.StartDate && endDate <= x.EndDate && startTime >= x.StartTime && endTime <= x.EndTime),
-                        null, x => x.Include(y => y.Vehicle))
-                    .Where(reservation => reservation.Vehicle.Type.Equals(Enums.VehicleTypes.Car.ToString()))
-                    .ToList();
+                    if (overlap < 0)
+                    {
+                        Reservations = _reservationRepository.GetAsQueryable(
+                        x => x.Type.Equals(Enums.ReservationTypes.Successful.ToString()) &&
+                        x.ParkingLotId == parkingLotId &&
+                        (
+                           (x.StartDate == startDate && x.StartTime < endTime && x.EndTime > startTime) ||
+                           (x.StartDate == endDate && x.EndTime > startTime) ||
+                           (x.EndDate == startDate && x.StartTime < endTime) ||
+                           (x.StartDate < endDate && x.EndDate > startDate)
+                        ),
+                        null, x => x.Include(y => y.Vehicle)).Where(x => x.Vehicle.Type.Equals(Enums.VehicleTypes.Car.ToString())).ToList();
+                    }
+                    else
+                    {
+                        ParkingLot parkingLot = _parkingLotRepository.GetAsQueryable(p => p.Id == parkingLotId, null, null).FirstOrDefault();
+                        if ((parkingLot.WorkingHourTo - parkingLot.WorkingHourFrom).TotalHours < 0)
+                        {
+                            Reservations = _reservationRepository.GetAsQueryable(
+                            x => x.Type.Equals(Enums.ReservationTypes.Successful.ToString()) &&
+                            x.ParkingLotId == parkingLotId &&
+                            (
+                              (x.StartDate == startDate && x.StartTime < endTime && x.EndTime > startTime) ||
+                              (x.StartDate == endDate && x.EndTime > startTime) ||
+                              (x.EndDate == startDate && x.StartTime < endTime) ||
+                              (x.StartDate < endDate && x.EndDate > startDate)
+                            ),
+                            null, x => x.Include(y => y.Vehicle)).Where(x => x.Vehicle.Type.Equals(Enums.VehicleTypes.Car.ToString())).ToList();
+                        }
+                        else
+                        {
+                            Reservations = _reservationRepository.GetAsQueryable(
+                            x => (x.Type.Equals(Enums.ReservationTypes.Successful.ToString())) &&
+                            (x.ParkingLotId == parkingLotId) &&
+                            ((x.StartDate.Date <= endDate && x.EndDate.Date >= startDate &&
+                            x.StartTime < endTime && x.EndTime > startTime) ||
+                            (startTime >= x.StartTime && x.StartTime < endTime && endTime <= x.EndTime && x.EndTime > startTime)))
+                            .Where(reservation => reservation.Vehicle.Type.Equals(Enums.VehicleTypes.Car.ToString())).ToList();
+                        }
+                    }
 
                     return Reservations.Count();
                 }
+
                 else
                 {
                     var User = _userRepository.GetAsQueryable(u => u.Id == id, null, x => x.Include(y => y.Roles).Include(y => y.Vehicles)).FirstOrDefault();
@@ -54,59 +93,46 @@ namespace IWParkingAPI.Services.Implementation
                         throw new BadRequestException("User doesn't have any vehicles");
                     }
 
-
-                    /*  var Reservations = _reservationRepository.GetAsQueryable(
-                          x => x.Type.Equals(Enums.ReservationTypes.Successful.ToString()) && x.ParkingLotId == parkingLotId &&
-                                   (x.StartDate.Date >= startDate && x.EndDate.Date <= endDate && x.StartTime <= startTime && x.EndTime >= endTime),
-                                   null, x => x.Include(y => y.Vehicle))
-                                   .Where(x => x.Vehicle.Type.Equals(vehicleType))
-                                   .ToList(); */
-                    /*   var Reservations = _reservationRepository.GetAsQueryable(
-                     x => x.Type.Equals(Enums.ReservationTypes.Successful.ToString()) &&
-                     x.ParkingLotId == parkingLotId &&
-                     ((x.StartDate < endDate && x.EndDate >= startDate) ||
-                     (x.StartDate == endDate && x.StartTime <= endTime) ||
-                     (x.EndDate == startDate && x.EndTime >= startTime)),
-                     null,
-                     x => x.Include(y => y.Vehicle))
-                     .Where(reservation => reservation.Vehicle.Type.Equals(Enums.VehicleTypes.Car.ToString()))
-                     .ToList(); */
-
-                    /*  var Reservations = _reservationRepository.GetAsQueryable(
-                   x => x.Type.Equals(Enums.ReservationTypes.Successful.ToString()) &&
-                   x.ParkingLotId == parkingLotId &&
-                   (
-                       // Check if the reservation ends after the start of the desired range
-                       (x.StartDate < endDate || (x.StartDate == endDate && x.StartTime <= endTime)) &&
-
-                       // Check if the reservation starts before the end of the desired range
-                       (x.EndDate > startDate || (x.EndDate == startDate && x.EndTime >= startTime))
-                   ),
-                   null,
-                   x => x.Include(y => y.Vehicle))
-                   .Where(x => x.Vehicle.Type.Equals(vehicleType))
-                   .ToList(); */
-
-                    var Reservations = _reservationRepository.GetAsQueryable(
-           x => x.Type.Equals(Enums.ReservationTypes.Successful.ToString()) &&
-           x.ParkingLotId == parkingLotId &&
-           (
-               // Check if the reservation overlaps within the same day
-               (x.StartDate == startDate && x.StartTime < endTime && x.EndTime > startTime) ||
-               (x.StartDate == endDate && x.EndTime > startTime) ||
-               (x.EndDate == startDate && x.StartTime < endTime) ||
-
-               // Check if the reservation spans multiple days
-               (x.StartDate < endDate && x.EndDate > startDate) ||
-               (x.StartDate < endDate && x.EndDate == startDate && x.StartTime < endTime) ||
-               (x.StartDate == endDate && x.EndDate > startDate && x.EndTime > startTime)
-           ),
-           null,
-           x => x.Include(y => y.Vehicle))
-           .Where(x => x.Vehicle.Type.Equals(vehicleType))
-           .ToList();
-
-
+                    if (overlap < 0)
+                    {
+                        Reservations = _reservationRepository.GetAsQueryable(
+                        x => x.Type.Equals(Enums.ReservationTypes.Successful.ToString()) &&
+                        x.ParkingLotId == parkingLotId &&
+                        (
+                           (x.StartDate == startDate && x.StartTime < endTime && x.EndTime > startTime) ||
+                           (x.StartDate == endDate && x.EndTime > startTime) ||
+                           (x.EndDate == startDate && x.StartTime < endTime) ||
+                           (x.StartDate < endDate && x.EndDate > startDate)
+                       ),
+                       null, x => x.Include(y => y.Vehicle)).Where(x => x.Vehicle.Type.Equals(vehicleType)).ToList();
+                    }
+                    else
+                    {
+                        ParkingLot parkingLot = _parkingLotRepository.GetAsQueryable(p => p.Id == parkingLotId, null, null).FirstOrDefault();
+                        if ((parkingLot.WorkingHourTo - parkingLot.WorkingHourFrom).TotalHours < 0)
+                        {
+                            Reservations = _reservationRepository.GetAsQueryable(
+                            x => x.Type.Equals(Enums.ReservationTypes.Successful.ToString()) &&
+                            x.ParkingLotId == parkingLotId &&
+                            (
+                              (x.StartDate == startDate && x.StartTime < endTime && x.EndTime > startTime) ||
+                              (x.StartDate == endDate && x.EndTime > startTime) ||
+                              (x.EndDate == startDate && x.StartTime < endTime) ||
+                              (x.StartDate < endDate && x.EndDate > startDate)
+                            ),
+                            null, x => x.Include(y => y.Vehicle)).Where(x => x.Vehicle.Type.Equals(Enums.VehicleTypes.Car.ToString())).ToList();
+                        }
+                        else
+                        {
+                            Reservations = _reservationRepository.GetAsQueryable(
+                            x => (x.Type.Equals(Enums.ReservationTypes.Successful.ToString())) &&
+                            (x.ParkingLotId == parkingLotId) &&
+                            ((x.StartDate.Date <= endDate && x.EndDate.Date >= startDate &&
+                            x.StartTime < endTime && x.EndTime > startTime) ||
+                            (startTime >= x.StartTime && x.StartTime < endTime && endTime <= x.EndTime && x.EndTime > startTime)))
+                            .Where(reservation => reservation.Vehicle.Type.Equals(vehicleType)).ToList();
+                        }
+                    }
 
                     return Reservations.Count();
                 }
