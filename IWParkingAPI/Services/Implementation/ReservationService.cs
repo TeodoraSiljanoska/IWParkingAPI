@@ -78,10 +78,11 @@ namespace IWParkingAPI.Services.Implementation
                 }
                 DateTime startDateTime = request.StartDate.Add(parsedStartTime);
                 DateTime endDateTime = request.EndDate.Add(parsedEndTime);
-                if (startDateTime >= endDateTime || startDateTime < DateTime.Now || endDateTime < DateTime.Now)
+          //check the condition
+                   if (startDateTime >= endDateTime || startDateTime < DateTime.Now || endDateTime < DateTime.Now)
                 {
                     throw new BadRequestException("Please enter valid date and time range to make a reservation");
-                }
+                } 
 
                 if ((parsedEndTime - parsedStartTime).TotalHours == 0 &&
                     (request.EndDate == request.StartDate || request.EndDate < request.StartDate))
