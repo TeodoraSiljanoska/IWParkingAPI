@@ -3,6 +3,7 @@ using IWParkingAPI.CustomExceptions;
 using IWParkingAPI.Infrastructure.Repository;
 using IWParkingAPI.Infrastructure.UnitOfWork;
 using IWParkingAPI.Mappers;
+using IWParkingAPI.Models;
 using IWParkingAPI.Models.Context;
 using IWParkingAPI.Models.Data;
 using IWParkingAPI.Models.Enums;
@@ -180,14 +181,19 @@ namespace IWParkingAPI.Services.Implementation
                         }
                         var Vehicle = _vehicleRepository.GetAsQueryable(x => x.UserId == int.Parse(userId)).Where(x => x.IsPrimary == true).FirstOrDefault();
 
+                        var madeReservations = 0;
+                        var vehicleType = Enums.VehicleTypes.Car.ToString();
                         if (Vehicle == null)
                         {
-                            throw new BadRequestException("User doesn't have a primary vehicle");
-                        }
-
-                        var vehicleType = Vehicle.Type;
-                        var madeReservations = _calculateCapacityExtension.AvailableCapacity(int.Parse(userId), vehicleType, p.Id,
+                            madeReservations = _calculateCapacityExtension.AvailableCapacity(0, Enums.VehicleTypes.Car.ToString(), p.Id,
                             date.Date, parsedTime, date.Date, parsedTime);
+                        }
+                        else
+                        {
+                            vehicleType = Vehicle.Type;
+                            madeReservations = _calculateCapacityExtension.AvailableCapacity(int.Parse(userId), vehicleType, p.Id,
+                                date.Date, parsedTime, date.Date, parsedTime);
+                        }
 
                         if (madeReservations == 0)
                         {
@@ -210,7 +216,7 @@ namespace IWParkingAPI.Services.Implementation
                                 var carAvailableCapacity = _calculateCapacityExtension.AvailableCapacity(0, Enums.VehicleTypes.Car.ToString(), p.Id,
                                     date.Date, parsedTime, date.Date, parsedTime);
                                 mappedObject.AvailableCapacity = ((int)(mappedObject.CapacityCar - carAvailableCapacity));
-                                mappedObject.Capacity = p.CapacityCar;  
+                                mappedObject.Capacity = p.CapacityCar;
                             }
                             else
                             {
@@ -298,7 +304,7 @@ namespace IWParkingAPI.Services.Implementation
                 var strUserId = _jWTDecode.ExtractClaimByType("Id");
                 if (strUserId == null)
                 {
-                    throw new BadRequestException("Unexpected error while Creating the Parking Lot");
+                    throw new NotFoundException("User not found");
                 }
                 var userId = Convert.ToInt32(strUserId);
 
@@ -409,7 +415,7 @@ namespace IWParkingAPI.Services.Implementation
                 var strUserId = _jWTDecode.ExtractClaimByType("Id");
                 if (strUserId == null)
                 {
-                    throw new BadRequestException("Unexpected error while updating the Parking Lot");
+                    throw new NotFoundException("User not found");
                 }
                 var userId = Convert.ToInt32(strUserId);
 
@@ -572,49 +578,81 @@ namespace IWParkingAPI.Services.Implementation
                 }
 
                 var strUserId = _jWTDecode.ExtractClaimByType("Id");
+                var strUserRole = _jWTDecode.ExtractClaimByType("Role");
                 if (strUserId == null)
                 {
-                    throw new BadRequestException("Unexpected error while Creating the Parking Lot");
+                    throw new NotFoundException("User not found");
                 }
                 var userId = Convert.ToInt32(strUserId);
-                ParkingLot parkingLot = _parkingLotRepository.GetAsQueryable(p => p.Id == id && p.UserId == userId, null, x => x.Include(y => y.Users)).FirstOrDefault();
 
-                if (parkingLot == null)
+                ParkingLot parkingLot = new ParkingLot();
+                if (strUserRole.Equals(UserRoles.SuperAdmin))
                 {
-                    throw new NotFoundException("Parking Lot not found");
-                }
+                    parkingLot = _parkingLotRepository.GetAsQueryable(p => p.Id == id, null, x => x.Include(y => y.Users)).FirstOrDefault();
+                    if (parkingLot == null)
+                    {
+                        throw new NotFoundException("Parking Lot not found");
+                    }
 
-                if (parkingLot.IsDeactivated == true)
-                {
-                    throw new BadRequestException("Parking Lot is already deactivated");
-                }
-
-                var existingRequest = _requestRepository.GetAsQueryable(x => x.ParkingLotId == id && x.UserId == parkingLot.UserId, null, null).FirstOrDefault();
-                if (existingRequest != null)
-                {
-                    throw new BadRequestException("There is already a request for this Parking Lot. Please wait until it is processed");
-                }
-
-                if (existingRequest == null)
-                {
-                    ParkingLotRequest plrequest = new ParkingLotRequest();
-                    plrequest.ParkingLotId = parkingLot.Id;
-                    plrequest.UserId = parkingLot.UserId;
-                    plrequest.TimeCreated = DateTime.Now;
-                    plrequest.Status = (int)Status.Pending;
-                    plrequest.Type = (int)RequestType.Deactivate;
-
-                    _parkingLotRequestRepository.Insert(plrequest);
+                    if (parkingLot.IsDeactivated == true)
+                    {
+                        throw new BadRequestException("Parking Lot is already deactivated");
+                    }
+                    var request = _requestRepository.GetAsQueryable(x => x.ParkingLotId == id && x.Type == (int)Enums.RequestType.Deactivate, null, null).FirstOrDefault();
+                    if (request != null)
+                    {
+                        _parkingLotRequestRepository.Delete(request);
+                        _unitOfWork.Save();
+                    }
+                    parkingLot.IsDeactivated = true;
+                    _parkingLotRepository.Update(parkingLot);
                     _unitOfWork.Save();
+
+                    var parkingLotDTO = _mapper.Map<ParkingLotDTO>(parkingLot);
+                    _response.ParkingLot = parkingLotDTO;
+                    _response.StatusCode = HttpStatusCode.OK;
+                    _response.Message = "Parking Lot deactivated successfully";
+                    return _response;
                 }
+                else
+                {
+                    parkingLot = _parkingLotRepository.GetAsQueryable(p => p.Id == id && p.UserId == userId,
+                        null, x => x.Include(y => y.Users)).FirstOrDefault();
+                    if (parkingLot == null)
+                    {
+                        throw new NotFoundException("Parking Lot not found");
+                    }
 
-                var parkingLotDTOResponse = _mapper.Map<ParkingLotDTO>(parkingLot);
+                    if (parkingLot.IsDeactivated == true)
+                    {
+                        throw new BadRequestException("Parking Lot is already deactivated");
+                    }
+                    var existingRequest = _requestRepository.GetAsQueryable(x => x.ParkingLotId == id && x.UserId == parkingLot.UserId, null, null).FirstOrDefault();
+                    if (existingRequest != null)
+                    {
+                        throw new BadRequestException("There is already a request for this Parking Lot. Please wait until it is processed");
+                    }
 
-                _response.ParkingLot = parkingLotDTOResponse;
-                _response.StatusCode = HttpStatusCode.OK;
-                _response.Message = "Request for deactivating the Parking Lot created successfully";
+                    if (existingRequest == null)
+                    {
+                        ParkingLotRequest plrequest = new ParkingLotRequest();
+                        plrequest.ParkingLotId = parkingLot.Id;
+                        plrequest.UserId = parkingLot.UserId;
+                        plrequest.TimeCreated = DateTime.Now;
+                        plrequest.Status = (int)Status.Pending;
+                        plrequest.Type = (int)RequestType.Deactivate;
 
-                return _response;
+                        _parkingLotRequestRepository.Insert(plrequest);
+                        _unitOfWork.Save();
+                    }
+                    var parkingLotDTOResponse = _mapper.Map<ParkingLotDTO>(parkingLot);
+
+                    _response.ParkingLot = parkingLotDTOResponse;
+                    _response.StatusCode = HttpStatusCode.OK;
+                    _response.Message = "Request for deactivating the Parking Lot created successfully";
+
+                    return _response;
+                }
             }
             catch (BadRequestException ex)
             {
