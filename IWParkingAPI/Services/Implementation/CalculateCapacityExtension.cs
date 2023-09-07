@@ -72,7 +72,7 @@ namespace IWParkingAPI.Services.Implementation
             }
         }
 
-        private List<Reservation> CountReservations(string? vehicleType, int parkingLotId, DateTime startDate, TimeSpan startTime, DateTime endDate, TimeSpan endTime, double overlap)
+       public List<Reservation> CountReservations(string? vehicleType, int parkingLotId, DateTime startDate, TimeSpan startTime, DateTime endDate, TimeSpan endTime, double overlap)
         {
             List<Reservation> Reservations;
             if (overlap < 0)
