@@ -14,14 +14,12 @@ namespace IWParkingAPI.Services.Implementation
     {
         private readonly IUnitOfWork<ParkingDbContext> _unitOfWork;
         private readonly IGenericRepository<Reservation> _reservationRepository;
-        private readonly IGenericRepository<AspNetUser> _userRepository;
         private readonly IGenericRepository<ParkingLot> _parkingLotRepository;
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
         public CalculateCapacityExtension(IUnitOfWork<ParkingDbContext> unitOfWork)
         {
             _unitOfWork = unitOfWork;
             _reservationRepository = _unitOfWork.GetGenericRepository<Reservation>();
-            _userRepository = _unitOfWork.GetGenericRepository<AspNetUser>();
             _parkingLotRepository = _unitOfWork.GetGenericRepository<ParkingLot>();
         }
         public int AvailableCapacity(int? id, string? vehicleType, int parkingLotId,
@@ -32,28 +30,9 @@ namespace IWParkingAPI.Services.Implementation
                 List<Reservation> Reservations = new List<Reservation>();
                 double overlap = (endTime - startTime).TotalHours;
 
-                if (id == 0)
-                {
-                    Reservations = CountReservations(Enums.VehicleTypes.Car.ToString(), parkingLotId, startDate, startTime, endDate, endTime, overlap);
-                    return Reservations.Count(); 
-                }
-                else
-                {
-                    var User = _userRepository.GetAsQueryable(u => u.Id == id, null, x => x.Include(y => y.Roles).Include(y => y.Vehicles)).FirstOrDefault();
+                Reservations = CountReservations(vehicleType, parkingLotId, startDate, startTime, endDate, endTime, overlap);
+                return Reservations.Count();
 
-                    if (User == null)
-                    {
-                        throw new NotFoundException("User not found");
-                    }
-
-                    if (!User.Vehicles.Any())
-                    {
-                        throw new BadRequestException("User doesn't have any vehicles");
-                    }
-
-                    Reservations = CountReservations(vehicleType, parkingLotId, startDate, startTime, endDate, endTime, overlap);
-                    return Reservations.Count();
-                }
             }
             catch (BadRequestException ex)
             {
@@ -72,7 +51,7 @@ namespace IWParkingAPI.Services.Implementation
             }
         }
 
-       public List<Reservation> CountReservations(string? vehicleType, int parkingLotId, DateTime startDate, TimeSpan startTime, DateTime endDate, TimeSpan endTime, double overlap)
+        public List<Reservation> CountReservations(string? vehicleType, int parkingLotId, DateTime startDate, TimeSpan startTime, DateTime endDate, TimeSpan endTime, double overlap)
         {
             List<Reservation> Reservations;
             if (overlap < 0)

@@ -27,13 +27,11 @@ namespace IWParkingAPI.Services.Implementation
         private readonly IJWTDecode _jWTDecode;
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
         private readonly ICalculateCapacityExtension _calculateCapacityExtension;
-        private readonly MakeReservationResponse _makeReservationResponse;
-
-
-
+        private readonly ReservationResponse _reservationResponse;
+        private readonly IEnumsExtension<Enums.VehicleTypes> _enumsExtensionVehicleTypes;
 
         public ReservationService(IUnitOfWork<ParkingDbContext> unitOfWork, IJWTDecode jWTDecode,
-            ICalculateCapacityExtension calculateCapacityExtension)
+            ICalculateCapacityExtension calculateCapacityExtension, IEnumsExtension<Enums.VehicleTypes> enumsExtension)
         {
             _mapper = MapperConfig.InitializeAutomapper();
             _unitOfWork = unitOfWork;
@@ -42,9 +40,10 @@ namespace IWParkingAPI.Services.Implementation
             _userRepository = _unitOfWork.GetGenericRepository<AspNetUser>();
             _jWTDecode = jWTDecode;
             _calculateCapacityExtension = calculateCapacityExtension;
-            _makeReservationResponse = new MakeReservationResponse();
+            _reservationResponse = new ReservationResponse();
+            _enumsExtensionVehicleTypes = enumsExtension;
         }
-        public MakeReservationResponse MakeReservation(MakeReservationRequest request)
+        public ReservationResponse MakeReservation(MakeReservationRequest request)
         {
             try
             {
@@ -78,11 +77,11 @@ namespace IWParkingAPI.Services.Implementation
                 }
                 DateTime startDateTime = request.StartDate.Add(parsedStartTime);
                 DateTime endDateTime = request.EndDate.Add(parsedEndTime);
-          //check the condition
-                   if (startDateTime >= endDateTime || startDateTime < DateTime.Now || endDateTime < DateTime.Now)
+                //check the condition
+                if (startDateTime >= endDateTime || startDateTime < DateTime.Now || endDateTime < DateTime.Now)
                 {
                     throw new BadRequestException("Please enter valid date and time range to make a reservation");
-                } 
+                }
 
                 if ((parsedEndTime - parsedStartTime).TotalHours == 0 &&
                     (request.EndDate == request.StartDate || request.EndDate < request.StartDate))
@@ -120,6 +119,8 @@ namespace IWParkingAPI.Services.Implementation
                     }
                 }
 
+
+
                 if (parsedStartTime < parkingLot.WorkingHourFrom || parsedEndTime > parkingLot.WorkingHourTo)
                 {
                     throw new BadRequestException("Parking Lot isn't available during those hours");
@@ -128,7 +129,8 @@ namespace IWParkingAPI.Services.Implementation
                 var madeReservations = _calculateCapacityExtension.AvailableCapacity(int.Parse(userId), selectedVehicle.Type, parkingLot.Id,
                      request.StartDate.Date, parsedStartTime, request.EndDate.Date, parsedEndTime);
 
-                if (selectedVehicle.Type.Equals(Enums.VehicleTypes.Car.ToString()))
+                // if users vehicle type is Car, check available car capacity
+                if (selectedVehicle.Type.Equals(_enumsExtensionVehicleTypes.GetDisplayName(Enums.VehicleTypes.Car)))
                 {
                     var availableCapacity = parkingLot.CapacityCar - madeReservations;
                     if (availableCapacity == 0)
@@ -137,17 +139,20 @@ namespace IWParkingAPI.Services.Implementation
                     }
                 }
 
-                if (selectedVehicle.Type.Equals(Enums.VehicleTypes.AdaptedCar.ToString()))
+                // if users vehicle type is Adapted Car
+                if (selectedVehicle.Type.Equals(_enumsExtensionVehicleTypes.GetDisplayName(Enums.VehicleTypes.AdaptedCar)))
                 {
+                    // first check available adapted car capacity
                     var availableAdaptedCapacity = parkingLot.CapacityAdaptedCar - madeReservations;
                     if (availableAdaptedCapacity == 0)
                     {
                         var madeReservationsWithCar = _calculateCapacityExtension.AvailableCapacity(int.Parse(userId),
-                        Enums.VehicleTypes.Car.ToString(), parkingLot.Id,
-                        request.StartDate, parsedStartTime, request.EndDate, parsedEndTime);
+                                    Enums.VehicleTypes.Car.ToString(), parkingLot.Id,
+                                    request.StartDate, parsedStartTime, request.EndDate, parsedEndTime);
 
-                        var availableCarCapacity = parkingLot.CapacityCar - madeReservations;
+                        var availableCarCapacity = parkingLot.CapacityCar - madeReservationsWithCar;
 
+                        // then check available car capacity
                         if (availableCarCapacity == 0)
                         {
                             throw new BadRequestException("Sorry. There aren't any free Parking Spaces on this Parking Lot");
@@ -219,10 +224,10 @@ namespace IWParkingAPI.Services.Implementation
                 _reservationRepository.Insert(reservationToInsert);
                 _unitOfWork.Save();
 
-                _makeReservationResponse.StatusCode = HttpStatusCode.OK;
-                _makeReservationResponse.Message = "Reservation made successfully";
-                _makeReservationResponse.Reservation = _mapper.Map<ReservationDTO>(reservationToInsert);
-                return _makeReservationResponse;
+                _reservationResponse.StatusCode = HttpStatusCode.OK;
+                _reservationResponse.Message = "Reservation made successfully";
+                _reservationResponse.Reservation = _mapper.Map<ReservationDTO>(reservationToInsert);
+                return _reservationResponse;
             }
             catch (BadRequestException ex)
             {
@@ -233,6 +238,59 @@ namespace IWParkingAPI.Services.Implementation
             {
                 _logger.Error($"Unexpected error while making the Reservation {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
                 throw new InternalErrorException("Unexpected error while making the Reservation");
+            }
+        }
+
+        public ReservationResponse CancelReservation(int reservationId)
+        {
+            try
+            {
+                var reservation = _reservationRepository.GetAsQueryable(x => x.Id == reservationId).FirstOrDefault();
+                if (reservation == null)
+                {
+                    throw new BadRequestException("Reservation doesn't exist");
+                }
+
+                if (reservation.Type.Equals(Enums.ReservationTypes.Cancelled.ToString()))
+                {
+                    throw new BadRequestException("Reservation is already cancelled");
+                }
+
+                DateTime dateTimeNow = DateTime.Now;
+                DateTime reservationStartDateTime = reservation.StartDate.Add(reservation.StartTime);
+                DateTime reservationEndDateTime = reservation.EndDate.Add(reservation.EndTime);
+                TimeSpan timeNow = dateTimeNow.TimeOfDay;
+                if (dateTimeNow > reservationEndDateTime)
+                {
+                    throw new BadRequestException("Can't cancel this reservation, because it has already finished");
+                }
+                if ((reservationEndDateTime.Date == dateTimeNow.Date && timeNow >= reservation.StartTime) 
+                    || (dateTimeNow > reservationStartDateTime))
+                {
+                    throw new BadRequestException("Can't cancel this reservation, because it has already started");
+                }
+                reservation.Type = Enums.ReservationTypes.Cancelled.ToString();
+                reservation.TimeModified = DateTime.Now;
+                _reservationRepository.Update(reservation);
+                _unitOfWork.Save();
+
+                var reservationDTO = _mapper.Map<ReservationDTO>(reservation);
+
+                _reservationResponse.StatusCode = HttpStatusCode.OK;
+                _reservationResponse.Message = "Reservation cancelled successfully";
+                _reservationResponse.Reservation = reservationDTO;
+                return _reservationResponse;
+
+            }
+            catch (BadRequestException ex)
+            {
+                _logger.Error($"Bad Request for CancelReservation {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.Error($"Unexpected error while cancelling the Reservation {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
+                throw new InternalErrorException("Unexpected error while cancelling the Reservation");
             }
         }
     }
