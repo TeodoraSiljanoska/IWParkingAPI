@@ -69,6 +69,7 @@ namespace IWParkingAPI.Services.Implementation
                     throw new BadRequestException("Please select a valid Parking Lot to make a reservation");
                 }
 
+                //convert from request - from string to TimeSpan
                 TimeSpan parsedStartTime;
                 TimeSpan parsedEndTime;
                 if (!TimeSpan.TryParse(request.StartTime, out parsedStartTime) ||
@@ -76,216 +77,154 @@ namespace IWParkingAPI.Services.Implementation
                 {
                     throw new BadRequestException("Invalid start or end time format");
                 }
-                DateTime startDateTime = request.StartDate.Date.Add(parsedStartTime);
-                DateTime endDateTime = request.EndDate.Date.Add(parsedEndTime);
-                if (startDateTime >= endDateTime || startDateTime < DateTime.Now || endDateTime < DateTime.Now)
+
+                //DateTime for reservation start and end
+                DateTime reservationStartDateTime = request.StartDate.Date.Add(parsedStartTime);
+                DateTime reservationEndDateTime = request.EndDate.Date.Add(parsedEndTime);
+                //if the working hours of the parking lot are overnight
+                bool workingHourisOvernight = false;
+                //workinghoursfrom
+                DateTime parkingLotWorkingStart = DateTime.Now.Date.Add(parkingLot.WorkingHourFrom);
+                DateTime parkingLotWorkingEnd;
+                DateTime fromPreviosWorkingDayEnd = DateTime.MinValue;
+                DateTime fromPreviousWorkingDayStart = DateTime.MaxValue;
+
+                //check if the reservation date and time range is valid
+                if (reservationEndDateTime <= reservationStartDateTime)
                 {
                     throw new BadRequestException("Please enter valid date and time range to make a reservation");
                 }
 
-                if ((parsedEndTime - parsedStartTime).TotalHours == 0 &&
-                    (request.EndDate == request.StartDate || request.EndDate < request.StartDate))
+                //if the workingHourTo <= workingHourFrom, then the workingHours of the Parking Lot are overnight
+                if (parkingLot.WorkingHourTo <= parkingLot.WorkingHourFrom)
                 {
-                    throw new BadRequestException("Please enter valid date and time range to make a reservation");
-                }
-                if ((parsedEndTime - parsedStartTime).TotalHours > 0)
-                {
-                    if (request.EndDate == request.StartDate && parsedEndTime < parsedStartTime)
-                    {
-                        throw new BadRequestException("Please enter valid date and time range to make a reservation");
-                    }
-                    if (parsedEndTime < parsedStartTime || request.EndDate < request.StartDate)
-                    {
-                        throw new BadRequestException("Please enter valid date and time range to make a reservation");
-                    }
-                }
-                if ((parsedEndTime - parsedStartTime).TotalHours < 0)
-                {
-                    if (request.EndDate <= request.StartDate)
-                    {
-                        throw new BadRequestException("Please enter valid date and time range to make a reservation");
-                    }
+                    workingHourisOvernight = true;
                 }
 
-                //if working hours are after midnight (ex. from 21 - 12)
-                //   var totalWorkingHours = (parkingLot.WorkingHourTo - parkingLot.WorkingHourFrom).TotalHours;
-                /*       if (totalWorkingHours < 0)
-                       {
-                           // if ((parsedEndTime - parsedStartTime).TotalHours < 0)
-                           // {    //ex. reservation from 23h - 01h the next day
-
-                           //pst=18:30 pl.whf=21 18>=21 false && 02:30<=12 true => false || 18<=21 true && 02<=12 true true
-                           //13:30 - 14:30
-                           //  if ((parsedEndTime - parsedStartTime).TotalHours > 0)
-                           //21-14
-                           if ((parsedEndTime - parsedStartTime).TotalHours > 0)
-                           {
-                               if (!(parsedStartTime >= parkingLot.WorkingHourFrom && parsedEndTime <= parkingLot.WorkingHourTo))
-                               {
-                                   throw new BadRequestException("Parking Lot isn't available during those hours");
-                               }
-                           }
-                           else if ((parsedEndTime - parsedStartTime).TotalHours <0)
-                           {
-                               if (((parsedStartTime >= parkingLot.WorkingHourFrom && parsedEndTime <= parkingLot.WorkingHourTo) ||
-                                    parsedStartTime <= parkingLot.WorkingHourFrom && parsedEndTime <= parkingLot.WorkingHourTo))
-                               {
-                                   throw new BadRequestException("Parking Lot isn't available during those hours");
-                               }
-                               else if  
-                                    (!((parsedStartTime >= parkingLot.WorkingHourFrom && parsedEndTime <= parkingLot.WorkingHourTo) ||
-                                    parsedStartTime <= parkingLot.WorkingHourFrom && parsedEndTime <= parkingLot.WorkingHourTo))
-                                   {
-                                       throw new BadRequestException("Parking Lot isn't available during those hours");
-                                   }
-                               }
-
-                           }
-                            //}
-
-
-                        /*   if (!((parsedStartTime >= parkingLot.WorkingHourFrom && parsedEndTime <= TimeSpan.FromHours(24)) ||
-                (parsedStartTime >= TimeSpan.Zero && parsedEndTime <= parkingLot.WorkingHourTo)))
-                           {
-                               throw new BadRequestException("Parking Lot isn't available during those hours");
-                           }*/
-            
-                
-                //LAST COMMENT
-
-                /*
-               var totalWorkingHours = (parkingLot.WorkingHourTo - parkingLot.WorkingHourFrom).TotalHours;
-                if (request.StartDate < request.EndDate)
+                //if the workingHours are overnight, then one day is added to calculate the workingHourTo
+                if (workingHourisOvernight == true)
                 {
-                    // Check if the reservation's start time is after working hours on the start date
-                    if (parsedStartTime < parkingLot.WorkingHourFrom)
-                    {
-                        throw new BadRequestException("Parking Lot isn't available during those hours");
-                    }
-
-                    // Check if the reservation's end time is after working hours on the end date
-                    if (parsedEndTime > parkingLot.WorkingHourTo)
-                    {
-                        throw new BadRequestException("Parking Lot isn't available during those hours");
-                    }
+                    fromPreviosWorkingDayEnd = DateTime.Now.Date.Add(parkingLot.WorkingHourTo);
+                    fromPreviousWorkingDayStart = parkingLotWorkingStart.AddDays(-1);
+                    parkingLotWorkingEnd = (DateTime.Now.Date.AddDays(1)).Date.Add(parkingLot.WorkingHourTo);
                 }
                 else
                 {
-                    // Reservation within the same day (no crossing midnight)
-                    if (totalWorkingHours < 0)
-                    {
-                        // Calculate the effective end time for the parking lot
-                        var effectiveWorkingHourTo = parkingLot.WorkingHourTo.Add(TimeSpan.FromDays(1)); // Add one day to represent crossing midnight
-
-                        if (!(parsedStartTime >= parkingLot.WorkingHourFrom || parsedEndTime <= effectiveWorkingHourTo))
-                        {
-                            throw new BadRequestException("Parking Lot isn't available during those hours");
-                        }
-                    }
-                    else
-                    {
-                        if (!(parsedStartTime >= parkingLot.WorkingHourFrom && parsedEndTime <= parkingLot.WorkingHourTo))
-                        {
-                            throw new BadRequestException("Parking Lot isn't available during those hours");
-                        }
-                    }
-                }
-                
-             /* if (totalWorkingHours < 0)
-                { 
-                    var effectiveWorkingHours = totalWorkingHours + 24;
-                  
-
-                    if (!(parsedStartTime >= parkingLot.WorkingHourFrom && parsedEndTime <= parkingLot.WorkingHourTo))
-                    {
-                        throw new BadRequestException("Parking Lot isn't available during those hours");
-                    }
-                }  */
-                /*    else
-                    {
-                        if (!(parsedStartTime >= parkingLot.WorkingHourFrom && parsedEndTime <= parkingLot.WorkingHourTo))
-                        {
-                            throw new BadRequestException("Parking Lot isn't available during those hours");
-                        }
-                    }*/ 
-
-                if (/*totalWorkingHours >0 && */(parsedStartTime < parkingLot.WorkingHourFrom || parsedEndTime > parkingLot.WorkingHourTo))
-            {
-                throw new BadRequestException("Parking Lot isn't available during those hours");
-            }
-
-            List<Reservation> existingReservation = _reservationRepository.GetAsQueryable(x =>
-            x.UserId == user.Id &&
-            x.VehicleId == selectedVehicle.Id).ToList();
-            foreach (var x in existingReservation)
-            {
-                DateTime start = x.StartDate.Add(x.StartTime);
-                DateTime end = x.EndDate.Add(x.EndTime);
-                // }
-                var res = existingReservation.Where(x => (x.StartDate <= request.EndDate && // Check for date range overlap
-                   x.EndDate >= request.StartDate &&
-                   start <= endDateTime && // Check for time range overlap
-                   end >= startDateTime) || (start == startDateTime && end == endDateTime))
-                   .FirstOrDefault();
-
-                if (res != null)
-                {
-                    throw new BadRequestException("A reservation with the same vehicle and overlapping time range already exists.");
+                    parkingLotWorkingEnd = DateTime.Now.Date.Add(parkingLot.WorkingHourTo);
                 }
 
-            }
-
-            var madeReservations = _calculateCapacityExtension.AvailableCapacity(int.Parse(userId), selectedVehicle.Type, parkingLot.Id,
-                 request.StartDate.Date, parsedStartTime, request.EndDate.Date, parsedEndTime);
-
-            if (selectedVehicle.Type.Equals(Enums.VehicleTypes.Car.ToString()))
-            {
-                var availableCapacity = parkingLot.CapacityCar - madeReservations;
-                if (availableCapacity == 0)
+                /* if(fromPreviosWorkingDayToEnd != DateTime.MinValue && (reservationStartDateTime < parkingLotWorkingStart.AddDays(-1)
+                     || reservationEndDateTime > fromPreviosWorkingDayToEnd || reservationEndDateTime > parkingLotWorkingEnd))*/
+                if (workingHourisOvernight == true)
                 {
-                    throw new BadRequestException("Sorry. There aren't any free Parking Spaces on this Parking Lot");
+                    if (reservationStartDateTime < parkingLotWorkingStart || reservationStartDateTime.Hour < fromPreviousWorkingDayStart.Hour 
+                        || reservationStartDateTime> fromPreviosWorkingDayEnd
+                        || reservationEndDateTime.Hour > fromPreviosWorkingDayEnd.Hour || reservationEndDateTime > parkingLotWorkingEnd)
+                        throw new BadRequestException("Please enter valid date and time range to make a reservation");
                 }
-            }
-
-            if (selectedVehicle.Type.Equals(Enums.VehicleTypes.AdaptedCar.ToString()))
-            {
-                var availableAdaptedCapacity = parkingLot.CapacityAdaptedCar - madeReservations;
-                if (availableAdaptedCapacity == 0)
+                else
                 {
-                    var madeReservationsWithCar = _calculateCapacityExtension.AvailableCapacity(int.Parse(userId),
-                    Enums.VehicleTypes.Car.ToString(), parkingLot.Id,
-                    request.StartDate, parsedStartTime, request.EndDate, parsedEndTime);
+                    if (reservationStartDateTime < parkingLotWorkingStart || reservationEndDateTime > parkingLotWorkingEnd)
+                    {
+                        throw new BadRequestException("Please enter valid date and time range to make a reservation");
+                    }
+                }
 
-                    var availableCarCapacity = parkingLot.CapacityCar - madeReservations;
 
-                    if (availableCarCapacity == 0)
+                //OLD VALIDATIONS
+                /* 
+                 if (reservationStartDateTime >= reservationEndDateTime || reservationStartDateTime < DateTime.Now || reservationEndDateTime < DateTime.Now)
+                 {
+                     throw new BadRequestException("Please enter valid date and time range to make a reservation");
+                 }
+
+                 if ((parsedEndTime - parsedStartTime).TotalHours == 0 &&
+                     (request.EndDate == request.StartDate || request.EndDate < request.StartDate))
+                 {
+                     throw new BadRequestException("Please enter valid date and time range to make a reservation");
+                 }
+                 if ((parsedEndTime - parsedStartTime).TotalHours > 0)
+                 {
+                     if (request.EndDate == request.StartDate && parsedEndTime < parsedStartTime)
+                     {
+                         throw new BadRequestException("Please enter valid date and time range to make a reservation");
+                     }
+                     if (parsedEndTime < parsedStartTime || request.EndDate < request.StartDate)
+                     {
+                         throw new BadRequestException("Please enter valid date and time range to make a reservation");
+                     }
+                 }
+                 if ((parsedEndTime - parsedStartTime).TotalHours < 0)
+                 {
+                     if (request.EndDate <= request.StartDate)
+                     {
+                         throw new BadRequestException("Please enter valid date and time range to make a reservation");
+                     }
+                 }*/
+
+
+
+
+
+                //  if (/*totalWorkingHours >0 && */(parsedStartTime < parkingLot.WorkingHourFrom || parsedEndTime > parkingLot.WorkingHourTo))
+                /* {
+                     throw new BadRequestException("Parking Lot isn't available during those hours");
+                 } */
+
+
+                CheckForExistingReservation(request, user, selectedVehicle, reservationStartDateTime, reservationEndDateTime);
+
+                var madeReservations = _calculateCapacityExtension.AvailableCapacity(int.Parse(userId), selectedVehicle.Type, parkingLot.Id,
+                     request.StartDate.Date, parsedStartTime, request.EndDate.Date, parsedEndTime);
+
+                if (selectedVehicle.Type.Equals(Enums.VehicleTypes.Car.ToString()))
+                {
+                    var availableCapacity = parkingLot.CapacityCar - madeReservations;
+                    if (availableCapacity == 0)
                     {
                         throw new BadRequestException("Sorry. There aren't any free Parking Spaces on this Parking Lot");
                     }
                 }
+
+                if (selectedVehicle.Type.Equals(Enums.VehicleTypes.AdaptedCar.ToString()))
+                {
+                    var availableAdaptedCapacity = parkingLot.CapacityAdaptedCar - madeReservations;
+                    if (availableAdaptedCapacity == 0)
+                    {
+                        var madeReservationsWithCar = _calculateCapacityExtension.AvailableCapacity(int.Parse(userId),
+                        Enums.VehicleTypes.Car.ToString(), parkingLot.Id,
+                        request.StartDate, parsedStartTime, request.EndDate, parsedEndTime);
+
+                        var availableCarCapacity = parkingLot.CapacityCar - madeReservations;
+
+                        if (availableCarCapacity == 0)
+                        {
+                            throw new BadRequestException("Sorry. There aren't any free Parking Spaces on this Parking Lot");
+                        }
+                    }
+                }
+
+                var reservation = _mapper.Map<ReservationDTO>(request);
+                reservation.StartDate = reservationStartDateTime.Date;
+                reservation.IsPaid = true;
+                reservation.Type = Enums.ReservationTypes.Successful.ToString();
+                double totalPrice = CalculateReservationPrice(reservationStartDateTime, reservationEndDateTime, parkingLot.Price);
+                totalPrice = Math.Ceiling(totalPrice);
+                reservation.Amount = (int)totalPrice;
+                reservation.UserId = int.Parse(userId);
+                reservation.ParkingLotId = parkingLot.Id;
+                reservation.VehicleId = selectedVehicle.Id;
+                reservation.TimeCreated = DateTime.Now;
+
+                var reservationToInsert = _mapper.Map<Reservation>(reservation);
+                _reservationRepository.Insert(reservationToInsert);
+                _unitOfWork.Save();
+
+                _makeReservationResponse.StatusCode = HttpStatusCode.OK;
+                _makeReservationResponse.Message = "Reservation made successfully";
+                _makeReservationResponse.Reservation = _mapper.Map<ReservationDTO>(reservationToInsert);
+                return _makeReservationResponse;
             }
-
-            var reservation = _mapper.Map<ReservationDTO>(request);
-            reservation.StartDate = startDateTime.Date;
-            reservation.IsPaid = true;
-            reservation.Type = Enums.ReservationTypes.Successful.ToString();
-            double totalPrice = CalculateReservationPrice(startDateTime, endDateTime, parkingLot.Price);
-            totalPrice = Math.Ceiling(totalPrice);
-            reservation.Amount = (int)totalPrice;
-            reservation.UserId = int.Parse(userId);
-            reservation.ParkingLotId = parkingLot.Id;
-            reservation.VehicleId = selectedVehicle.Id;
-            reservation.TimeCreated = DateTime.Now;
-
-            var reservationToInsert = _mapper.Map<Reservation>(reservation);
-            _reservationRepository.Insert(reservationToInsert);
-            _unitOfWork.Save();
-
-            _makeReservationResponse.StatusCode = HttpStatusCode.OK;
-            _makeReservationResponse.Message = "Reservation made successfully";
-            _makeReservationResponse.Reservation = _mapper.Map<ReservationDTO>(reservationToInsert);
-            return _makeReservationResponse;
-        }
             catch (BadRequestException ex)
             {
                 _logger.Error($"Bad Request for MakeReservation {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
@@ -295,18 +234,42 @@ namespace IWParkingAPI.Services.Implementation
             {
                 _logger.Error($"Unexpected error while making the Reservation {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
                 throw new InternalErrorException("Unexpected error while making the Reservation");
-}
+            }
+        }
+
+        private void CheckForExistingReservation(MakeReservationRequest request, AspNetUser? user, Vehicle? selectedVehicle, DateTime reservationStartDateTime, DateTime reservationEndDateTime)
+        {
+            List<Reservation> existingReservation = _reservationRepository.GetAsQueryable(x =>
+                        x.UserId == user.Id &&
+                        x.VehicleId == selectedVehicle.Id).ToList();
+            foreach (var x in existingReservation)
+            {
+                DateTime start = x.StartDate.Add(x.StartTime);
+                DateTime end = x.EndDate.Add(x.EndTime);
+                // }
+                var res = existingReservation.Where(x => (x.StartDate <= request.EndDate && // Check for date range overlap
+                   x.EndDate >= request.StartDate &&
+                   start <= reservationEndDateTime && // Check for time range overlap
+                   end >= reservationStartDateTime) || (start == reservationStartDateTime && end == reservationEndDateTime))
+                   .FirstOrDefault();
+
+                if (res != null)
+                {
+                    throw new BadRequestException("A reservation with the same vehicle and overlapping time range already exists.");
+                }
+
+            }
         }
 
         private double CalculateReservationPrice(DateTime startDateTime, DateTime endDateTime, double hourlyRate)
-{
-    // Calculate the total duration of the reservation in hours
-    TimeSpan reservationDuration = endDateTime - startDateTime;
+        {
+            // Calculate the total duration of the reservation in hours
+            TimeSpan reservationDuration = endDateTime - startDateTime;
 
-    // Calculate the total price based on the hourly rate
-    double totalPrice = reservationDuration.TotalHours * hourlyRate;
+            // Calculate the total price based on the hourly rate
+            double totalPrice = reservationDuration.TotalHours * hourlyRate;
 
-    return totalPrice;
-}
+            return totalPrice;
+        }
     }
 }
