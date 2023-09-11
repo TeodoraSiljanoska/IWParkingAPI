@@ -115,11 +115,18 @@ namespace IWParkingAPI.Services.Implementation
 
                 /* if(fromPreviosWorkingDayToEnd != DateTime.MinValue && (reservationStartDateTime < parkingLotWorkingStart.AddDays(-1)
                      || reservationEndDateTime > fromPreviosWorkingDayToEnd || reservationEndDateTime > parkingLotWorkingEnd))*/
+                TimeSpan tempEndOfDay = new TimeSpan(0, 23, 59, 59, 59);
+                DateTime endOfPreviousDay = fromPreviousWorkingDayStart.Date.Add(tempEndOfDay);
+                TimeSpan tempEndOfWorkingHours = new TimeSpan(0, 23, 59, 59, 59);
                 if (workingHourisOvernight == true)
                 {
-                    if (reservationStartDateTime < parkingLotWorkingStart || reservationStartDateTime.Hour < fromPreviousWorkingDayStart.Hour 
-                        || reservationStartDateTime> fromPreviosWorkingDayEnd
-                        || reservationEndDateTime.Hour > fromPreviosWorkingDayEnd.Hour || reservationEndDateTime > parkingLotWorkingEnd)
+                    if(!((reservationStartDateTime >= fromPreviousWorkingDayStart && reservationStartDateTime >= endOfPreviousDay 
+                        && reservationEndDateTime <= fromPreviosWorkingDayEnd) ||
+                        (reservationStartDateTime >= parkingLotWorkingStart && reservationEndDateTime <= parkingLotWorkingEnd)))
+
+                  /*  if (reservationStartDateTime < parkingLotWorkingStart || reservationStartDateTime.Hour < fromPreviousWorkingDayStart.Hour
+                        || reservationStartDateTime > fromPreviosWorkingDayEnd
+                        || reservationEndDateTime.Hour > fromPreviosWorkingDayEnd.Hour || reservationEndDateTime > parkingLotWorkingEnd)*/
                         throw new BadRequestException("Please enter valid date and time range to make a reservation");
                 }
                 else
@@ -204,25 +211,7 @@ namespace IWParkingAPI.Services.Implementation
                     }
                 }
 
-                var reservation = _mapper.Map<ReservationDTO>(request);
-                reservation.StartDate = reservationStartDateTime.Date;
-                reservation.IsPaid = true;
-                reservation.Type = Enums.ReservationTypes.Successful.ToString();
-                double totalPrice = CalculateReservationPrice(reservationStartDateTime, reservationEndDateTime, parkingLot.Price);
-                totalPrice = Math.Ceiling(totalPrice);
-                reservation.Amount = (int)totalPrice;
-                reservation.UserId = int.Parse(userId);
-                reservation.ParkingLotId = parkingLot.Id;
-                reservation.VehicleId = selectedVehicle.Id;
-                reservation.TimeCreated = DateTime.Now;
-
-                var reservationToInsert = _mapper.Map<Reservation>(reservation);
-                _reservationRepository.Insert(reservationToInsert);
-                _unitOfWork.Save();
-
-                _makeReservationResponse.StatusCode = HttpStatusCode.OK;
-                _makeReservationResponse.Message = "Reservation made successfully";
-                _makeReservationResponse.Reservation = _mapper.Map<ReservationDTO>(reservationToInsert);
+                InsertReservation(request, userId, selectedVehicle, parkingLot, reservationStartDateTime, reservationEndDateTime);
                 return _makeReservationResponse;
             }
             catch (BadRequestException ex)
@@ -235,6 +224,29 @@ namespace IWParkingAPI.Services.Implementation
                 _logger.Error($"Unexpected error while making the Reservation {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
                 throw new InternalErrorException("Unexpected error while making the Reservation");
             }
+        }
+
+        private void InsertReservation(MakeReservationRequest request, string userId, Vehicle selectedVehicle, ParkingLot parkingLot, DateTime reservationStartDateTime, DateTime reservationEndDateTime)
+        {
+            var reservation = _mapper.Map<ReservationDTO>(request);
+            reservation.StartDate = reservationStartDateTime.Date;
+            reservation.IsPaid = true;
+            reservation.Type = Enums.ReservationTypes.Successful.ToString();
+            double totalPrice = CalculateReservationPrice(reservationStartDateTime, reservationEndDateTime, parkingLot.Price);
+            totalPrice = Math.Ceiling(totalPrice);
+            reservation.Amount = (int)totalPrice;
+            reservation.UserId = int.Parse(userId);
+            reservation.ParkingLotId = parkingLot.Id;
+            reservation.VehicleId = selectedVehicle.Id;
+            reservation.TimeCreated = DateTime.Now;
+
+            var reservationToInsert = _mapper.Map<Reservation>(reservation);
+            _reservationRepository.Insert(reservationToInsert);
+            _unitOfWork.Save();
+
+            _makeReservationResponse.StatusCode = HttpStatusCode.OK;
+            _makeReservationResponse.Message = "Reservation made successfully";
+            _makeReservationResponse.Reservation = _mapper.Map<ReservationDTO>(reservationToInsert);
         }
 
         private void CheckForExistingReservation(MakeReservationRequest request, AspNetUser? user, Vehicle? selectedVehicle, DateTime reservationStartDateTime, DateTime reservationEndDateTime)
