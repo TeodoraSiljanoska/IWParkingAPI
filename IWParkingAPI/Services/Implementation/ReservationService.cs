@@ -81,6 +81,11 @@ namespace IWParkingAPI.Services.Implementation
                 //DateTime for reservation start and end
                 DateTime reservationStartDateTime = request.StartDate.Date.Add(parsedStartTime);
                 DateTime reservationEndDateTime = request.EndDate.Date.Add(parsedEndTime);
+
+                if(reservationStartDateTime < DateTime.Now || reservationEndDateTime < DateTime.Now)
+                {
+                    throw new BadRequestException("Please enter valid date and time range to make a reservation");
+                }
                 //if the working hours of the parking lot are overnight
                 bool workingHourisOvernight = false;
                 //workinghoursfrom
