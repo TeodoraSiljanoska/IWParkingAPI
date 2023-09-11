@@ -3,6 +3,7 @@ using IWParkingAPI.CustomExceptions;
 using IWParkingAPI.Infrastructure.Repository;
 using IWParkingAPI.Infrastructure.UnitOfWork;
 using IWParkingAPI.Mappers;
+using IWParkingAPI.Models;
 using IWParkingAPI.Models.Context;
 using IWParkingAPI.Models.Data;
 using IWParkingAPI.Models.Enums;
@@ -181,6 +182,19 @@ namespace IWParkingAPI.Services.Implementation
                         }
                         //   var Vehicle = _vehicleRepository.GetAsQueryable(x => x.UserId == int.Parse(userId)).Where(x => x.IsPrimary == true).FirstOrDefault();
 
+                        var madeReservations = 0;
+                        var vehicleType = Enums.VehicleTypes.Car.ToString();
+                        if (Vehicle == null)
+                        {
+                            madeReservations = _calculateCapacityExtension.AvailableCapacity(0, Enums.VehicleTypes.Car.ToString(), p.Id,
+                            date.Date, parsedTime, date.Date, parsedTime);
+                        }
+                        else
+                        {
+                            vehicleType = Vehicle.Type;
+                            madeReservations = _calculateCapacityExtension.AvailableCapacity(int.Parse(userId), vehicleType, p.Id,
+                                date.Date, parsedTime, date.Date, parsedTime);
+                        }
                         /*    if (Vehicle == null)
                             {
                                 throw new BadRequestException("User doesn't have a primary vehicle");
@@ -284,16 +298,16 @@ public ParkingLotResponse GetParkingLotById(int id)
     }
 }
 
-public ParkingLotResponse CreateParkingLot(ParkingLotReq request)
-{
-    try
-    {
-        var strUserId = _jWTDecode.ExtractClaimByType("Id");
-        if (strUserId == null)
+        public ParkingLotResponse CreateParkingLot(ParkingLotReq request)
         {
-            throw new BadRequestException("Unexpected error while Creating the Parking Lot");
-        }
-        var userId = Convert.ToInt32(strUserId);
+            try
+            {
+                var strUserId = _jWTDecode.ExtractClaimByType("Id");
+                if (strUserId == null)
+                {
+                    throw new NotFoundException("User not found");
+                }
+                var userId = Convert.ToInt32(strUserId);
 
         var existinguser = _userRepository.GetById(userId);
         if (existinguser == null || existinguser.IsDeactivated == true)
@@ -395,16 +409,16 @@ public ParkingLotResponse CreateParkingLot(ParkingLotReq request)
 }
 
 
-public ParkingLotResponse UpdateParkingLot(int id, UpdateParkingLotRequest request)
-{
-    try
-    {
-        var strUserId = _jWTDecode.ExtractClaimByType("Id");
-        if (strUserId == null)
+        public ParkingLotResponse UpdateParkingLot(int id, UpdateParkingLotRequest request)
         {
-            throw new BadRequestException("Unexpected error while updating the Parking Lot");
-        }
-        var userId = Convert.ToInt32(strUserId);
+            try
+            {
+                var strUserId = _jWTDecode.ExtractClaimByType("Id");
+                if (strUserId == null)
+                {
+                    throw new NotFoundException("User not found");
+                }
+                var userId = Convert.ToInt32(strUserId);
 
         ParkingLot parkingLot = _parkingLotRepository.GetAsQueryable(p => p.Id == id && p.UserId == userId, null, x => x.Include(y => y.Users)).FirstOrDefault();//.Where(x => x.UserId == userId); 
 
@@ -564,67 +578,99 @@ public ParkingLotResponse DeactivateParkingLot(int id)
             throw new BadRequestException("ParkingLotId is required");
         }
 
-        var strUserId = _jWTDecode.ExtractClaimByType("Id");
-        if (strUserId == null)
-        {
-            throw new BadRequestException("Unexpected error while Creating the Parking Lot");
+                var strUserId = _jWTDecode.ExtractClaimByType("Id");
+                var strUserRole = _jWTDecode.ExtractClaimByType("Role");
+                if (strUserId == null)
+                {
+                    throw new NotFoundException("User not found");
+                }
+                var userId = Convert.ToInt32(strUserId);
+
+                ParkingLot parkingLot = new ParkingLot();
+                if (strUserRole.Equals(UserRoles.SuperAdmin))
+                {
+                    parkingLot = _parkingLotRepository.GetAsQueryable(p => p.Id == id, null, x => x.Include(y => y.Users)).FirstOrDefault();
+                    if (parkingLot == null)
+                    {
+                        throw new NotFoundException("Parking Lot not found");
+                    }
+
+                    if (parkingLot.IsDeactivated == true)
+                    {
+                        throw new BadRequestException("Parking Lot is already deactivated");
+                    }
+                    var request = _requestRepository.GetAsQueryable(x => x.ParkingLotId == id && x.Type == (int)Enums.RequestType.Deactivate, null, null).FirstOrDefault();
+                    if (request != null)
+                    {
+                        _parkingLotRequestRepository.Delete(request);
+                        _unitOfWork.Save();
+                    }
+                    parkingLot.IsDeactivated = true;
+                    _parkingLotRepository.Update(parkingLot);
+                    _unitOfWork.Save();
+
+                    var parkingLotDTO = _mapper.Map<ParkingLotDTO>(parkingLot);
+                    _response.ParkingLot = parkingLotDTO;
+                    _response.StatusCode = HttpStatusCode.OK;
+                    _response.Message = "Parking Lot deactivated successfully";
+                    return _response;
+                }
+                else
+                {
+                    parkingLot = _parkingLotRepository.GetAsQueryable(p => p.Id == id && p.UserId == userId,
+                        null, x => x.Include(y => y.Users)).FirstOrDefault();
+                    if (parkingLot == null)
+                    {
+                        throw new NotFoundException("Parking Lot not found");
+                    }
+
+                    if (parkingLot.IsDeactivated == true)
+                    {
+                        throw new BadRequestException("Parking Lot is already deactivated");
+                    }
+                    var existingRequest = _requestRepository.GetAsQueryable(x => x.ParkingLotId == id && x.UserId == parkingLot.UserId, null, null).FirstOrDefault();
+                    if (existingRequest != null)
+                    {
+                        throw new BadRequestException("There is already a request for this Parking Lot. Please wait until it is processed");
+                    }
+
+                    if (existingRequest == null)
+                    {
+                        ParkingLotRequest plrequest = new ParkingLotRequest();
+                        plrequest.ParkingLotId = parkingLot.Id;
+                        plrequest.UserId = parkingLot.UserId;
+                        plrequest.TimeCreated = DateTime.Now;
+                        plrequest.Status = (int)Status.Pending;
+                        plrequest.Type = (int)RequestType.Deactivate;
+
+                        _parkingLotRequestRepository.Insert(plrequest);
+                        _unitOfWork.Save();
+                    }
+                    var parkingLotDTOResponse = _mapper.Map<ParkingLotDTO>(parkingLot);
+
+                    _response.ParkingLot = parkingLotDTOResponse;
+                    _response.StatusCode = HttpStatusCode.OK;
+                    _response.Message = "Request for deactivating the Parking Lot created successfully";
+
+                    return _response;
+                }
+            }
+            catch (BadRequestException ex)
+            {
+                _logger.Error($"Bad Request for DeactivateParkingLot {Environment.NewLine}ErrorMessage: {ex.Message}");
+                throw;
+            }
+            catch (NotFoundException ex)
+            {
+                _logger.Error($"Not Found for DeactivateParkingLot {Environment.NewLine}ErrorMessage: {ex.Message}");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.Error($"Unexpected error while deactivating the Parking Lot {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
+                throw new InternalErrorException("Unexpected error while deactivating the Parking Lot");
+            }
         }
-        var userId = Convert.ToInt32(strUserId);
-        ParkingLot parkingLot = _parkingLotRepository.GetAsQueryable(p => p.Id == id && p.UserId == userId, null, x => x.Include(y => y.Users)).FirstOrDefault();
-
-        if (parkingLot == null)
-        {
-            throw new NotFoundException("Parking Lot not found");
-        }
-
-        if (parkingLot.IsDeactivated == true)
-        {
-            throw new BadRequestException("Parking Lot is already deactivated");
-        }
-
-        var existingRequest = _requestRepository.GetAsQueryable(x => x.ParkingLotId == id && x.UserId == parkingLot.UserId, null, null).FirstOrDefault();
-        if (existingRequest != null)
-        {
-            throw new BadRequestException("There is already a request for this Parking Lot. Please wait until it is processed");
-        }
-
-        if (existingRequest == null)
-        {
-            ParkingLotRequest plrequest = new ParkingLotRequest();
-            plrequest.ParkingLotId = parkingLot.Id;
-            plrequest.UserId = parkingLot.UserId;
-            plrequest.TimeCreated = DateTime.Now;
-            plrequest.Status = (int)Status.Pending;
-            plrequest.Type = (int)RequestType.Deactivate;
-
-            _parkingLotRequestRepository.Insert(plrequest);
-            _unitOfWork.Save();
-        }
-
-        var parkingLotDTOResponse = _mapper.Map<ParkingLotDTO>(parkingLot);
-
-        _response.ParkingLot = parkingLotDTOResponse;
-        _response.StatusCode = HttpStatusCode.OK;
-        _response.Message = "Request for deactivating the Parking Lot created successfully";
-
-        return _response;
-    }
-    catch (BadRequestException ex)
-    {
-        _logger.Error($"Bad Request for DeactivateParkingLot {Environment.NewLine}ErrorMessage: {ex.Message}");
-        throw;
-    }
-    catch (NotFoundException ex)
-    {
-        _logger.Error($"Not Found for DeactivateParkingLot {Environment.NewLine}ErrorMessage: {ex.Message}");
-        throw;
-    }
-    catch (Exception ex)
-    {
-        _logger.Error($"Unexpected error while deactivating the Parking Lot {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
-        throw new InternalErrorException("Unexpected error while deactivating the Parking Lot");
-    }
-}
 
 public ParkingLotResponse RemoveParkingLotFavourite(int parkingLotId)
 {
