@@ -61,16 +61,12 @@ namespace IWParkingAPI.Services.Implementation
                     throw new BadRequestException("Please select a valid vehicle to make a reservation");
                 }
 
-                var parkingLot = _parkingLotRepository.GetAsQueryable(x => x.Id == request.ParkingLotId, null, null).FirstOrDefault();
+                var parkingLot = _parkingLotRepository.GetAsQueryable(x => x.Id == request.ParkingLotId
+                    && x.IsDeactivated == false, null, null).FirstOrDefault();
 
                 if (parkingLot == null)
                 {
                     throw new BadRequestException("Please select a valid Parking Lot to make a reservation");
-                }
-
-                if (parkingLot.IsDeactivated == true)
-                {
-                    throw new BadRequestException("Can't make reservation on a deactivated Parking Lot");
                 }
 
                 //convert from request - from string to TimeSpan
