@@ -27,9 +27,9 @@ namespace IWParkingAPI.Controllers
 
         [HttpPut("ExtendReservation/{id}")]
         [AuthorizeCustom(UserRoles.User)]
-        public ReservationResponse ExtendReservation(int reservationId, ExtendReservationRequest request)
+        public ReservationResponse ExtendReservation(int id, ExtendReservationRequest request)
         {
-            return _reservationService.ExtendReservation(reservationId, request);
+            return _reservationService.ExtendReservation(id, request);
         }
 
     }
