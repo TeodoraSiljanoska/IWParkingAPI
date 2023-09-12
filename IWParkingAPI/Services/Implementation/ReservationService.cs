@@ -81,10 +81,10 @@ namespace IWParkingAPI.Services.Implementation
                 //DateTime for reservation start and end
                 DateTime reservationStartDateTime = request.StartDate.Date.Add(parsedStartTime);
                 DateTime reservationEndDateTime = request.EndDate.Date.Add(parsedEndTime);
-                if(reservationStartDateTime < DateTime.Now || reservationEndDateTime < DateTime.Now)
-                 {
-                     throw new BadRequestException("Please enter valid date and time range to make a reservation");
-                 }
+                if (reservationStartDateTime < DateTime.Now || reservationEndDateTime < DateTime.Now)
+                {
+                    throw new BadRequestException("Please enter valid date and time range to make a reservation");
+                }
 
                 //if the working hours of the parking lot are overnight
                 bool workingHourisOvernight = false;
@@ -92,9 +92,7 @@ namespace IWParkingAPI.Services.Implementation
                 DateTime parkingLotWorkingStart = reservationStartDateTime.Date.Add(parkingLot.WorkingHourFrom);
                 DateTime parkingLotWorkingEnd;
                 DateTime fromPreviosWorkingDayEnd = DateTime.MinValue;
-                DateTime fromPWDE2 = DateTime.MinValue;
                 DateTime fromPreviousWorkingDayStart = DateTime.MaxValue;
-                DateTime fromPWDS2 = DateTime.MaxValue;
 
                 //check if the reservation date and time range is valid
                 if (reservationEndDateTime <= reservationStartDateTime)
@@ -113,8 +111,6 @@ namespace IWParkingAPI.Services.Implementation
                 {
                     fromPreviosWorkingDayEnd = reservationStartDateTime.Date.Add(parkingLot.WorkingHourTo);
                     fromPreviousWorkingDayStart = parkingLotWorkingStart.AddDays(-1);
-                    fromPWDE2 = reservationEndDateTime.Date.Add(parkingLot.WorkingHourTo);
-                    fromPWDS2 = (reservationEndDateTime.Date.AddDays(-1)).Add(parkingLot.WorkingHourFrom);
                     parkingLotWorkingEnd = (reservationEndDateTime.Date.AddDays(1)).Date.Add(parkingLot.WorkingHourTo);
                 }
                 else
@@ -122,17 +118,47 @@ namespace IWParkingAPI.Services.Implementation
                     parkingLotWorkingEnd = reservationEndDateTime.Date.Add(parkingLot.WorkingHourTo);
                 }
 
-                TimeSpan tempEndOfDay = new TimeSpan(0, 23, 59, 59, 59);
-                DateTime endOfPreviousDay = fromPreviousWorkingDayStart.Date.Add(tempEndOfDay);
-                DateTime endOfPD2 = fromPWDE2.Date.Add(tempEndOfDay);
+                TimeSpan tempStartOfDay = new TimeSpan(0, 0, 0, 0);
+                DateTime endOfReservationForDay;
+               
                 if (workingHourisOvernight == true)
                 {
-                    if (!((reservationStartDateTime >= fromPreviousWorkingDayStart && reservationStartDateTime >= endOfPreviousDay
-                        && reservationEndDateTime <= fromPreviosWorkingDayEnd) ||
-                        (reservationStartDateTime >= fromPWDS2 && reservationStartDateTime >= endOfPD2
-                        && reservationEndDateTime <= fromPWDE2) ||
-                        (reservationStartDateTime >= parkingLotWorkingStart && reservationEndDateTime <= parkingLotWorkingEnd)))
-                        throw new BadRequestException("Please enter valid date and time range to make a reservation");
+                    if (parsedEndTime > parsedStartTime)
+                    {
+                        endOfReservationForDay = reservationStartDateTime.Date.Add(parsedEndTime);
+                    }
+                    else 
+                    { 
+                        endOfReservationForDay = reservationStartDateTime.AddDays(1).Date.Add(parsedEndTime); 
+                    }
+                    DateTime startOfDay = reservationStartDateTime.Date.Add(tempStartOfDay);
+                    DateTime day = reservationStartDateTime.Date.Add(parkingLot.WorkingHourTo);
+                    DateTime day2 = reservationEndDateTime.Date.Add(parkingLot.WorkingHourTo);
+                    DateTime startOfDay2 = reservationEndDateTime.Date.Add(tempStartOfDay);
+
+                    if (parsedEndTime > parsedStartTime)
+                    {
+                        if (!(((reservationStartDateTime >= startOfDay && endOfReservationForDay <= day)
+                           && (reservationEndDateTime >= startOfDay2 && reservationEndDateTime <= day2)) ||
+                           (reservationStartDateTime >= parkingLotWorkingStart && reservationEndDateTime <= parkingLotWorkingEnd)))
+                                throw new BadRequestException("Please enter valid date and time range to make a reservation");
+                    }
+                    else if (parsedEndTime == parsedStartTime)
+                    {
+                        var temp = day;
+                        day = day.AddDays(1); 
+                        if (!(((reservationStartDateTime < temp && reservationStartDateTime >= startOfDay && endOfReservationForDay <= day) &&
+                           (reservationEndDateTime >= startOfDay2 && reservationEndDateTime <= day2)) ||
+                           (reservationStartDateTime >= parkingLotWorkingStart && reservationEndDateTime.Hour <= parkingLotWorkingEnd.Hour)))
+                               throw new BadRequestException("Please enter valid date and time range to make a reservation");
+                    }
+                    else
+                    {
+                        if (!(((reservationStartDateTime >= startOfDay && endOfReservationForDay <= day) &&
+                           (reservationEndDateTime >= startOfDay2 && reservationEndDateTime <= day2)) ||
+                           (reservationStartDateTime >= parkingLotWorkingStart && reservationEndDateTime.Hour <= parkingLotWorkingEnd.Hour)))
+                               throw new BadRequestException("Please enter valid date and time range to make a reservation");
+                    }
                 }
                 else
                 {
@@ -212,7 +238,7 @@ namespace IWParkingAPI.Services.Implementation
             _makeReservationResponse.Reservation = _mapper.Map<ReservationDTO>(reservationToInsert);
         }
 
-        private void CheckForExistingReservation(MakeReservationRequest request, AspNetUser user, 
+        private void CheckForExistingReservation(MakeReservationRequest request, AspNetUser user,
             Vehicle selectedVehicle, DateTime reservationStartDateTime, DateTime reservationEndDateTime)
         {
             List<Reservation> existingReservation = _reservationRepository.GetAsQueryable(x =>
@@ -234,7 +260,6 @@ namespace IWParkingAPI.Services.Implementation
                 {
                     throw new BadRequestException("A reservation with the same vehicle and overlapping time range already exists.");
                 }
-
             }
         }
 
