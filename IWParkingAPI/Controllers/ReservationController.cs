@@ -20,9 +20,16 @@ namespace IWParkingAPI.Controllers
 
         [HttpPost("MakeReservation")]
         [AuthorizeCustom(UserRoles.User)]
-        public MakeReservationResponse MakeReservation(MakeReservationRequest request)
+        public ReservationResponse MakeReservation(MakeReservationRequest request)
         {
            return _reservationService.MakeReservation(request); 
+        }
+
+        [HttpPut("ExtendReservation/{id}")]
+        [AuthorizeCustom(UserRoles.User)]
+        public ReservationResponse ExtendReservation(int reservationId, ExtendReservationRequest request)
+        {
+            return _reservationService.ExtendReservation(reservationId, request);
         }
 
     }

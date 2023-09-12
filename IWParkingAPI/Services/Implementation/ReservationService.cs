@@ -27,10 +27,7 @@ namespace IWParkingAPI.Services.Implementation
         private readonly IJWTDecode _jWTDecode;
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
         private readonly ICalculateCapacityExtension _calculateCapacityExtension;
-        private readonly MakeReservationResponse _makeReservationResponse;
-
-
-
+        private readonly ReservationResponse _reservationResponse;
 
         public ReservationService(IUnitOfWork<ParkingDbContext> unitOfWork, IJWTDecode jWTDecode,
             ICalculateCapacityExtension calculateCapacityExtension)
@@ -42,9 +39,9 @@ namespace IWParkingAPI.Services.Implementation
             _userRepository = _unitOfWork.GetGenericRepository<AspNetUser>();
             _jWTDecode = jWTDecode;
             _calculateCapacityExtension = calculateCapacityExtension;
-            _makeReservationResponse = new MakeReservationResponse();
+            _reservationResponse = new ReservationResponse();
         }
-        public MakeReservationResponse MakeReservation(MakeReservationRequest request)
+        public ReservationResponse MakeReservation(MakeReservationRequest request)
         {
             try
             {
@@ -62,7 +59,8 @@ namespace IWParkingAPI.Services.Implementation
                     throw new BadRequestException("Please select a valid vehicle to make a reservation");
                 }
 
-                var parkingLot = _parkingLotRepository.GetAsQueryable(x => x.Id == request.ParkingLotId, null, null).FirstOrDefault();
+                var parkingLot = _parkingLotRepository.GetAsQueryable(x => x.Id == request.ParkingLotId && 
+                x.IsDeactivated == false, null, null).FirstOrDefault();
 
                 if (parkingLot == null)
                 {
@@ -86,8 +84,6 @@ namespace IWParkingAPI.Services.Implementation
                 {
                     throw new BadRequestException("Please enter valid date and time range to make a reservation");
                 }
-
-
 
                 ValidateDateTimeRange(parkingLot, reservationStartDateTime, reservationEndDateTime);
 
@@ -124,7 +120,7 @@ namespace IWParkingAPI.Services.Implementation
                 }
 
                 InsertReservation(request, userId, selectedVehicle, parkingLot, reservationStartDateTime, reservationEndDateTime);
-                return _makeReservationResponse;
+                return _reservationResponse;
             }
             catch (BadRequestException ex)
             {
@@ -135,6 +131,79 @@ namespace IWParkingAPI.Services.Implementation
             {
                 _logger.Error($"Unexpected error while making the Reservation {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
                 throw new InternalErrorException("Unexpected error while making the Reservation");
+            }
+        }
+
+        public ReservationResponse ExtendReservation(int reservationId, ExtendReservationRequest request)
+        {
+            try
+            {
+                var userId = Convert.ToInt32(_jWTDecode.ExtractClaimByType("Id"));
+                var reservation = _reservationRepository.GetAsQueryable(x => x.Id == reservationId && x.UserId == userId
+                && x.Type == Enums.ReservationTypes.Successful.ToString()).FirstOrDefault();
+                if (reservation == null)
+                {
+                    throw new NotFoundException("Reservation doesn't exist");
+                }
+                var parkingLot = _parkingLotRepository.GetAsQueryable(x => x.Id == reservation.ParkingLotId &&
+                x.IsDeactivated == false, null, null).FirstOrDefault();
+
+                TimeSpan reservationExtendedEndTime;
+                if (!TimeSpan.TryParse(request.EndTime, out reservationExtendedEndTime))
+                {
+                    throw new BadRequestException("Invalid start or end time format");
+                }
+
+                DateTime reservationStartDateTime = reservation.StartDate.Add(reservation.StartTime);
+                DateTime reservationEndDateTime = reservation.EndDate.Add(reservation.EndTime);
+                DateTime reservationExtendedEndDateTime = request.EndDate.Add(reservationExtendedEndTime);
+
+                if (reservationEndDateTime < DateTime.Now)
+                {
+                    throw new BadRequestException("Can't extend this reservation, because it has already finished");
+                }
+                else
+                {
+                    if (reservationExtendedEndDateTime <= reservationStartDateTime || 
+                        reservationExtendedEndDateTime == reservationEndDateTime || reservationExtendedEndDateTime < reservationEndDateTime)
+                    {
+                        throw new BadRequestException("Please enter valid date and time range to extend the reservation");
+                    }
+
+                    ValidateDateTimeRange(parkingLot, reservationStartDateTime, reservationExtendedEndDateTime);
+                }
+
+                reservation.Type = Enums.ReservationTypes.Successful.ToString();
+                reservation.EndTime = reservationExtendedEndTime;
+                reservation.EndDate = request.EndDate.Date;
+                reservation.TimeModified = DateTime.Now;
+                _reservationRepository.Update(reservation);
+                _unitOfWork.Save();
+
+                var reservationDTO = _mapper.Map<ReservationDTO>(reservation);
+                reservationDTO.StartDate = reservation.StartDate;
+                reservationDTO.StartTime = reservation.StartTime;
+
+                _reservationResponse.StatusCode = HttpStatusCode.OK;
+                _reservationResponse.Message = "Reservation extended successfully";
+                _reservationResponse.Reservation = reservationDTO;
+                return _reservationResponse;
+
+            }
+            catch (NotFoundException ex)
+            {
+                _logger.Error($"Not Found for ExtendReservation {Environment.NewLine}ErrorMessage: {ex.Message}");
+                throw;
+            }
+            catch (BadRequestException ex)
+            {
+                _logger.Error($"Bad Request for ExtendReservation {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.Error($"Unexpected error while extending the Reservation {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
+                throw new InternalErrorException("Unexpected error while extending the Reservation");
             }
         }
 
@@ -156,9 +225,9 @@ namespace IWParkingAPI.Services.Implementation
             _reservationRepository.Insert(reservationToInsert);
             _unitOfWork.Save();
 
-            _makeReservationResponse.StatusCode = HttpStatusCode.OK;
-            _makeReservationResponse.Message = "Reservation made successfully";
-            _makeReservationResponse.Reservation = _mapper.Map<ReservationDTO>(reservationToInsert);
+            _reservationResponse.StatusCode = HttpStatusCode.OK;
+            _reservationResponse.Message = "Reservation made successfully";
+            _reservationResponse.Reservation = _mapper.Map<ReservationDTO>(reservationToInsert);
         }
 
         private void CheckForExistingReservation(MakeReservationRequest request, AspNetUser user,
@@ -238,13 +307,13 @@ namespace IWParkingAPI.Services.Implementation
             }
             catch (BadRequestException ex)
             {
-                _logger.Error($"Bad Request for MakeReservation {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
+                _logger.Error($"Bad Request for ValidateDateTimeRange {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
                 throw;
             }
             catch (Exception ex)
             {
-                _logger.Error($"Unexpected error while making the Reservation {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
-                throw new InternalErrorException("Unexpected error while making the Reservation");
+                _logger.Error($"Unexpected error while validating the DateTime range {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
+                throw new InternalErrorException("Unexpected error while validating the DateTime range");
             }
 
         }
