@@ -173,6 +173,7 @@ namespace IWParkingAPI.Services.Implementation
                 foreach (var p in paginatedParkingLots)
                 {
                     var mappedObject = _mapper.Map<ParkingLotWithAvailableCapacityDTO>(p);
+                    //if the User is logged in capacity and available capacity is returned according to the primary Vehicle Type
                     if (role != null && role.Equals(Models.UserRoles.User))
                     {
                         if (userFavouritesList.Contains(p))
