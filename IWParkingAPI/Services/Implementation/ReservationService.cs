@@ -68,6 +68,11 @@ namespace IWParkingAPI.Services.Implementation
                     throw new BadRequestException("Please select a valid Parking Lot to make a reservation");
                 }
 
+                if (parkingLot.IsDeactivated == true)
+                {
+                    throw new BadRequestException("Can't make reservation on a deactivated Parking Lot");
+                }
+
                 //convert from request - from string to TimeSpan
                 TimeSpan reservationStartTime;
                 TimeSpan reservationEndTime;
@@ -125,7 +130,7 @@ namespace IWParkingAPI.Services.Implementation
                 }
 
                 InsertReservation(request, userId, selectedVehicle, parkingLot, reservationStartDateTime, reservationEndDateTime);
-                return _makeReservationResponse;
+                return _reservationResponse;
             }
             catch (BadRequestException ex)
             {
@@ -157,9 +162,9 @@ namespace IWParkingAPI.Services.Implementation
             _reservationRepository.Insert(reservationToInsert);
             _unitOfWork.Save();
 
-            _makeReservationResponse.StatusCode = HttpStatusCode.OK;
-            _makeReservationResponse.Message = "Reservation made successfully";
-            _makeReservationResponse.Reservation = _mapper.Map<ReservationDTO>(reservationToInsert);
+            _reservationResponse.StatusCode = HttpStatusCode.OK;
+            _reservationResponse.Message = "Reservation made successfully";
+            _reservationResponse.Reservation = _mapper.Map<ReservationDTO>(reservationToInsert);
         }
 
         private void CheckForExistingReservation(MakeReservationRequest request, AspNetUser user,
@@ -254,7 +259,8 @@ namespace IWParkingAPI.Services.Implementation
         {
             try
             {
-                var reservation = _reservationRepository.GetAsQueryable(x => x.Id == reservationId).FirstOrDefault();
+                var userId = Convert.ToInt32(_jWTDecode.ExtractClaimByType("Id"));
+                var reservation = _reservationRepository.GetAsQueryable(x => x.Id == reservationId && x.UserId == userId).FirstOrDefault();
                 if (reservation == null)
                 {
                     throw new BadRequestException("Reservation doesn't exist");
