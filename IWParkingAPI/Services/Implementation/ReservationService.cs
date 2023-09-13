@@ -178,7 +178,7 @@ namespace IWParkingAPI.Services.Implementation
                     CheckForExistingReservationForExtend(reservation, reservationExtendedEndDateTime);
                 }
 
-                UpdateReservation(request, reservation, parkingLot, reservationExtendedEndTime, reservationStartDateTime, reservationEndDateTime);
+                UpdateReservation(request, reservation, parkingLot, reservationExtendedEndTime, reservationStartDateTime);
                 return _reservationResponse;
 
             }
@@ -199,12 +199,12 @@ namespace IWParkingAPI.Services.Implementation
             }
         }
 
-        private void UpdateReservation(ExtendReservationRequest request, Reservation? reservation, ParkingLot? parkingLot, TimeSpan reservationExtendedEndTime, DateTime reservationStartDateTime, DateTime reservationEndDateTime)
+        private void UpdateReservation(ExtendReservationRequest request, Reservation? reservation, ParkingLot? parkingLot, TimeSpan reservationExtendedEndTime, DateTime reservationStartDateTime)
         {
             reservation.Type = Enums.ReservationTypes.Successful.ToString();
             reservation.EndTime = reservationExtendedEndTime;
             reservation.EndDate = request.EndDate.Date;
-            double totalPrice = CalculatePrice(parkingLot, reservationStartDateTime, reservationEndDateTime);
+            double totalPrice = CalculatePrice(parkingLot, reservationStartDateTime, reservation.EndDate.Add(reservation.EndTime));
             totalPrice = Math.Ceiling(totalPrice);
             reservation.Amount = (int)totalPrice;
             reservation.TimeModified = DateTime.Now;
@@ -317,16 +317,18 @@ namespace IWParkingAPI.Services.Implementation
                 TimeSpan startOfDay = new TimeSpan(0, 0, 0, 0);
                 TimeSpan endOfDay = new TimeSpan(0, 23, 59, 59);
                 DateTime currentDateTime = reservationStartDateTime;
-                int totalWorkingHours = 0;
+                int totalNonWorkingHours = 0;
+                double duration = (reservationEndDateTime - reservationStartDateTime).TotalHours; 
                 while (currentDateTime <= reservationEndDateTime)
                 {
-                    if (((currentDateTime.TimeOfDay >= startOfDay && currentDateTime.TimeOfDay <= parkingLotWorkingHoursEnd) ||
+                    if (!((currentDateTime.TimeOfDay >= startOfDay && currentDateTime.TimeOfDay <= parkingLotWorkingHoursEnd) ||
                         (currentDateTime.TimeOfDay >= parkingLotWorkingHoursStart && currentDateTime.TimeOfDay <= endOfDay))
                         && currentDateTime.TimeOfDay != parkingLotWorkingHoursEnd)
-                        totalWorkingHours++;
+                        totalNonWorkingHours++; 
                     currentDateTime = currentDateTime.AddHours(1);
                 }
-                priceForOvernight = (totalWorkingHours - 1) * parkingLot.Price;
+                duration = duration - totalNonWorkingHours;
+                priceForOvernight = duration * parkingLot.Price;
                 priceToReturn = priceForOvernight;
             }
             else
@@ -432,7 +434,7 @@ namespace IWParkingAPI.Services.Implementation
                 {
                     throw new BadRequestException("Can't cancel this reservation, because it has already finished");
                 }
-                if ((reservationEndDateTime.Date == dateTimeNow.Date && timeNow >= reservation.StartTime) 
+                if ((reservationEndDateTime.Date == dateTimeNow.Date && timeNow >= reservation.StartTime)
                     || (dateTimeNow > reservationStartDateTime))
                 {
                     throw new BadRequestException("Can't cancel this reservation, because it has already started");
