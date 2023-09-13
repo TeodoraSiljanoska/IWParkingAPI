@@ -28,9 +28,10 @@ namespace IWParkingAPI.Services.Implementation
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
         private readonly ICalculateCapacityExtension _calculateCapacityExtension;
         private readonly ReservationResponse _reservationResponse;
+        private readonly IEnumsExtension<Enums.VehicleTypes> _enumsExtensionVehicleTypes;
 
         public ReservationService(IUnitOfWork<ParkingDbContext> unitOfWork, IJWTDecode jWTDecode,
-            ICalculateCapacityExtension calculateCapacityExtension)
+            ICalculateCapacityExtension calculateCapacityExtension, IEnumsExtension<Enums.VehicleTypes> enumsExtension)
         {
             _mapper = MapperConfig.InitializeAutomapper();
             _unitOfWork = unitOfWork;
@@ -40,6 +41,7 @@ namespace IWParkingAPI.Services.Implementation
             _jWTDecode = jWTDecode;
             _calculateCapacityExtension = calculateCapacityExtension;
             _reservationResponse = new ReservationResponse();
+            _enumsExtensionVehicleTypes = enumsExtension;
         }
         public ReservationResponse MakeReservation(MakeReservationRequest request)
         {
@@ -59,8 +61,8 @@ namespace IWParkingAPI.Services.Implementation
                     throw new BadRequestException("Please select a valid vehicle to make a reservation");
                 }
 
-                var parkingLot = _parkingLotRepository.GetAsQueryable(x => x.Id == request.ParkingLotId &&
-                x.IsDeactivated == false, null, null).FirstOrDefault();
+                var parkingLot = _parkingLotRepository.GetAsQueryable(x => x.Id == request.ParkingLotId
+                    && x.IsDeactivated == false, null, null).FirstOrDefault();
 
                 if (parkingLot == null)
                 {
@@ -92,7 +94,8 @@ namespace IWParkingAPI.Services.Implementation
                 var madeReservations = _calculateCapacityExtension.AvailableCapacity(int.Parse(userId), selectedVehicle.Type, parkingLot.Id,
                      request.StartDate.Date, reservationStartTime, request.EndDate.Date, reservationEndTime);
 
-                if (selectedVehicle.Type.Equals(Enums.VehicleTypes.Car.ToString()))
+                // if users vehicle type is Car, check available car capacity
+                if (selectedVehicle.Type.Equals(_enumsExtensionVehicleTypes.GetDisplayName(Enums.VehicleTypes.Car)))
                 {
                     var availableCapacity = parkingLot.CapacityCar - madeReservations;
                     if (availableCapacity == 0)
@@ -101,7 +104,8 @@ namespace IWParkingAPI.Services.Implementation
                     }
                 }
 
-                if (selectedVehicle.Type.Equals(Enums.VehicleTypes.AdaptedCar.ToString()))
+                // if users vehicle type is Adapted Car
+                if (selectedVehicle.Type.Equals(_enumsExtensionVehicleTypes.GetDisplayName(Enums.VehicleTypes.AdaptedCar)))
                 {
                     var availableAdaptedCapacity = parkingLot.CapacityAdaptedCar - madeReservations;
                     if (availableAdaptedCapacity == 0)
@@ -110,7 +114,7 @@ namespace IWParkingAPI.Services.Implementation
                         Enums.VehicleTypes.Car.ToString(), parkingLot.Id,
                         request.StartDate, reservationStartTime, request.EndDate, reservationEndTime);
 
-                        var availableCarCapacity = parkingLot.CapacityCar - madeReservations;
+                        var availableCarCapacity = parkingLot.CapacityCar - madeReservationsWithCar;
 
                         if (availableCarCapacity == 0)
                         {
@@ -402,6 +406,60 @@ namespace IWParkingAPI.Services.Implementation
                 throw new InternalErrorException("Unexpected error while validating the DateTime range");
             }
 
+        }
+
+        public ReservationResponse CancelReservation(int reservationId)
+        {
+            try
+            {
+                var userId = Convert.ToInt32(_jWTDecode.ExtractClaimByType("Id"));
+                var reservation = _reservationRepository.GetAsQueryable(x => x.Id == reservationId && x.UserId == userId).FirstOrDefault();
+                if (reservation == null)
+                {
+                    throw new BadRequestException("Reservation doesn't exist");
+                }
+
+                if (reservation.Type.Equals(Enums.ReservationTypes.Cancelled.ToString()))
+                {
+                    throw new BadRequestException("Reservation is already cancelled");
+                }
+
+                DateTime dateTimeNow = DateTime.Now;
+                DateTime reservationStartDateTime = reservation.StartDate.Add(reservation.StartTime);
+                DateTime reservationEndDateTime = reservation.EndDate.Add(reservation.EndTime);
+                TimeSpan timeNow = dateTimeNow.TimeOfDay;
+                if (dateTimeNow > reservationEndDateTime)
+                {
+                    throw new BadRequestException("Can't cancel this reservation, because it has already finished");
+                }
+                if ((reservationEndDateTime.Date == dateTimeNow.Date && timeNow >= reservation.StartTime) 
+                    || (dateTimeNow > reservationStartDateTime))
+                {
+                    throw new BadRequestException("Can't cancel this reservation, because it has already started");
+                }
+                reservation.Type = Enums.ReservationTypes.Cancelled.ToString();
+                reservation.TimeModified = DateTime.Now;
+                _reservationRepository.Update(reservation);
+                _unitOfWork.Save();
+
+                var reservationDTO = _mapper.Map<ReservationDTO>(reservation);
+
+                _reservationResponse.StatusCode = HttpStatusCode.OK;
+                _reservationResponse.Message = "Reservation cancelled successfully";
+                _reservationResponse.Reservation = reservationDTO;
+                return _reservationResponse;
+
+            }
+            catch (BadRequestException ex)
+            {
+                _logger.Error($"Bad Request for CancelReservation {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.Error($"Unexpected error while cancelling the Reservation {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
+                throw new InternalErrorException("Unexpected error while cancelling the Reservation");
+            }
         }
     }
 }

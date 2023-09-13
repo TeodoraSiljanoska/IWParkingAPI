@@ -38,10 +38,10 @@ namespace IWParkingAPI.Services.Implementation
         private readonly AllVehiclesResponse _vehiclesByUserIdResponse;
         private readonly VehicleResponse _makePrimaryResponse;
         private readonly VehicleTypesResponse _vehicleTypeResponse;
+        private readonly IEnumsExtension<Enums.VehicleTypes> _enumsExtensionVehicleTypes;
 
 
-
-        public VehicleService(IUnitOfWork<ParkingDbContext> unitOfWork, IJWTDecode jWTDecode)
+        public VehicleService(IUnitOfWork<ParkingDbContext> unitOfWork, IJWTDecode jWTDecode, IEnumsExtension<Enums.VehicleTypes> enumsExtension)
         {
             _mapper = MapperConfig.InitializeAutomapper();
             _unitOfWork = unitOfWork;
@@ -52,6 +52,7 @@ namespace IWParkingAPI.Services.Implementation
             _vehiclesByUserIdResponse = new AllVehiclesResponse();
             _makePrimaryResponse = new VehicleResponse();
             _vehicleTypeResponse = new VehicleTypesResponse();
+            _enumsExtensionVehicleTypes = enumsExtension;
         }
 
         public AllVehiclesWithUserResponse GetAllVehicles()
@@ -404,7 +405,7 @@ namespace IWParkingAPI.Services.Implementation
                                                 .Cast<VehicleTypes>()
                                                 .ToArray();
 
-                string[] displayNames = GetDisplayNames(enumValues);
+                string[] displayNames = _enumsExtensionVehicleTypes.GetDisplayNames(enumValues);
                 List<string> vehicleTypes = new List<string>();
 
                 foreach (string displayName in displayNames)
@@ -493,20 +494,5 @@ namespace IWParkingAPI.Services.Implementation
                 throw new InternalErrorException("Unexpected error while making Vehicle primary");
             }
         }
-
-        ///Additional method to get display names for the method GetVehicleTypes()
-        public static string[] GetDisplayNames(Enums.VehicleTypes[] enumValues)
-        {
-            return enumValues.Select(enumValue =>
-            {
-                var displayAttribute = enumValue.GetType()
-                                                .GetField(enumValue.ToString())
-                                                .GetCustomAttributes(typeof(DisplayAttribute), false)
-                                                .FirstOrDefault() as DisplayAttribute;
-
-                return displayAttribute?.Name ?? enumValue.ToString();
-            }).ToArray();
-        }
-
     }
 }
