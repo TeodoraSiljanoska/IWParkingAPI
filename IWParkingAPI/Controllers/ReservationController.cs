@@ -32,7 +32,7 @@ namespace IWParkingAPI.Controllers
             return _reservationService.CancelReservation(id);
         }
 
-        [HttpPut("ExtendReservation/{id}")]
+        [HttpPut("Extend/{id}")]
         [AuthorizeCustom(UserRoles.User)]
         public ReservationResponse ExtendReservation(int id, ExtendReservationRequest request)
         {
