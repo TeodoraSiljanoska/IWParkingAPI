@@ -174,23 +174,7 @@ namespace IWParkingAPI.Services.Implementation
                     CheckForExistingReservationForExtend(reservation, reservationExtendedEndDateTime);
                 }
 
-                reservation.Type = Enums.ReservationTypes.Successful.ToString();
-                reservation.EndTime = reservationExtendedEndTime;
-                reservation.EndDate = request.EndDate.Date;
-                double totalPrice = CalculateReservationPrice(reservationStartDateTime, reservationExtendedEndDateTime, parkingLot.Price);
-                totalPrice = Math.Ceiling(totalPrice);
-                reservation.Amount = (int)totalPrice;
-                reservation.TimeModified = DateTime.Now;
-                _reservationRepository.Update(reservation);
-                _unitOfWork.Save();
-
-                var reservationDTO = _mapper.Map<ReservationDTO>(reservation);
-                reservationDTO.StartDate = reservation.StartDate;
-                reservationDTO.StartTime = reservation.StartTime;
-
-                _reservationResponse.StatusCode = HttpStatusCode.OK;
-                _reservationResponse.Message = "Reservation extended successfully";
-                _reservationResponse.Reservation = reservationDTO;
+                UpdateReservation(request, reservation, parkingLot, reservationExtendedEndTime, reservationStartDateTime, reservationEndDateTime);
                 return _reservationResponse;
 
             }
@@ -211,14 +195,34 @@ namespace IWParkingAPI.Services.Implementation
             }
         }
 
+        private void UpdateReservation(ExtendReservationRequest request, Reservation? reservation, ParkingLot? parkingLot, TimeSpan reservationExtendedEndTime, DateTime reservationStartDateTime, DateTime reservationEndDateTime)
+        {
+            reservation.Type = Enums.ReservationTypes.Successful.ToString();
+            reservation.EndTime = reservationExtendedEndTime;
+            reservation.EndDate = request.EndDate.Date;
+            double totalPrice = CalculatePrice(parkingLot, reservationStartDateTime, reservationEndDateTime);
+            totalPrice = Math.Ceiling(totalPrice);
+            reservation.Amount = (int)totalPrice;
+            reservation.TimeModified = DateTime.Now;
+            _reservationRepository.Update(reservation);
+            _unitOfWork.Save();
+
+            var reservationDTO = _mapper.Map<ReservationDTO>(reservation);
+            reservationDTO.StartDate = reservation.StartDate;
+            reservationDTO.StartTime = reservation.StartTime;
+
+            _reservationResponse.StatusCode = HttpStatusCode.OK;
+            _reservationResponse.Message = "Reservation extended successfully";
+            _reservationResponse.Reservation = reservationDTO;
+        }
+
         private void InsertReservation(MakeReservationRequest request, string userId, Vehicle selectedVehicle, ParkingLot parkingLot, DateTime reservationStartDateTime, DateTime reservationEndDateTime)
         {
             var reservation = _mapper.Map<ReservationDTO>(request);
             reservation.StartDate = reservationStartDateTime.Date;
             reservation.IsPaid = true;
             reservation.Type = Enums.ReservationTypes.Successful.ToString();
-            double totalPrice = CalculatePrice2(parkingLot, reservationStartDateTime, reservationEndDateTime);
-            // double totalPrice = CalculateReservationPrice(reservationStartDateTime, reservationEndDateTime, parkingLot.Price);
+            double totalPrice = CalculatePrice(parkingLot, reservationStartDateTime, reservationEndDateTime);
             totalPrice = Math.Ceiling(totalPrice);
             reservation.Amount = (int)totalPrice;
             reservation.UserId = int.Parse(userId);
@@ -259,7 +263,6 @@ namespace IWParkingAPI.Services.Implementation
                 }
             }
         }
-
         private void CheckForExistingReservationForExtend(Reservation reservation, DateTime reservationExtendedEndDateTime)
         {
             DateTime reservationStartDateTime = reservation.StartDate.Date.Add(reservation.StartTime);
@@ -285,49 +288,47 @@ namespace IWParkingAPI.Services.Implementation
                 }
             }
         }
-
-
-        private double CalculateReservationPrice(DateTime startDateTime, DateTime endDateTime, double hourlyRate)
-        {
-            // Calculate the total duration of the reservation in hours
-            TimeSpan reservationDuration = endDateTime - startDateTime;
-
-            // Calculate the total price based on the hourly rate
-            double totalPrice = reservationDuration.TotalHours * hourlyRate;
-
-            return totalPrice;
-        }
-
-        private double CalculatePrice2(ParkingLot parkingLot, DateTime reservationStartDateTime, DateTime reservationEndDateTime)
+        private double CalculatePrice(ParkingLot parkingLot, DateTime reservationStartDateTime, DateTime reservationEndDateTime)
         {
             bool isOvernight = false;
-            TimeSpan parkingLotWorkingHoursStart = parkingLot.WorkingHourFrom; // Start time, e.g., 8:00 AM
-            TimeSpan parkingLotWorkingHoursEnd = parkingLot.WorkingHourTo;  // End time, e.g., 6:00 PM
-            DateTime reservationStartDate = reservationStartDateTime.Date;           // Start date of the reservation, e.g., today
-            DateTime reservationEndDate = reservationEndDateTime.Date; // End date of the reservation, e.g., 2 days from now
-            TimeSpan reservationStartTime = reservationStartDateTime.TimeOfDay;        // Start time of the reservation, e.g., 9:00 AM
-            TimeSpan reservationEndTime = reservationEndDateTime.TimeOfDay;          // End time of the reservation, e.g., 4:00 PM
-
+            TimeSpan parkingLotWorkingHoursStart = parkingLot.WorkingHourFrom;
+            TimeSpan parkingLotWorkingHoursEnd = parkingLot.WorkingHourTo;
+            DateTime reservationStartDate = reservationStartDateTime.Date;
+            DateTime reservationEndDate = reservationEndDateTime.Date;
+            TimeSpan reservationStartTime = reservationStartDateTime.TimeOfDay;
+            TimeSpan reservationEndTime = reservationEndDateTime.TimeOfDay;
             DateTime currentDate = reservationStartDate;
             TimeSpan totalDurationWithinWorkingHours = TimeSpan.Zero;
+            double priceForNonOvernight = 0;
+            double priceForOvernight = 0;
+            double priceToReturn = 0;
 
             if (parkingLotWorkingHoursEnd < parkingLotWorkingHoursStart)
             {
                 isOvernight = true;
-                totalDurationWithinWorkingHours = reservationEndDateTime - reservationStartDateTime;
             }
-            TimeSpan total = reservationEndDateTime - reservationStartDateTime;
 
-            while (currentDate <= reservationEndDate)
+            if (isOvernight)
             {
-                if (isOvernight)
+                TimeSpan startOfDay = new TimeSpan(0, 0, 0, 0);
+                TimeSpan endOfDay = new TimeSpan(0, 23, 59, 59);
+                DateTime currentDateTime = reservationStartDateTime;
+                int totalWorkingHours = 0;
+                while (currentDateTime <= reservationEndDateTime)
                 {
-                    TimeSpan workingHoursOutOfRange = -(parkingLot.WorkingHourTo - parkingLot.WorkingHourFrom);
-                    totalDurationWithinWorkingHours -= workingHoursOutOfRange;
+                    if (((currentDateTime.TimeOfDay >= startOfDay && currentDateTime.TimeOfDay <= parkingLotWorkingHoursEnd) ||
+                        (currentDateTime.TimeOfDay >= parkingLotWorkingHoursStart && currentDateTime.TimeOfDay <= endOfDay))
+                        && currentDateTime.TimeOfDay != parkingLotWorkingHoursEnd)
+                        totalWorkingHours++;
+                    currentDateTime = currentDateTime.AddHours(1);
                 }
-                else
+                priceForOvernight = (totalWorkingHours - 1) * parkingLot.Price;
+                priceToReturn = priceForOvernight;
+            }
+            else
+            {
+                while (currentDate <= reservationEndDate)
                 {
-                    // Calculate the intersection of reservation times and working hours for the current day
                     TimeSpan reservationWorkingHoursStart =
                         (currentDate == reservationStartDate && reservationStartTime > parkingLotWorkingHoursStart) ?
                         reservationStartTime : parkingLotWorkingHoursStart;
@@ -336,72 +337,71 @@ namespace IWParkingAPI.Services.Implementation
                         (currentDate == reservationEndDate && reservationEndTime < parkingLotWorkingHoursEnd) ?
                         reservationEndTime : parkingLotWorkingHoursEnd;
 
-                    // Calculate the duration within working hours for the current day
                     TimeSpan durationWithinWorkingHours = reservationWorkingHoursEnd - reservationWorkingHoursStart;
 
                     if (durationWithinWorkingHours > TimeSpan.Zero)
                     {
                         totalDurationWithinWorkingHours += durationWithinWorkingHours;
                     }
-
-                    // Move to the next day
+                    currentDate = currentDate.AddDays(1);
                 }
-                currentDate = currentDate.AddDays(1);
+                priceForNonOvernight = parkingLot.Price * totalDurationWithinWorkingHours.TotalHours;
+                priceToReturn = priceForNonOvernight;
             }
-            double price = parkingLot.Price * totalDurationWithinWorkingHours.TotalHours;
-            return price;
+
+            return priceToReturn;
         }
 
-    private void ValidateDateTimeRange(ParkingLot parkingLot, DateTime reservationStartDateTime, DateTime reservationEndDateTime)
-    {
-        try
+        private void ValidateDateTimeRange(ParkingLot parkingLot, DateTime reservationStartDateTime, DateTime reservationEndDateTime)
         {
-            bool isOvernight = false;
-
-            if (parkingLot.WorkingHourTo <= parkingLot.WorkingHourFrom)
+            try
             {
-                isOvernight = true;
-            }
-            //Reservation
-            var reservationStartTime = reservationStartDateTime.TimeOfDay;
-            var reservationEndTime = reservationEndDateTime.TimeOfDay;
+                bool isOvernight = false;
 
-            if (isOvernight)
-            {
-                var parkingLotNonWorkingStart = parkingLot.WorkingHourTo;
-                var parkingLotNonWorkingEnd = parkingLot.WorkingHourFrom;
-
-                // out of valid time range
-                if ((reservationStartTime >= parkingLotNonWorkingStart && reservationStartTime < parkingLotNonWorkingEnd) ||
-                    (reservationEndTime > parkingLotNonWorkingStart && reservationEndTime <= parkingLotNonWorkingEnd))
+                if (parkingLot.WorkingHourTo <= parkingLot.WorkingHourFrom)
                 {
-                    throw new BadRequestException("Non working hours");
+                    isOvernight = true;
                 }
-            }
-            else
-            {
-                var parkingLotWorkingStart = parkingLot.WorkingHourFrom;
-                var parkingLotWorkingEnd = parkingLot.WorkingHourTo;
+                //Reservation
+                var reservationStartTime = reservationStartDateTime.TimeOfDay;
+                var reservationEndTime = reservationEndDateTime.TimeOfDay;
 
-                // valid time range
-                if ((reservationStartTime < parkingLotWorkingStart || reservationStartTime >= parkingLotWorkingEnd) ||
-                  (reservationEndTime <= parkingLotWorkingStart || reservationEndTime > parkingLotWorkingEnd))
+                if (isOvernight)
                 {
-                    throw new BadRequestException("Non working hours");
+                    var parkingLotNonWorkingStart = parkingLot.WorkingHourTo;
+                    var parkingLotNonWorkingEnd = parkingLot.WorkingHourFrom;
+
+                    // out of valid time range
+                    if ((reservationStartTime >= parkingLotNonWorkingStart && reservationStartTime < parkingLotNonWorkingEnd) ||
+                        (reservationEndTime > parkingLotNonWorkingStart && reservationEndTime <= parkingLotNonWorkingEnd))
+                    {
+                        throw new BadRequestException("Non working hours");
+                    }
+                }
+                else
+                {
+                    var parkingLotWorkingStart = parkingLot.WorkingHourFrom;
+                    var parkingLotWorkingEnd = parkingLot.WorkingHourTo;
+
+                    // valid time range
+                    if ((reservationStartTime < parkingLotWorkingStart || reservationStartTime >= parkingLotWorkingEnd) ||
+                      (reservationEndTime <= parkingLotWorkingStart || reservationEndTime > parkingLotWorkingEnd))
+                    {
+                        throw new BadRequestException("Non working hours");
+                    }
                 }
             }
-        }
-        catch (BadRequestException ex)
-        {
-            _logger.Error($"Bad Request for ValidateDateTimeRange {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
-            throw;
-        }
-        catch (Exception ex)
-        {
-            _logger.Error($"Unexpected error while validating the DateTime range {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
-            throw new InternalErrorException("Unexpected error while validating the DateTime range");
-        }
+            catch (BadRequestException ex)
+            {
+                _logger.Error($"Bad Request for ValidateDateTimeRange {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.Error($"Unexpected error while validating the DateTime range {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
+                throw new InternalErrorException("Unexpected error while validating the DateTime range");
+            }
 
+        }
     }
-}
 }
