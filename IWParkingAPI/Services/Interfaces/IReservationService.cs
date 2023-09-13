@@ -5,6 +5,7 @@ namespace IWParkingAPI.Services.Interfaces
 {
     public interface IReservationService
     {
-        public MakeReservationResponse MakeReservation(MakeReservationRequest request);
+        public ReservationResponse MakeReservation(MakeReservationRequest request);
+        public ReservationResponse CancelReservation(int  reservationId);
     }
 }

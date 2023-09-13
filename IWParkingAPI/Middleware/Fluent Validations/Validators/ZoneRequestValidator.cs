@@ -9,7 +9,7 @@ namespace IWParkingAPI.Middleware.Fluent_Validations.Validators
         {
             RuleFor(x => x.Name)
                 .NotEmpty().WithMessage("Zone name is required")
-                .Matches("^[A-Z][0-9]{2}$");
+                .Matches("^[A-Z][0-9]$").WithMessage("Zone name is invalid");
         }
     }
 }
