@@ -18,13 +18,11 @@ namespace IWParkingAPI.Models.Responses.Dto
 
         public TimeSpan WorkingHourTo { get; set; }
 
-        [JsonIgnore]
        public int CapacityCar { get; set; }
 
-        [JsonIgnore]
         public int CapacityAdaptedCar { get; set; }
 
-        public int Capacity { get; set; }
+    //    public int Capacity { get; set; }
         public int Price { get; set; }
 
         public int UserId { get; set; }
@@ -37,6 +35,7 @@ namespace IWParkingAPI.Models.Responses.Dto
 
         public int Status { get; set; }
         public bool IsFavourite { get; set; } = false;
-        public int AvailableCapacity { get; set; }
+        public int AvailableCapacityCar { get; set; }
+        public int AvailableCapacityAdaptedCar { get; set; }
     }
 }
