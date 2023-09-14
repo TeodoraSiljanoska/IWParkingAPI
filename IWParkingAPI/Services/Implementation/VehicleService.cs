@@ -13,17 +13,8 @@ using NLog;
 using Microsoft.EntityFrameworkCore;
 using IWParkingAPI.Utilities;
 using IWParkingAPI.Models.Responses.Dto;
-using System.IdentityModel.Tokens.Jwt;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
 using IWParkingAPI.Models.Enums;
 using static IWParkingAPI.Models.Enums.Enums;
-using Newtonsoft.Json.Linq;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel;
-using System.Reflection;
-using System;
-using IWParkingAPI.Models;
 
 namespace IWParkingAPI.Services.Implementation
 {
@@ -93,13 +84,7 @@ namespace IWParkingAPI.Services.Implementation
         {
             try
             {
-                var userId = Convert.ToInt32(_jWTDecode.ExtractClaimByType("Id"));
-                var existingUser = _userRepository.GetAsQueryable(u => u.Id == userId, null, null).FirstOrDefault();
-
-                if (existingUser == null || existingUser.IsDeactivated == true)
-                {
-                    throw new NotFoundException("User doesn't exist");
-                }
+                int userId = CheckIfUserExists();
 
                 var checkExistingPlateNumber = _vehicleRepository.GetAsQueryable(v => v.PlateNumber == request.PlateNumber).FirstOrDefault();
                 if (checkExistingPlateNumber != null)
@@ -119,9 +104,7 @@ namespace IWParkingAPI.Services.Implementation
                 vehicle.UserId = userId;
                 _vehicleRepository.Insert(vehicle);
                 _unitOfWork.Save();
-
                 var VehicleDTO = _mapper.Map<VehicleDTO>(vehicle);
-
                 _makePrimaryResponse.Vehicle = VehicleDTO;
                 _makePrimaryResponse.StatusCode = HttpStatusCode.OK;
                 _makePrimaryResponse.Message = "Vehicle created successfully";
@@ -352,12 +335,7 @@ namespace IWParkingAPI.Services.Implementation
         {
             try
             {
-                var userId = Convert.ToInt32(_jWTDecode.ExtractClaimByType("Id"));
-                var user = _userRepository.GetById(userId);
-                if (user == null || user.IsDeactivated == true)
-                {
-                    throw new NotFoundException("User not found");
-                }
+                int userId = CheckIfUserExists();
 
                 var vehicles = _vehicleRepository.GetAsQueryable(x => x.UserId == userId).ToList();
 
@@ -398,6 +376,31 @@ namespace IWParkingAPI.Services.Implementation
 
         }
 
+        private int CheckIfUserExists()
+        {
+            try
+            {
+                var userId = Convert.ToInt32(_jWTDecode.ExtractClaimByType("Id"));
+                var user = _userRepository.GetById(userId);
+                if (user == null || user.IsDeactivated == true)
+                {
+                    throw new NotFoundException("User not found");
+                }
+                return userId;
+            }
+            catch (NotFoundException ex)
+            {
+                _logger.Error($"Not Found for CheckIfUserExists {Environment.NewLine}ErrorMessage: {ex.Message}");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.Error($"Unexpected error while checking if User exists in CheckIfUserExists method" +
+                    $" {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
+                throw new InternalErrorException("Unexpected error while checking if User exists in CheckIfUserExists method");
+            }
+        }
+
         public VehicleTypesResponse GetVehicleTypes()
         {
             try
@@ -431,7 +434,8 @@ namespace IWParkingAPI.Services.Implementation
         {
             try
             {
-                var userId = Convert.ToInt32(_jWTDecode.ExtractClaimByType("Id"));
+                int userId = CheckIfUserExists();
+
                 if (vehicleId <= 0)
                 {
                     throw new BadRequestException("Vehicle Id is required");
@@ -441,13 +445,6 @@ namespace IWParkingAPI.Services.Implementation
                 if (vehicle == null)
                 {
                     throw new NotFoundException("Vehicle not found");
-                }
-
-                var user = _userRepository.GetById(userId);
-
-                if (user == null)
-                {
-                    throw new NotFoundException("User not found");
                 }
 
                 var vehiclesOfTheUser = _vehicleRepository.GetAll().Where(v => v.UserId == userId);
