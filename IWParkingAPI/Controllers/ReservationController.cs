@@ -5,6 +5,7 @@ using IWParkingAPI.Models.Responses;
 using IWParkingAPI.Services.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Policy;
 
 namespace IWParkingAPI.Controllers
 {
@@ -30,6 +31,13 @@ namespace IWParkingAPI.Controllers
         public ReservationResponse CancelReservation(int id)
         {
             return _reservationService.CancelReservation(id);
+        }
+
+        [HttpGet("GetByUser")]
+        [AuthorizeCustom(UserRoles.User)]
+        public AllReservationsResponse GetUserReservations(int pageNumber, int pageSize)
+        {
+            return _reservationService.GetUserReservations(pageNumber, pageSize);
         }
 
     }
