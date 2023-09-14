@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using IWParkingAPI.Models.Data;
 using Microsoft.EntityFrameworkCore;
 
-namespace IWParkingAPI.Models.Context;
+namespace IWParkingAPI.Models;
 
 public partial class ParkingDbContext : DbContext
 {
@@ -147,7 +146,6 @@ public partial class ParkingDbContext : DbContext
                 .IsRequired()
                 .HasDefaultValueSql("('False')");
             entity.Property(e => e.Name).HasMaxLength(256);
-            entity.Property(e => e.Status).HasDefaultValueSql("((1))");
             entity.Property(e => e.TimeCreated).HasColumnType("datetime");
             entity.Property(e => e.TimeModified).HasColumnType("datetime");
             entity.Property(e => e.UserId).HasColumnName("User_Id");
@@ -249,7 +247,6 @@ public partial class ParkingDbContext : DbContext
                 .HasDefaultValueSql("('False')");
             entity.Property(e => e.Name).HasMaxLength(256);
             entity.Property(e => e.ParkingLotId).HasColumnName("ParkingLot_Id");
-            entity.Property(e => e.Status).HasDefaultValueSql("((1))");
             entity.Property(e => e.TimeCreated).HasColumnType("datetime");
             entity.Property(e => e.TimeModified).HasColumnType("datetime");
             entity.Property(e => e.UserId).HasColumnName("User_Id");

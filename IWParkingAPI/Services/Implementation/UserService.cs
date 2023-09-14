@@ -13,8 +13,7 @@ using AutoMapper;
 using IWParkingAPI.Utilities;
 using IWParkingAPI.Models.Responses.Dto;
 using IWParkingAPI.Models.Responses;
-using Azure.Core;
-using System.Drawing.Printing;
+using IWParkingAPI.Models;
 
 public class UserService : IUserService
 {

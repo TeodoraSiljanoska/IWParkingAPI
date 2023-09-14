@@ -5,6 +5,7 @@ using IWParkingAPI.Models.Responses;
 using IWParkingAPI.Services.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Policy;
 
 namespace IWParkingAPI.Controllers
 {
@@ -37,6 +38,13 @@ namespace IWParkingAPI.Controllers
         public ReservationResponse ExtendReservation(int id, ExtendReservationRequest request)
         {
             return _reservationService.ExtendReservation(id, request);
+        }
+
+        [HttpGet("GetByUser")]
+        [AuthorizeCustom(UserRoles.User)]
+        public AllReservationsResponse GetUserReservations(int pageNumber, int pageSize)
+        {
+            return _reservationService.GetUserReservations(pageNumber, pageSize);
         }
 
     }

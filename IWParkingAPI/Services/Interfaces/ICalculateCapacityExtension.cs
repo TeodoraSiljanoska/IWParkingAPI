@@ -1,4 +1,5 @@
-﻿using IWParkingAPI.Models.Data;
+﻿using IWParkingAPI.Models;
+using IWParkingAPI.Models.Data;
 
 namespace IWParkingAPI.Services.Interfaces
 {

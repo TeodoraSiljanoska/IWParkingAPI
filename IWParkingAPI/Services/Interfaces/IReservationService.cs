@@ -8,5 +8,6 @@ namespace IWParkingAPI.Services.Interfaces
         public ReservationResponse MakeReservation(MakeReservationRequest request);
         public ReservationResponse CancelReservation(int  reservationId);
         public ReservationResponse ExtendReservation(int reservationId, ExtendReservationRequest request);
+        public AllReservationsResponse GetUserReservations(int pageNumber, int pageSize);
     }
 }

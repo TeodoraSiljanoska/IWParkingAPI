@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace IWParkingAPI.Models.Data;
+namespace IWParkingAPI.Models;
 
 public partial class TempParkingLot
 {
@@ -32,8 +32,6 @@ public partial class TempParkingLot
     public DateTime TimeCreated { get; set; }
 
     public DateTime? TimeModified { get; set; }
-
-    public int Status { get; set; }
 
     public int? ParkingLotId { get; set; }
 
