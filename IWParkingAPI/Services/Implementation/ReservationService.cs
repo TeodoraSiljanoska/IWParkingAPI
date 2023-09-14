@@ -50,6 +50,67 @@ namespace IWParkingAPI.Services.Implementation
             _allReservationsResponse = new AllReservationsResponse();
             _enumsExtensionVehicleTypes = enumsExtension;
         }
+
+        public AllReservationsResponse GetUserReservations(int pageNumber, int pageSize)
+        {
+            try
+            {
+                var userId = _jWTDecode.ExtractClaimByType("Id");
+                if (userId == null)
+                {
+                    throw new BadRequestException("Please login to make a reservation");
+                }
+
+                var reservations = _reservationRepository.GetAsQueryable(x => x.UserId == int.Parse(userId));
+
+                if (pageNumber == 0)
+                {
+                    pageNumber = PageNumber;
+                }
+                if (pageSize == 0)
+                {
+                    pageSize = PageSize;
+                }
+
+                var totalCount = reservations.Count();
+                var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+                var paginatedReservations = reservations.Skip((pageNumber - 1) * pageSize)
+                                                     .Take(pageSize)
+                                                     .ToList();
+
+                if (paginatedReservations.Count() == 0)
+                {
+                    _allReservationsResponse.StatusCode = HttpStatusCode.OK;
+                    _allReservationsResponse.Message = "There aren't any reservations.";
+                    _allReservationsResponse.Reservations = Enumerable.Empty<ReservationDTO>();
+                    return _allReservationsResponse;
+                }
+
+                List<ReservationDTO> resDTOs = new List<ReservationDTO>();
+                foreach (var res in paginatedReservations)
+                {
+                    resDTOs.Add(_mapper.Map<ReservationDTO>(res));
+                }
+
+                _allReservationsResponse.Reservations = resDTOs;
+                _allReservationsResponse.StatusCode = HttpStatusCode.OK;
+                _allReservationsResponse.Message = "User reservations returned successfully";
+                _allReservationsResponse.NumPages = totalPages;
+                return _allReservationsResponse;
+
+            }
+
+            catch (BadRequestException ex)
+            {
+                _logger.Error($"Bad Request for MakeReservation {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.Error($"Unexpected error while making the Reservation {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
+                throw new InternalErrorException("Unexpected error while making the Reservation");
+            }
+        }
         public ReservationResponse MakeReservation(MakeReservationRequest request)
         {
             try
@@ -467,112 +528,6 @@ namespace IWParkingAPI.Services.Implementation
             {
                 _logger.Error($"Unexpected error while validating the DateTime range {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
                 throw new InternalErrorException("Unexpected error while validating the DateTime range");
-            }
-
-        }
-
-
-                if (reservation.Type.Equals(Enums.ReservationTypes.Cancelled.ToString()))
-                {
-                    throw new BadRequestException("Reservation is already cancelled");
-                }
-
-                DateTime dateTimeNow = DateTime.Now;
-                DateTime reservationStartDateTime = reservation.StartDate.Add(reservation.StartTime);
-                DateTime reservationEndDateTime = reservation.EndDate.Add(reservation.EndTime);
-                TimeSpan timeNow = dateTimeNow.TimeOfDay;
-                if (dateTimeNow > reservationEndDateTime)
-                {
-                    throw new BadRequestException("Can't cancel this reservation, because it has already finished");
-                }
-                if ((reservationEndDateTime.Date == dateTimeNow.Date && timeNow >= reservation.StartTime)
-                    || (dateTimeNow > reservationStartDateTime))
-                {
-                    throw new BadRequestException("Can't cancel this reservation, because it has already started");
-                }
-                reservation.Type = Enums.ReservationTypes.Cancelled.ToString();
-                reservation.TimeModified = DateTime.Now;
-                _reservationRepository.Update(reservation);
-                _unitOfWork.Save();
-
-                var reservationDTO = _mapper.Map<ReservationDTO>(reservation);
-
-                _reservationResponse.StatusCode = HttpStatusCode.OK;
-                _reservationResponse.Message = "Reservation cancelled successfully";
-                _reservationResponse.Reservation = reservationDTO;
-                return _reservationResponse;
-
-            }
-            catch (BadRequestException ex)
-            {
-                _logger.Error($"Bad Request for CancelReservation {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
-                throw;
-            }
-            catch (Exception ex)
-            {
-                _logger.Error($"Unexpected error while cancelling the Reservation {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
-                throw new InternalErrorException("Unexpected error while cancelling the Reservation");
-            }
-        }
-
-        public AllReservationsResponse GetUserReservations(int pageNumber, int pageSize)
-        {
-            try
-            {
-                var userId = _jWTDecode.ExtractClaimByType("Id");
-                if (userId == null)
-                {
-                    throw new BadRequestException("Please login to make a reservation");
-                }
-
-                var reservations = _reservationRepository.GetAsQueryable(x => x.UserId == int.Parse(userId));
-
-                if (pageNumber == 0)
-                {
-                    pageNumber = PageNumber;
-                }
-                if (pageSize == 0)
-                {
-                    pageSize = PageSize;
-                }
-
-                var totalCount = reservations.Count();
-                var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
-                var paginatedReservations = reservations.Skip((pageNumber - 1) * pageSize)
-                                                     .Take(pageSize)
-                                                     .ToList();
-
-                if (paginatedReservations.Count() == 0)
-                {
-                    _allReservationsResponse.StatusCode = HttpStatusCode.OK;
-                    _allReservationsResponse.Message = "There aren't any reservations.";
-                    _allReservationsResponse.Reservations = Enumerable.Empty<ReservationDTO>();
-                    return _allReservationsResponse;
-                }
-
-                List<ReservationDTO> resDTOs = new List<ReservationDTO>();
-                foreach(var res in paginatedReservations)
-                {
-                    resDTOs.Add(_mapper.Map<ReservationDTO>(res));
-                }
-
-                _allReservationsResponse.Reservations = resDTOs;
-                _allReservationsResponse.StatusCode = HttpStatusCode.OK;
-                _allReservationsResponse.Message = "User reservations returned successfully";
-                _allReservationsResponse.NumPages = totalPages;
-                return _allReservationsResponse;
-
-            }
-
-            catch (BadRequestException ex)
-            {
-                _logger.Error($"Bad Request for MakeReservation {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
-                throw;
-            }
-            catch (Exception ex)
-            {
-                _logger.Error($"Unexpected error while making the Reservation {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
-                throw new InternalErrorException("Unexpected error while making the Reservation");
             }
         }
     }
