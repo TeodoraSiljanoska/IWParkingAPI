@@ -222,6 +222,11 @@ namespace IWParkingAPI.Mappers
                 .ForMember(dest => dest.TimeModified, opt => opt.MapFrom(src => src.TimeModified))
                 .ForMember(dest => dest.VehicleId, opt => opt.MapFrom(src => src.VehicleId));
 
+                //ExtendReservation
+                cfg.CreateMap<ExtendReservationRequest, ReservationDTO>()
+                .ForMember(dest => dest.EndDate, opt => opt.MapFrom(src => src.EndDate))
+                .ForMember(dest => dest.EndTime, opt => opt.MapFrom(src => src.EndTime));
+
 
 
                 cfg.CreateMap<ParkingLotReq, TempParkingLot>()
