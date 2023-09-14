@@ -29,8 +29,6 @@
         public DateTime TimeCreated { get; set; }
 
         public DateTime? TimeModified { get; set; }
-
-        public int Status { get; set; }
         public bool IsFavourite { get; set; } = false;
     }
 }

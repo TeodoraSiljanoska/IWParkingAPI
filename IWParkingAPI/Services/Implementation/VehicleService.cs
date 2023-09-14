@@ -23,6 +23,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel;
 using System.Reflection;
 using System;
+using IWParkingAPI.Models;
 
 namespace IWParkingAPI.Services.Implementation
 {

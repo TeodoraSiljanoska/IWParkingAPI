@@ -5,7 +5,7 @@ namespace IWParkingAPI.Models.Enums
 {
     public class Enums
     {
-        public enum Status
+        public enum RequestStatus
         {
             [Display(Name ="Pending")]
             Pending = 1,

@@ -79,11 +79,11 @@ namespace IWParkingAPI.Services.Implementation
 
                 if (userId == null)
                 {
-                    query = query.Where(x => x.Status == (int)Status.Approved && x.IsDeactivated == false);
+                    query = query.Where(x => x.IsDeactivated == false);
                 }
                 else if (role.Equals(Models.UserRoles.User))
                 {
-                    query = query.Where(x => x.Status == (int)Status.Approved && x.IsDeactivated == false);
+                    query = query.Where(x => x.IsDeactivated == false);
 
                     var userWithParkingLots = _userRepository.GetAsQueryable(x => x.Id == int.Parse(userId),
                         null, x => x.Include(y => y.ParkingLotsNavigation)).FirstOrDefault();
@@ -92,7 +92,7 @@ namespace IWParkingAPI.Services.Implementation
                 }
                 else if (role.Equals(Models.UserRoles.Owner))
                 {
-                    query = query.Where(x => x.UserId == int.Parse(userId) && x.Status == (int)Status.Approved);
+                    query = query.Where(x => x.UserId == int.Parse(userId));
                     if (!string.IsNullOrEmpty(request.Status))
                     {
                         ParkingLotStatus enumValue = (ParkingLotStatus)Enum.Parse(typeof(ParkingLotStatus), request.Status);
@@ -104,7 +104,6 @@ namespace IWParkingAPI.Services.Implementation
                 }
                 else if (role.Equals(Models.UserRoles.SuperAdmin))
                 {
-                    query = query.Where(x => x.Status == (int)Status.Approved);
                     if (!string.IsNullOrEmpty(request.Status))
                     {
                         ParkingLotStatus enumValue = (ParkingLotStatus)Enum.Parse(typeof(ParkingLotStatus), request.Status);
@@ -116,7 +115,7 @@ namespace IWParkingAPI.Services.Implementation
                 }
                 else
                 {
-                    query = query.Where(x => x.Status == (int)Status.Approved && x.IsDeactivated == false);
+                    query = query.Where(x => x.IsDeactivated == false);
                 }
 
                 if (!string.IsNullOrEmpty(request.Name))
@@ -305,7 +304,6 @@ namespace IWParkingAPI.Services.Implementation
                 parkingLot.UserId = userId;
                 parkingLot.User = existinguser;
                 parkingLot.TimeCreated = DateTime.Now;
-                parkingLot.Status = (int)Status.Pending;
                 parkingLot.WorkingHourTo = from;
                 parkingLot.WorkingHourTo = to;
                 parkingLot.ParkingLotId = null;
@@ -325,7 +323,7 @@ namespace IWParkingAPI.Services.Implementation
                 plrequest.ParkingLotId = parkingLot.Id;
                 plrequest.UserId = parkingLot.UserId;
                 plrequest.TimeCreated = DateTime.Now;
-                plrequest.Status = (int)Status.Pending;
+                plrequest.Status = (int)RequestStatus.Pending;
                 _parkingLotRequestRepository.Insert(plrequest);
                 _unitOfWork.Save();
 
@@ -369,7 +367,7 @@ namespace IWParkingAPI.Services.Implementation
                 }
                 var userId = Convert.ToInt32(strUserId);
 
-                ParkingLot parkingLot = _parkingLotRepository.GetAsQueryable(p => p.Id == id && p.UserId == userId, null, x => x.Include(y => y.Users)).FirstOrDefault();//.Where(x => x.UserId == userId); 
+                ParkingLot parkingLot = _parkingLotRepository.GetAsQueryable(p => p.Id == id && p.UserId == userId && p.IsDeactivated == false, null, x => x.Include(y => y.Users)).FirstOrDefault();//.Where(x => x.UserId == userId); 
 
                 if (parkingLot == null)
                 {
@@ -446,14 +444,11 @@ namespace IWParkingAPI.Services.Implementation
                     existingPlFromUser2.Price = (existingPlFromUser2.Price == request.Price) ? existingPlFromUser2.Price : request.Price;
                     existingPlFromUser2.TimeModified = DateTime.Now;
 
-
-                    existingPlFromUser2.Status = (int)Status.Pending;
                     _tempParkingLotRepository.Update(_mapper.Map<TempParkingLot>(existingPlFromUser2));
                 }
                 else
                 {
                     var tempParkingLot = _mapper.Map<TempParkingLot>(request);
-                    tempParkingLot.Status = (int)Status.Pending;
                     tempParkingLot.TimeCreated = DateTime.Now;
                     tempParkingLot.UserId = parkingLot.UserId;
                     tempParkingLot.User = parkingLot.User;
@@ -468,7 +463,7 @@ namespace IWParkingAPI.Services.Implementation
                     if (existingRequest.Type == (int)RequestType.Update)
                     {
                         existingRequest.UserId = parkingLot.UserId;
-                        existingRequest.Status = (int)Status.Pending;
+                        existingRequest.Status = (int)RequestStatus.Pending;
                         existingRequest.Type = (int)RequestType.Update;
                         existingRequest.TimeCreated = DateTime.Now;
                         _requestRepository.Update(existingRequest);
@@ -488,7 +483,7 @@ namespace IWParkingAPI.Services.Implementation
                     plrequest.ParkingLotId = parkingLot.Id;
                     plrequest.UserId = parkingLot.UserId;
                     plrequest.TimeCreated = DateTime.Now;
-                    plrequest.Status = (int)Status.Pending;
+                    plrequest.Status = (int)RequestStatus.Pending;
                     plrequest.Type = (int)RequestType.Update;
                     _parkingLotRequestRepository.Insert(plrequest);
                     _unitOfWork.Save();
@@ -555,6 +550,7 @@ namespace IWParkingAPI.Services.Implementation
                         _unitOfWork.Save();
                     }
                     parkingLot.IsDeactivated = true;
+                    parkingLot.TimeModified = DateTime.Now;
                     _parkingLotRepository.Update(parkingLot);
                     _unitOfWork.Save();
 
@@ -589,7 +585,7 @@ namespace IWParkingAPI.Services.Implementation
                         plrequest.ParkingLotId = parkingLot.Id;
                         plrequest.UserId = parkingLot.UserId;
                         plrequest.TimeCreated = DateTime.Now;
-                        plrequest.Status = (int)Status.Pending;
+                        plrequest.Status = (int)RequestStatus.Pending;
                         plrequest.Type = (int)RequestType.Deactivate;
 
                         _parkingLotRequestRepository.Insert(plrequest);
@@ -711,7 +707,7 @@ namespace IWParkingAPI.Services.Implementation
                     throw new NotFoundException("User not found");
                 }
 
-                if (parkingLot == null || parkingLot.IsDeactivated == true || parkingLot.Status != (int)Status.Approved)
+                if (parkingLot == null || parkingLot.IsDeactivated == true)
                 {
                     throw new NotFoundException("Parking Lot not found");
                 }
@@ -776,41 +772,38 @@ namespace IWParkingAPI.Services.Implementation
                     return _getDTOResponse;
                 }
 
-                var favouritesList = userWithParkingLots.ParkingLotsNavigation.ToList();
-
-                var approvedFromFavourites = favouritesList.Where(a => a.Status == (int)Status.Approved && a.IsDeactivated == false);
-
+                var favouritesList = userWithParkingLots.ParkingLotsNavigation.Where(a => a.IsDeactivated == false).ToList();
 
                 List<ParkingLot> paginatedParkingLots = new List<ParkingLot>();
                 if (pageNumber == 0 && pageSize == 0)
                 {
                     pageNumber = PageNumber;
                     pageSize = PageSize;
-                    paginatedParkingLots = approvedFromFavourites.ToList();
+                    paginatedParkingLots = favouritesList.ToList();
                 }
                 else if (pageNumber == 0)
                 {
                     pageNumber = PageNumber;
-                    paginatedParkingLots = approvedFromFavourites.Skip((pageNumber - 1) * pageSize)
+                    paginatedParkingLots = favouritesList.Skip((pageNumber - 1) * pageSize)
                                                      .Take(pageSize)
                                                      .ToList();
                 }
                 else if (pageSize == 0)
                 {
                     pageSize = PageSize;
-                    paginatedParkingLots = approvedFromFavourites.Skip((pageNumber - 1) * pageSize)
+                    paginatedParkingLots = favouritesList.Skip((pageNumber - 1) * pageSize)
                                                      .Take(pageSize)
                                                      .ToList();
                 }
                 else
                 {
-                    paginatedParkingLots = approvedFromFavourites.Skip((pageNumber - 1) * pageSize)
+                    paginatedParkingLots = favouritesList.Skip((pageNumber - 1) * pageSize)
                                                      .Take(pageSize)
                                                      .ToList();
                 }
 
 
-                var totalCount = approvedFromFavourites.Count();
+                var totalCount = favouritesList.Count();
                 var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
 
                 if (!paginatedParkingLots.Any())
