@@ -35,8 +35,16 @@ namespace IWParkingAPI.Models.Enums
             Activated = 1,
 
             [Display(Name = "Deactivated")]
-            Deactivated = 2,
+            Deactivated = 2
         }
+
+        /*[Display(Name = "Deactivated")]
+            Deactivated = 1,
+
+            [Display(Name = "Activated")]
+            Activated = 2,
+            [Display(Name = "Updated")]
+            Updated = 3 */
 
         public enum VehicleTypes
         {
