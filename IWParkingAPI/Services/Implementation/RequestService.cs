@@ -174,6 +174,7 @@ namespace IWParkingAPI.Services.Implementation
                     var tempParkingLotDTO = _mapper.Map<TempParkingLotDTO>(tempParkingLot);
                     var pL = _mapper.Map<ParkingLot>(tempParkingLotDTO);
                     pL.Status = (int)Status.Approved;
+                   // pL.Status = (int)ParkingLotStatus.Activated;
                     pL.TimeCreated = DateTime.Now;
                     _parkingLotRepository.Insert(pL);
 
@@ -204,6 +205,7 @@ namespace IWParkingAPI.Services.Implementation
                 {
                     parkingLotToDeactivate.IsDeactivated = true;
                     parkingLotToDeactivate.TimeModified = DateTime.Now;
+                   // parkingLotToDeactivate.Status = (int)Enums.ParkingLotStatus.Deactivated;
                     _parkingLotRepository.Update(_mapper.Map<ParkingLot>(parkingLotToDeactivate));
                     _requestRepository.Delete(req);
                     _unitOfWork.Save();
@@ -244,6 +246,7 @@ namespace IWParkingAPI.Services.Implementation
 
 
                     ParkingLot.Status = (int)Status.Approved;
+                    //ParkingLot.Status = (int)ParkingLotStatus.Updated;
                     _parkingLotRepository.Update(_mapper.Map<ParkingLot>(ParkingLot));
                     _tempParkingLotRepository.Delete(tempParkingLot);
 
