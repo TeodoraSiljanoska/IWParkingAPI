@@ -24,8 +24,7 @@ namespace IWParkingAPI.Controllers
             return _parkingLotService.GetAllParkingLots(pageNumber, pageSize, request);
         }
 
-        [AuthorizeCustom(UserRoles.SuperAdmin, UserRoles.Owner)]
-
+        [AuthorizeCustom(UserRoles.SuperAdmin, UserRoles.Owner, UserRoles.User)]
         [HttpGet("Get/{id}")]
         public ParkingLotResponse GetParkingLotById(int id)
         {
