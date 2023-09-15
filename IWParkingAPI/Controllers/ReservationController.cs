@@ -19,18 +19,18 @@ namespace IWParkingAPI.Controllers
             _reservationService = reservationService;
         }
 
+        [HttpGet("GetByUser")]
+        [AuthorizeCustom(UserRoles.User)]
+        public AllReservationsResponse GetUserReservations(int pageNumber, int pageSize)
+        {
+            return _reservationService.GetUserReservations(pageNumber, pageSize);
+        }
+
         [HttpPost("Make")]
         [AuthorizeCustom(UserRoles.User)]
         public ReservationResponse MakeReservation(MakeReservationRequest request)
         {
            return _reservationService.MakeReservation(request); 
-        }
-
-        [HttpGet("Cancel/{id}")]
-        [AuthorizeCustom(UserRoles.User)]
-        public ReservationResponse CancelReservation(int id)
-        {
-            return _reservationService.CancelReservation(id);
         }
 
         [HttpPut("Extend/{id}")]
@@ -40,11 +40,11 @@ namespace IWParkingAPI.Controllers
             return _reservationService.ExtendReservation(id, request);
         }
 
-        [HttpGet("GetByUser")]
+        [HttpDelete("Cancel/{id}")]
         [AuthorizeCustom(UserRoles.User)]
-        public AllReservationsResponse GetUserReservations(int pageNumber, int pageSize)
+        public ReservationResponse CancelReservation(int id)
         {
-            return _reservationService.GetUserReservations(pageNumber, pageSize);
+            return _reservationService.CancelReservation(id);
         }
 
     }

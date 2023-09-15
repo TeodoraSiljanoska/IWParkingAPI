@@ -208,6 +208,22 @@ namespace IWParkingAPI.Mappers
                 .ForMember(dest => dest.TimeModified, opt => opt.MapFrom(src => src.TimeModified))
                 .ForMember(dest => dest.VehicleId, opt => opt.MapFrom(src => src.VehicleId));
 
+                //GetByUser
+                //MakeReservation
+                cfg.CreateMap<Reservation, ReservationWithParkingLotDTO>()
+                .ForMember(dest => dest.Type, opt => opt.MapFrom(src => src.Type))
+                .ForMember(dest => dest.StartDate, opt => opt.MapFrom(src => src.StartDate))
+                .ForMember(dest => dest.StartTime, opt => opt.MapFrom(src => src.StartTime))
+                .ForMember(dest => dest.EndDate, opt => opt.MapFrom(src => src.EndDate))
+                .ForMember(dest => dest.EndTime, opt => opt.MapFrom(src => src.EndTime))
+                .ForMember(dest => dest.Amount, opt => opt.MapFrom(src => src.Amount))
+                .ForMember(dest => dest.IsPaid, opt => opt.MapFrom(src => src.IsPaid))
+                .ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.UserId))
+                .ForMember(dest => dest.ParkingLotId, opt => opt.MapFrom(src => src.ParkingLotId))
+                .ForMember(dest => dest.TimeCreated, opt => opt.MapFrom(src => src.TimeCreated))
+                .ForMember(dest => dest.TimeModified, opt => opt.MapFrom(src => src.TimeModified))
+                .ForMember(dest => dest.VehicleId, opt => opt.MapFrom(src => src.VehicleId));
+
                 //ExtendReservation
                 cfg.CreateMap<ExtendReservationRequest, ReservationDTO>()
                 .ForMember(dest => dest.EndDate, opt => opt.MapFrom(src => src.EndDate))
