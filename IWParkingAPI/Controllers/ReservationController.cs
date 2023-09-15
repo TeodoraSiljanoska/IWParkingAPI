@@ -36,6 +36,7 @@ namespace IWParkingAPI.Controllers
         }
 
         [HttpPut("Extend/{id}")]
+        [Validate]
         [AuthorizeCustom(UserRoles.User)]
         public ReservationResponse ExtendReservation(int id, ExtendReservationRequest request)
         {

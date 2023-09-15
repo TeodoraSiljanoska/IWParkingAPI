@@ -42,6 +42,8 @@ namespace IWParkingAPI.Fluent_Validations
             services.AddSingleton<IValidator<ZoneRequest>, ZoneRequestValidator>();
             services.AddSingleton<IValidator<CityRequest>, CityRequestValidator>();
             services.AddSingleton<IValidator<MakeReservationRequest>, MakeReservationValidator>();
+            services.AddSingleton<IValidator<ExtendReservationRequest>, ExtendReservationValidator>();
+
             return services;
         }
     }
