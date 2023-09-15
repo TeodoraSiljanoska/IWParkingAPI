@@ -211,6 +211,7 @@ namespace IWParkingAPI.Mappers
                 //GetByUser
                 //MakeReservation
                 cfg.CreateMap<Reservation, ReservationWithParkingLotDTO>()
+                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
                 .ForMember(dest => dest.Type, opt => opt.MapFrom(src => src.Type))
                 .ForMember(dest => dest.StartDate, opt => opt.MapFrom(src => src.StartDate))
                 .ForMember(dest => dest.StartTime, opt => opt.MapFrom(src => src.StartTime))
