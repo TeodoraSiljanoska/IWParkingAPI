@@ -192,7 +192,7 @@ public class UserService : IUserService
 
     }
 
-    public UserResponse DeactivateUser()
+    public ResponseBase DeactivateUser()
     {
         try
         {
@@ -219,14 +219,10 @@ public class UserService : IUserService
             _userRepository.Update(user);
             _unitOfWork.Save();
 
-            var userDto = _mapper.Map<UserDTO>(user);
-            userDto.IsDeactivated = true;
+            _response.StatusCode = HttpStatusCode.OK;
+            _response.Message = "Profile successfully deactivated";
 
-            _userDTOResponse.User = userDto;
-            _userDTOResponse.StatusCode = HttpStatusCode.OK;
-            _userDTOResponse.Message = "User deactivated successfully";
-
-            return _userDTOResponse;
+            return _response;
         }
         catch (BadRequestException ex)
         {

@@ -9,7 +9,7 @@ namespace IWParkingAPI.Services.Interfaces
         public AllUsersResponse GetAllUsers(int pageNumber, int pageSize);
         public UserResponse GetUserById();
         public UserResponse UpdateUser(UpdateUserRequest changes);
-        public UserResponse DeactivateUser();
+        public ResponseBase DeactivateUser();
         public ResponseBase DeactivateUserAdmin(int id);
     }
 }
