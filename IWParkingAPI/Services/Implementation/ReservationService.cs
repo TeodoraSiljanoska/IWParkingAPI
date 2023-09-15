@@ -139,11 +139,9 @@ namespace IWParkingAPI.Services.Implementation
                 //convert from request - from string to TimeSpan
                 TimeSpan reservationStartTime;
                 TimeSpan reservationEndTime;
-                if (!TimeSpan.TryParse(request.StartTime, out reservationStartTime) ||
-                    !TimeSpan.TryParse(request.EndTime, out reservationEndTime))
-                {
-                    throw new BadRequestException("Invalid start or end time format");
-                }
+                TimeSpan.TryParse(request.StartTime, out reservationStartTime);
+                TimeSpan.TryParse(request.EndTime, out reservationEndTime);
+                
 
                 //DateTime for reservation start and end
                 DateTime reservationStartDateTime = request.StartDate.Date.Add(reservationStartTime);
@@ -218,12 +216,9 @@ namespace IWParkingAPI.Services.Implementation
                 }
                 var parkingLot = _parkingLotRepository.GetAsQueryable(x => x.Id == reservation.ParkingLotId &&
                 x.IsDeactivated == false, null, null).FirstOrDefault();
-
+                
                 TimeSpan reservationExtendedEndTime;
-                if (!TimeSpan.TryParse(request.EndTime, out reservationExtendedEndTime))
-                {
-                    throw new BadRequestException("Invalid start or end time format");
-                }
+                TimeSpan.TryParse(request.EndTime, out reservationExtendedEndTime); 
 
                 DateTime reservationStartDateTime = reservation.StartDate.Add(reservation.StartTime);
                 DateTime reservationEndDateTime = reservation.EndDate.Add(reservation.EndTime);

@@ -1,4 +1,5 @@
-﻿using IWParkingAPI.Middleware.Authorization;
+﻿using IWParkingAPI.Fluent_Validations;
+using IWParkingAPI.Middleware.Authorization;
 using IWParkingAPI.Models;
 using IWParkingAPI.Models.Requests;
 using IWParkingAPI.Models.Responses;
@@ -27,6 +28,7 @@ namespace IWParkingAPI.Controllers
         }
 
         [HttpPost("Make")]
+        [Validate]
         [AuthorizeCustom(UserRoles.User)]
         public ReservationResponse MakeReservation(MakeReservationRequest request)
         {
@@ -34,6 +36,7 @@ namespace IWParkingAPI.Controllers
         }
 
         [HttpPut("Extend/{id}")]
+        [Validate]
         [AuthorizeCustom(UserRoles.User)]
         public ReservationResponse ExtendReservation(int id, ExtendReservationRequest request)
         {
