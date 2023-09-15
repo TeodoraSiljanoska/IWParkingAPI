@@ -1,12 +1,9 @@
 ﻿using AutoMapper;
-using Azure.Core;
 using IWParkingAPI.CustomExceptions;
 using IWParkingAPI.Infrastructure.Repository;
 using IWParkingAPI.Infrastructure.UnitOfWork;
 using IWParkingAPI.Mappers;
 using IWParkingAPI.Models;
-using IWParkingAPI.Models.Context;
-using IWParkingAPI.Models.Data;
 using IWParkingAPI.Models.Enums;
 using IWParkingAPI.Models.Requests;
 using IWParkingAPI.Models.Responses;
@@ -15,7 +12,6 @@ using IWParkingAPI.Services.Interfaces;
 using IWParkingAPI.Utilities;
 using Microsoft.EntityFrameworkCore;
 using NLog;
-using System.Drawing.Printing;
 using System.Net;
 
 namespace IWParkingAPI.Services.Implementation
@@ -61,7 +57,8 @@ namespace IWParkingAPI.Services.Implementation
                     throw new BadRequestException("Please login to make a reservation");
                 }
 
-                var reservations = _reservationRepository.GetAsQueryable(x => x.UserId == int.Parse(userId));
+                var reservations = _reservationRepository.GetAsQueryable(x => x.UserId == int.Parse(userId),
+                    null, x => x.Include(y => y.ParkingLot).Include(y => y.Vehicle));
 
                 if (pageNumber == 0)
                 {
@@ -82,14 +79,17 @@ namespace IWParkingAPI.Services.Implementation
                 {
                     _allReservationsResponse.StatusCode = HttpStatusCode.OK;
                     _allReservationsResponse.Message = "There aren't any reservations.";
-                    _allReservationsResponse.Reservations = Enumerable.Empty<ReservationDTO>();
+                    _allReservationsResponse.Reservations = Enumerable.Empty<ReservationWithParkingLotDTO>();
                     return _allReservationsResponse;
                 }
 
-                List<ReservationDTO> resDTOs = new List<ReservationDTO>();
+                List<ReservationWithParkingLotDTO> resDTOs = new List<ReservationWithParkingLotDTO>();
                 foreach (var res in paginatedReservations)
                 {
-                    resDTOs.Add(_mapper.Map<ReservationDTO>(res));
+                    ReservationWithParkingLotDTO reservationDTO = _mapper.Map<ReservationWithParkingLotDTO>(res);
+                    reservationDTO.ParkingLot = _mapper.Map<ParkingLotDTO>(res.ParkingLot);
+                    reservationDTO.Vehicle = _mapper.Map<VehicleDTO>(res.Vehicle);
+                    resDTOs.Add(reservationDTO);
                 }
 
                 _allReservationsResponse.Reservations = resDTOs;
@@ -97,7 +97,6 @@ namespace IWParkingAPI.Services.Implementation
                 _allReservationsResponse.Message = "User reservations returned successfully";
                 _allReservationsResponse.NumPages = totalPages;
                 return _allReservationsResponse;
-
             }
 
             catch (BadRequestException ex)
@@ -212,7 +211,7 @@ namespace IWParkingAPI.Services.Implementation
             {
                 var userId = Convert.ToInt32(_jWTDecode.ExtractClaimByType("Id"));
                 var reservation = _reservationRepository.GetAsQueryable(x => x.Id == reservationId && x.UserId == userId
-                && x.Type == Enums.ReservationTypes.Successful.ToString()).FirstOrDefault();
+                && x.Type == Enums.ReservationTypes.Successful.ToString(), null, x => x.Include(y => y.Vehicle)).FirstOrDefault();
                 if (reservation == null)
                 {
                     throw new NotFoundException("Reservation doesn't exist");
@@ -272,7 +271,8 @@ namespace IWParkingAPI.Services.Implementation
             try
             {
                 var userId = Convert.ToInt32(_jWTDecode.ExtractClaimByType("Id"));
-                var reservation = _reservationRepository.GetAsQueryable(x => x.Id == reservationId && x.UserId == userId).FirstOrDefault();
+                var reservation = _reservationRepository.GetAsQueryable(x => x.Id == reservationId && x.UserId == userId,
+                    null, x => x.Include(y => y.ParkingLot).Include(y => y.Vehicle)).FirstOrDefault();
                 if (reservation == null)
                 {
                     throw new BadRequestException("Reservation doesn't exist");
@@ -301,8 +301,9 @@ namespace IWParkingAPI.Services.Implementation
                 _reservationRepository.Update(reservation);
                 _unitOfWork.Save();
 
-                var reservationDTO = _mapper.Map<ReservationDTO>(reservation);
-
+                var reservationDTO = _mapper.Map<ReservationWithParkingLotDTO>(reservation);
+                reservationDTO.Vehicle = _mapper.Map<VehicleDTO>(reservation.Vehicle);
+                reservationDTO.ParkingLot = _mapper.Map<ParkingLotDTO>(reservation.ParkingLot);
                 _reservationResponse.StatusCode = HttpStatusCode.OK;
                 _reservationResponse.Message = "Reservation cancelled successfully";
                 _reservationResponse.Reservation = reservationDTO;
@@ -321,6 +322,9 @@ namespace IWParkingAPI.Services.Implementation
             }
         }
 
+
+
+
         private void UpdateReservation(ExtendReservationRequest request, Reservation? reservation, ParkingLot? parkingLot, TimeSpan reservationExtendedEndTime, DateTime reservationStartDateTime)
         {
             reservation.Type = Enums.ReservationTypes.Successful.ToString();
@@ -333,9 +337,11 @@ namespace IWParkingAPI.Services.Implementation
             _reservationRepository.Update(reservation);
             _unitOfWork.Save();
 
-            var reservationDTO = _mapper.Map<ReservationDTO>(reservation);
+            var reservationDTO = _mapper.Map<ReservationWithParkingLotDTO>(reservation);
             reservationDTO.StartDate = reservation.StartDate;
             reservationDTO.StartTime = reservation.StartTime;
+            reservationDTO.ParkingLot = _mapper.Map<ParkingLotDTO>(parkingLot);
+            reservationDTO.Vehicle = _mapper.Map<VehicleDTO>(reservation.Vehicle);
 
             _reservationResponse.StatusCode = HttpStatusCode.OK;
             _reservationResponse.Message = "Reservation extended successfully";
@@ -360,9 +366,13 @@ namespace IWParkingAPI.Services.Implementation
             _reservationRepository.Insert(reservationToInsert);
             _unitOfWork.Save();
 
+            var resToReturn = _mapper.Map<ReservationWithParkingLotDTO>(reservationToInsert);
+            resToReturn.Vehicle = _mapper.Map<VehicleDTO>(selectedVehicle);
+            resToReturn.ParkingLot = _mapper.Map<ParkingLotDTO>(parkingLot);
+
             _reservationResponse.StatusCode = HttpStatusCode.OK;
             _reservationResponse.Message = "Reservation made successfully";
-            _reservationResponse.Reservation = _mapper.Map<ReservationDTO>(reservationToInsert);
+            _reservationResponse.Reservation = resToReturn;
         }
 
         private void CheckForExistingReservation(MakeReservationRequest request, AspNetUser user,

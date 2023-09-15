@@ -34,7 +34,7 @@ namespace IWParkingAPI.Controllers
         [AuthorizeCustom(UserRoles.Owner)]
         [Validate]
         [HttpPost("Create")]
-        public ParkingLotResponse CreateParkingLot(ParkingLotReq request)
+        public ResponseBase CreateParkingLot(ParkingLotReq request)
         {
             return _parkingLotService.CreateParkingLot(request);
         }
@@ -42,28 +42,28 @@ namespace IWParkingAPI.Controllers
         [AuthorizeCustom(UserRoles.Owner)]
         [Validate]
         [HttpPut("Update/{id}")]
-        public ParkingLotResponse UpdateParkingLot(int id, UpdateParkingLotRequest request)
+        public ResponseBase UpdateParkingLot(int id, UpdateParkingLotRequest request)
         {
             return _parkingLotService.UpdateParkingLot(id,request);
         }
 
         [AuthorizeCustom(UserRoles.Owner, UserRoles.SuperAdmin)]
         [HttpDelete("Deactivate/{id}")]
-        public ParkingLotResponse DeactivateParkingLot(int id)
+        public ResponseBase DeactivateParkingLot(int id)
         {
             return _parkingLotService.DeactivateParkingLot(id);
         }
 
         [HttpDelete("RemoveParkingLotFavourite/{parkingLotId}")]
         [AuthorizeCustom(UserRoles.User)]
-        public ParkingLotResponse RemoveParkingLotFavourite(int parkingLotId)
+        public ResponseBase RemoveParkingLotFavourite(int parkingLotId)
         {
             return _parkingLotService.RemoveParkingLotFavourite(parkingLotId);
         }
 
         [HttpPost("MakeParkingLotFavourite/{parkingLotId}")]
         [AuthorizeCustom(UserRoles.User)]
-        public ParkingLotResponse MakeParkingLotFavorite(int parkingLotId)
+        public ResponseBase MakeParkingLotFavorite(int parkingLotId)
         {
             return _parkingLotService.MakeParkingLotFavorite(parkingLotId);
         }

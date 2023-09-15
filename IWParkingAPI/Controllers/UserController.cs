@@ -47,14 +47,14 @@ namespace IWParkingAPI.Controllers
 
         [AuthorizeCustom(UserRoles.User, UserRoles.Owner)]
         [HttpDelete("Deactivate")]
-        public UserResponse Deactivate()
+        public ResponseBase Deactivate()
         {
             return _userService.DeactivateUser();
         }
 
         [AuthorizeCustom(UserRoles.SuperAdmin)]
         [HttpDelete("Deactivate/{id}")]
-        public UserResponse DeactivateUserAdmin(int id)
+        public ResponseBase DeactivateUserAdmin(int id)
         {
             return _userService.DeactivateUserAdmin(id);
         }
