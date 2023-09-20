@@ -54,20 +54,12 @@ namespace IWParkingAPI.Services.Implementation
                 throw new InternalErrorException("Unexpected error while getting all Zones");
             }
         }
+
         public ZoneResponse GetZoneById(int id)
         {
             try
             {
-                if (id <= 0)
-                {
-                    throw new BadRequestException("Zone Id is required");
-                }
-
-                Zone zone = _zoneRepository.GetById(id);
-                if (zone == null)
-                {
-                    throw new NotFoundException("Zone not found");
-                }
+                Zone zone = CheckIfZoneExists(id);
 
                 _response.Zone = zone;
                 _response.StatusCode = HttpStatusCode.OK;
@@ -95,12 +87,7 @@ namespace IWParkingAPI.Services.Implementation
         {
             try
             {
-                if (_zoneRepository.FindByPredicate(u => u.Name == request.Name))
-                {
-                    throw new BadRequestException("Zone already exists");
-                }
-
-                var zone = _mapper.Map<Zone>(request);
+                Zone zone = CheckIfZoneExistsByName(request);
 
                 _zoneRepository.Insert(zone);
                 _unitOfWork.Save();
@@ -122,33 +109,13 @@ namespace IWParkingAPI.Services.Implementation
                 throw new InternalErrorException("Unexpected error while creating the Role");
             }
         }
+
         public ZoneResponse UpdateZone(int id, ZoneRequest changes)
         {
             try
             {
-                if (id <= 0)
-                {
-                    throw new BadRequestException("Zone Id is required");
-                }
-
-                Zone zone = _zoneRepository.GetById(id);
-
-                if (zone == null)
-                {
-                    throw new NotFoundException("Zone not found");
-                }
-                if (changes.Name == zone.Name)
-                {
-                    throw new BadRequestException("No updates were entered. Please enter the updates");
-                }
-
-                if (changes.Name != zone.Name)
-                {
-                    if (_zoneRepository.FindByPredicate(u => u.Name == changes.Name))
-                    {
-                        throw new BadRequestException("Zone with that name already exists");
-                    }
-                }
+                Zone zone = CheckIfZoneExists(id);
+                CheckUpdateZoneDetails(changes, zone);
 
                 zone.Name = (zone.Name == changes.Name) ? zone.Name : changes.Name;
 
@@ -183,16 +150,7 @@ namespace IWParkingAPI.Services.Implementation
         {
             try
             {
-                if (id <= 0)
-                {
-                    throw new BadRequestException("Zone Id is required");
-                }
-
-                Zone zone = _zoneRepository.GetById(id);
-                if (zone == null)
-                {
-                    throw new NotFoundException("Zone not found");
-                }
+                Zone zone = CheckIfZoneExists(id);
 
                 _zoneRepository.Delete(zone);
                 _unitOfWork.Save();
@@ -218,6 +176,98 @@ namespace IWParkingAPI.Services.Implementation
                 _logger.Error($"Unexpected error while deleting the Zone {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
                 throw new InternalErrorException("Unexpected error while deleting the Zone");
             }
+        }
+
+        private Zone CheckIfZoneExists(int id)
+        {
+            try
+            {
+                if (id <= 0)
+                {
+                    throw new BadRequestException("Zone Id is required");
+                }
+
+                Zone zone = _zoneRepository.GetById(id);
+                if (zone == null)
+                {
+                    throw new NotFoundException("Zone not found");
+                }
+
+                return zone;
+            }
+            catch (NotFoundException ex)
+            {
+                _logger.Error($"Not Found for CheckIfZoneExists {Environment.NewLine}ErrorMessage: {ex.Message}");
+                throw;
+            }
+            catch (BadRequestException ex)
+            {
+                _logger.Error($"Bad Request for CheckIfZoneExists {Environment.NewLine}ErrorMessage: {ex.Message}");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.Error($"Unexpected error while checking if Zone exists in CheckIfZoneExists method" +
+                    $" {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
+                throw new InternalErrorException("Unexpected error while checking if Zone exists in CheckIfZoneExists method");
+            }
+        }
+
+        private Zone CheckIfZoneExistsByName(ZoneRequest request)
+        {
+            try
+            {
+                if (_zoneRepository.FindByPredicate(u => u.Name == request.Name))
+                {
+                    throw new BadRequestException("Zone already exists");
+                }
+
+                var zone = _mapper.Map<Zone>(request);
+                return zone;
+            }
+            catch (BadRequestException ex)
+            {
+                _logger.Error($"Bad Request for CheckIfZoneExistsByName {Environment.NewLine}ErrorMessage: {ex.Message}");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.Error($"Unexpected error while checking if Zone exists by Name in CheckIfZoneExistsByName method" +
+                    $" {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
+                throw new InternalErrorException("Unexpected error while checking if Zone exists by Name in CheckIfZoneExistsByName method");
+            }
+
+        }
+
+        private void CheckUpdateZoneDetails(ZoneRequest changes, Zone zone)
+        {
+            try
+            {
+                if (changes.Name == zone.Name)
+                {
+                    throw new BadRequestException("No updates were entered. Please enter the updates");
+                }
+
+                if (changes.Name != zone.Name)
+                {
+                    if (_zoneRepository.FindByPredicate(u => u.Name == changes.Name))
+                    {
+                        throw new BadRequestException("Zone with that name already exists");
+                    }
+                }
+            }
+            catch (BadRequestException ex)
+            {
+                _logger.Error($"Bad Request for CheckUpdateZoneDetails {Environment.NewLine}ErrorMessage: {ex.Message}");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.Error($"Unexpected error while checking Update Zone details in CheckUpdateZoneDetails method" +
+                    $" {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
+                throw new InternalErrorException("Unexpected error while checking Update Zone details in CheckUpdateZoneDetails method");
+            }
+
         }
     }
 }

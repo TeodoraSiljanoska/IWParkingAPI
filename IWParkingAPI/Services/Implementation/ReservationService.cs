@@ -57,23 +57,10 @@ namespace IWParkingAPI.Services.Implementation
                     throw new BadRequestException("Please login to make a reservation");
                 }
 
-                var reservations = _reservationRepository.GetAsQueryable(x => x.UserId == int.Parse(userId),
-                    null, x => x.Include(y => y.ParkingLot).Include(y => y.Vehicle));
-
-                if (pageNumber == 0)
-                {
-                    pageNumber = PageNumber;
-                }
-                if (pageSize == 0)
-                {
-                    pageSize = PageSize;
-                }
-
-                var totalCount = reservations.Count();
-                var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
-                var paginatedReservations = reservations.Skip((pageNumber - 1) * pageSize)
-                                                     .Take(pageSize)
-                                                     .ToList();
+                var reservations = _reservationRepository.GetAsQueryable(x => x.UserId == int.Parse(userId));
+                int totalPages;
+                List<Reservation> paginatedReservations;
+                PaginateReservations(ref pageNumber, ref pageSize, reservations, out totalPages, out paginatedReservations);
 
                 if (paginatedReservations.Count() == 0)
                 {
@@ -110,40 +97,28 @@ namespace IWParkingAPI.Services.Implementation
                 throw new InternalErrorException("Unexpected error while making the Reservation");
             }
         }
+
         public ReservationResponse MakeReservation(MakeReservationRequest request)
         {
             try
             {
-                var userId = _jWTDecode.ExtractClaimByType("Id");
-                if (userId == null)
+                var userId = Convert.ToInt32(_jWTDecode.ExtractClaimByType("Id"));
+                var user = _userRepository.GetAsQueryable(x => x.Id == userId,
+                    null, x => x.Include(y => y.Vehicles)).FirstOrDefault();
+                if (user == null || user.IsDeactivated == true)
                 {
-                    throw new BadRequestException("Please login to make a reservation");
+                    throw new BadRequestException("User not found");
                 }
 
-                var user = _userRepository.GetAsQueryable(x => x.Id == Convert.ToInt32(userId), null, x => x.Include(y => y.Vehicles)).FirstOrDefault();
-                var selectedVehicle = user.Vehicles.Where(x => x.PlateNumber == request.PlateNumber).FirstOrDefault();
+                Vehicle? selectedVehicle = CheckIfVehicleIsValid(request, user);
+                ParkingLot? parkingLot = CheckIfParkingLotIsValid(request);
 
-                if (selectedVehicle == null)
-                {
-                    throw new BadRequestException("Please select a valid vehicle to make a reservation");
-                }
-
-                var parkingLot = _parkingLotRepository.GetAsQueryable(x => x.Id == request.ParkingLotId
-                    && x.IsDeactivated == false, null, null).FirstOrDefault();
-
-                if (parkingLot == null)
-                {
-                    throw new BadRequestException("Please select a valid Parking Lot to make a reservation");
-                }
-
-                //convert from request - from string to TimeSpan
                 TimeSpan reservationStartTime;
                 TimeSpan reservationEndTime;
                 TimeSpan.TryParse(request.StartTime, out reservationStartTime);
                 TimeSpan.TryParse(request.EndTime, out reservationEndTime);
                 
 
-                //DateTime for reservation start and end
                 DateTime reservationStartDateTime = request.StartDate.Date.Add(reservationStartTime);
                 DateTime reservationEndDateTime = request.EndDate.Date.Add(reservationEndTime);
                 if (reservationStartDateTime <= DateTime.Now || reservationEndDateTime <= DateTime.Now ||
@@ -156,7 +131,7 @@ namespace IWParkingAPI.Services.Implementation
 
                 CheckForExistingReservation(request, user, selectedVehicle, reservationStartDateTime, reservationEndDateTime);
 
-                var madeReservations = _calculateCapacityExtension.AvailableCapacity(int.Parse(userId), selectedVehicle.Type, parkingLot.Id,
+                var madeReservations = _calculateCapacityExtension.AvailableCapacity(userId, selectedVehicle.Type, parkingLot.Id,
                      request.StartDate.Date, reservationStartTime, request.EndDate.Date, reservationEndTime);
 
                 // if users vehicle type is Car, check available car capacity
@@ -175,7 +150,7 @@ namespace IWParkingAPI.Services.Implementation
                     var availableAdaptedCapacity = parkingLot.CapacityAdaptedCar - madeReservations;
                     if (availableAdaptedCapacity == 0)
                     {
-                        var madeReservationsWithCar = _calculateCapacityExtension.AvailableCapacity(int.Parse(userId),
+                        var madeReservationsWithCar = _calculateCapacityExtension.AvailableCapacity(userId,
                         Enums.VehicleTypes.Car.ToString(), parkingLot.Id,
                         request.StartDate, reservationStartTime, request.EndDate, reservationEndTime);
 
@@ -188,7 +163,7 @@ namespace IWParkingAPI.Services.Implementation
                     }
                 }
 
-                InsertReservation(request, userId, selectedVehicle, parkingLot, reservationStartDateTime, reservationEndDateTime);
+                InsertReservation(request, userId.ToString(), selectedVehicle, parkingLot, reservationStartDateTime, reservationEndDateTime);
                 return _reservationResponse;
             }
             catch (BadRequestException ex)
@@ -317,8 +292,77 @@ namespace IWParkingAPI.Services.Implementation
             }
         }
 
+        private ParkingLot CheckIfParkingLotIsValid(MakeReservationRequest request)
+        {
+            try
+            {
+                var parkingLot = _parkingLotRepository.GetAsQueryable(x => x.Id == request.ParkingLotId
+                                     && x.IsDeactivated == false, null, null).FirstOrDefault();
+                if (parkingLot == null)
+                {
+                    throw new BadRequestException("Please select a valid Parking Lot to make a reservation");
+                }
+
+                return parkingLot;
+            }
+            catch (BadRequestException ex)
+            {
+                _logger.Error($"Bad Request for CheckIfParkingLotIsValid {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.Error($"Unexpected error while checking if Parking Lot is valid in CheckIfParkingLotIsValid method" +
+                    $" {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
+                throw new InternalErrorException("Unexpected error while checking if Parking Lot is valid in CheckIfParkingLotIsValid method");
+            }
 
 
+        }
+
+        private static Vehicle CheckIfVehicleIsValid(MakeReservationRequest request, AspNetUser? user)
+        {
+            try
+            {
+                var selectedVehicle = user.Vehicles.Where(x => x.PlateNumber == request.PlateNumber).FirstOrDefault();
+                if (selectedVehicle == null)
+                {
+                    throw new BadRequestException("Please select a valid vehicle to make a reservation");
+                }
+
+                return selectedVehicle;
+            }
+            catch (BadRequestException ex)
+            {
+                _logger.Error($"Bad Request for CheckIfVehicleIsValid {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.Error($"Unexpected error while checking if the Vehicle is valid in CheckIfVehicleIsValid method" +
+                    $" {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
+                throw new InternalErrorException("Unexpected error while checking if Vehicle is valid in CheckIfVehicleIsValid method");
+            }
+
+        }
+
+        private static void PaginateReservations(ref int pageNumber, ref int pageSize, IQueryable<Reservation> reservations, out int totalPages, out List<Reservation> paginatedReservations)
+        {
+            if (pageNumber == 0)
+            {
+                pageNumber = PageNumber;
+            }
+            if (pageSize == 0)
+            {
+                pageSize = PageSize;
+            }
+
+            var totalCount = reservations.Count();
+            totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+            paginatedReservations = reservations.Skip((pageNumber - 1) * pageSize)
+                                                 .Take(pageSize)
+                                                 .ToList();
+        }
 
         private void UpdateReservation(ExtendReservationRequest request, Reservation? reservation, ParkingLot? parkingLot, TimeSpan reservationExtendedEndTime, DateTime reservationStartDateTime)
         {
@@ -394,6 +438,7 @@ namespace IWParkingAPI.Services.Implementation
                 }
             }
         }
+
         private void CheckForExistingReservationForExtend(Reservation reservation, DateTime reservationExtendedEndDateTime)
         {
             DateTime reservationStartDateTime = reservation.StartDate.Date.Add(reservation.StartTime);
@@ -419,6 +464,7 @@ namespace IWParkingAPI.Services.Implementation
                 }
             }
         }
+
         private double CalculatePrice(ParkingLot parkingLot, DateTime reservationStartDateTime, DateTime reservationEndDateTime)
         {
             bool isOvernight = false;

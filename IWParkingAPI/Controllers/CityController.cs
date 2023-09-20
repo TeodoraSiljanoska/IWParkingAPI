@@ -18,7 +18,6 @@ namespace IWParkingAPI.Controllers
             _cityService = cityService;
         }
 
-        [AuthorizeCustom(UserRoles.SuperAdmin, UserRoles.Owner, UserRoles.User)]
         [HttpGet("GetAll")]
         public AllCitiesResponse GetAll()
         {
