@@ -58,7 +58,7 @@ namespace IWParkingAPI.Services.Implementation
                 }
 
                 var reservations = _reservationRepository.GetAsQueryable(x => x.UserId == int.Parse(userId),
-                    null, x => x.Include(y => y.ParkingLot).Include(y => y.Vehicle));
+                    q => q.OrderBy(x => x.TimeCreated), x => x.Include(y => y.ParkingLot).Include(y => y.Vehicle));
 
                 if (pageNumber == 0)
                 {
