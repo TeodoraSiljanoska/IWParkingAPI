@@ -119,7 +119,6 @@ namespace IWParkingAPI.Services.Implementation
                 TimeSpan.TryParse(request.EndTime, out reservationEndTime);
                 
 
-                //DateTime for reservation start and end
                 DateTime reservationStartDateTime = request.StartDate.Date.Add(reservationStartTime);
                 DateTime reservationEndDateTime = request.EndDate.Date.Add(reservationEndTime);
                 if (reservationStartDateTime <= DateTime.Now || reservationEndDateTime <= DateTime.Now ||

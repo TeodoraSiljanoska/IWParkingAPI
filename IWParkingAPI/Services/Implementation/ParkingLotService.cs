@@ -27,7 +27,6 @@ namespace IWParkingAPI.Services.Implementation
         private readonly IGenericRepository<ParkingLotRequest> _parkingLotRequestRepository;
         private readonly IGenericRepository<AspNetUser> _userRepository;
         private readonly IGenericRepository<ParkingLotRequest> _requestRepository;
-        private readonly AllFavouriteParkingLotsResponse _getDTOResponse;
         private readonly AllParkingLotResponse _allDTOResponse;
         private readonly ParkingLotResponse _response;
         private readonly ResponseBase _baseResponse;
@@ -54,7 +53,6 @@ namespace IWParkingAPI.Services.Implementation
             _requestRepository = _unitOfWork.GetGenericRepository<ParkingLotRequest>();
             _calculateCapacityExtension = calculateCapacityExtension;
             _response = new ParkingLotResponse();
-            _getDTOResponse = new AllFavouriteParkingLotsResponse();
             _allDTOResponse = new AllParkingLotResponse();
             _baseResponse = new ResponseBase();
             _jWTDecode = jWTDecode;
@@ -122,7 +120,22 @@ namespace IWParkingAPI.Services.Implementation
             {
                 ParkingLot parkingLot = CheckIfPLExists(parkingLotId);
 
-                var parkingLotDTO = _mapper.Map<ParkingLotDTO>(parkingLot);
+                var date = DateTime.Now;
+                TimeSpan parsedTime;
+                var resTo = TimeSpan.TryParse(date.TimeOfDay.ToString(), out parsedTime);
+
+                var parkingLotDTO = _mapper.Map<ParkingLotWithAvailableCapacityDTO>(parkingLot);
+
+                var madeReservationsCar = _calculateCapacityExtension.AvailableCapacity(0,
+                    _enumsExtensionVehicleTypes.GetDisplayName(VehicleTypes.Car), parkingLotId,
+                    date.Date, parsedTime, date.Date, parsedTime);
+                var madeReservationsAdaptedCar = _calculateCapacityExtension.AvailableCapacity(0,
+                    _enumsExtensionVehicleTypes.GetDisplayName(VehicleTypes.AdaptedCar), parkingLotId,
+                    date.Date, parsedTime, date.Date, parsedTime);
+
+                parkingLotDTO.AvailableCapacityCar = parkingLotDTO.CapacityCar - madeReservationsCar;
+                parkingLotDTO.AvailableCapacityAdaptedCar = parkingLotDTO.CapacityAdaptedCar - madeReservationsAdaptedCar;
+
                 _response.ParkingLot = parkingLotDTO;
                 _response.StatusCode = HttpStatusCode.OK;
                 _response.Message = "Parking Lot returned successfully";
@@ -176,12 +189,12 @@ namespace IWParkingAPI.Services.Implementation
                     throw new InternalErrorException("An error while creating the Parking Lot occurred");
                 }
 
-                ParkingLotRequest plrequest = new ParkingLotRequest();
-                plrequest.ParkingLotId = parkingLot.Id;
-                plrequest.UserId = parkingLot.UserId;
-                plrequest.TimeCreated = DateTime.Now;
-                plrequest.Status = (int)RequestStatus.Pending;
-                _parkingLotRequestRepository.Insert(plrequest);
+                ParkingLotRequest plRequest = new ParkingLotRequest();
+                plRequest.ParkingLotId = parkingLot.Id;
+                plRequest.UserId = parkingLot.UserId;
+                plRequest.TimeCreated = DateTime.Now;
+                plRequest.Status = (int)RequestStatus.Pending;
+                _parkingLotRequestRepository.Insert(plRequest);
                 _unitOfWork.Save();
 
                 _baseResponse.StatusCode = HttpStatusCode.OK;
@@ -211,7 +224,7 @@ namespace IWParkingAPI.Services.Implementation
         }
 
 
-        public ResponseBase UpdateParkingLot(int id, UpdateParkingLotRequest request)
+        public ResponseBase UpdateParkingLot(int parkingLotId, UpdateParkingLotRequest request)
         {
             try
             {
@@ -232,8 +245,10 @@ namespace IWParkingAPI.Services.Implementation
 
                 if (parkingLot.Name != request.Name)
                 {
-                    var expl = _tempParkingLotRepository.GetAsQueryable(p => p.Name == request.Name && p.City == request.City && p.ParkingLotId != parkingLotId, null, null).FirstOrDefault();
-                    var existingpl = _parkingLotRepository.GetAsQueryable(p => p.Name == request.Name && p.City == request.City, null, null).FirstOrDefault();
+                    var expl = _tempParkingLotRepository.GetAsQueryable(p => p.Name == request.Name
+                    && p.City == request.City && p.ParkingLotId != parkingLotId, null, null).FirstOrDefault();
+                    var existingpl = _parkingLotRepository.GetAsQueryable(p => p.Name == request.Name
+                    && p.City == request.City, null, null).FirstOrDefault();
                     if (existingpl != null || expl != null)
                     {
                         throw new BadRequestException("Parking Lot with that name already exists");
@@ -247,55 +262,8 @@ namespace IWParkingAPI.Services.Implementation
 
                 CheckIfUpdatesWereEnteredForUpdate(request, from, to);
                 CheckIfPLAlreadyExistsForUpdate(parkingLotId, request, userId, parkingLot, from, to);
-
-                var existingPlFromUser2 = _tempParkingLotRepository.GetAsQueryable(p => p.ParkingLotId == parkingLotId).FirstOrDefault();
-                if (existingPlFromUser2 != null)
-                {
-                    existingPlFromUser2.Name = (existingPlFromUser2.Name == request.Name) ? existingPlFromUser2.Name : request.Name;
-                    existingPlFromUser2.City = (existingPlFromUser2.City == request.City) ? existingPlFromUser2.City : request.City;
-                    existingPlFromUser2.Zone = (existingPlFromUser2.Zone == request.Zone) ? existingPlFromUser2.Zone : request.Zone;
-                    existingPlFromUser2.Address = (existingPlFromUser2.Address == request.Address) ? existingPlFromUser2.Address : request.Address;
-                    existingPlFromUser2.City = (existingPlFromUser2.City == request.City) ? existingPlFromUser2.City : request.City;
-                    existingPlFromUser2.WorkingHourFrom = (existingPlFromUser2.WorkingHourFrom == from) ? existingPlFromUser2.WorkingHourFrom : from;
-                    existingPlFromUser2.WorkingHourTo = (existingPlFromUser2.WorkingHourTo == to) ? existingPlFromUser2.WorkingHourTo : to;
-                    existingPlFromUser2.CapacityCar = (existingPlFromUser2.CapacityCar == request.CapacityCar) ? existingPlFromUser2.CapacityCar : request.CapacityCar;
-                    existingPlFromUser2.CapacityAdaptedCar = (existingPlFromUser2.CapacityAdaptedCar == request.CapacityAdaptedCar) ? existingPlFromUser2.CapacityAdaptedCar : request.CapacityAdaptedCar;
-                    existingPlFromUser2.Price = (existingPlFromUser2.Price == request.Price) ? existingPlFromUser2.Price : request.Price;
-                    existingPlFromUser2.TimeModified = DateTime.Now;
-
-                    _tempParkingLotRepository.Update(_mapper.Map<TempParkingLot>(existingPlFromUser2));
-                }
-                else
-                {
-                    var tempParkingLot = _mapper.Map<TempParkingLot>(request);
-                    tempParkingLot.TimeCreated = DateTime.Now;
-                    tempParkingLot.UserId = parkingLot.UserId;
-                    tempParkingLot.User = parkingLot.User;
-                    tempParkingLot.ParkingLotId = parkingLot.Id;
-                    _tempParkingLotRepository.Insert(tempParkingLot);
-
-                    _unitOfWork.Save();
-                }
-                CheckIfRequestExistsOrElseCreateNew(parkingLotId, parkingLot);
-
-                    if (existingRequest.Type != (int)RequestType.Update)
-                    {
-                        throw new BadRequestException("There is already a request for this Parking Lot. Please wait until it is processed");
-                    }
-                }
-
-                if (existingRequest == null)
-                {
-                    ParkingLotRequest plrequest = new ParkingLotRequest();
-
-                    plrequest.ParkingLotId = parkingLot.Id;
-                    plrequest.UserId = parkingLot.UserId;
-                    plrequest.TimeCreated = DateTime.Now;
-                    plrequest.Status = (int)RequestStatus.Pending;
-                    plrequest.Type = (int)RequestType.Update;
-                    _parkingLotRequestRepository.Insert(plrequest);
-                    _unitOfWork.Save();
-                }
+                CheckIfPLAlreadyExists2ForUpdate(parkingLotId, request, parkingLot, from, to);
+                InsertPLDetailsInTempPL(parkingLotId, parkingLot);
 
                 _baseResponse.StatusCode = HttpStatusCode.OK;
                 _baseResponse.Message = $"Request for updating the Parking Lot {parkingLot.Name} created successfully";
@@ -318,7 +286,8 @@ namespace IWParkingAPI.Services.Implementation
             }
         }
 
-        public ResponseBase DeactivateParkingLot(int id)
+
+        public ResponseBase DeactivateParkingLot(int parkingLotId)
         {
             try
             {
@@ -360,7 +329,7 @@ namespace IWParkingAPI.Services.Implementation
             }
         }
 
-        public ParkingLotResponse RemoveParkingLotFavourite(int parkingLotId)
+        public ResponseBase RemoveParkingLotFavourite(int parkingLotId)
         {
             try
             {
@@ -382,11 +351,9 @@ namespace IWParkingAPI.Services.Implementation
                 _userRepository.Update(user);
                 _unitOfWork.Save();
 
-                var parkingLotDTO = _mapper.Map<ParkingLotDTO>(parkingLot);
-                _response.Message = "Parking Lot successfully removed from favourites.";
-                _response.StatusCode = HttpStatusCode.OK;
-                _response.ParkingLot = parkingLotDTO;
-                return _response;
+                _baseResponse.Message = $"Parking Lot {parkingLot.Name} successfully removed from Favourites";
+                _baseResponse.StatusCode = HttpStatusCode.OK;
+                return _baseResponse;
             }
             catch (NotFoundException ex)
             {
@@ -405,7 +372,7 @@ namespace IWParkingAPI.Services.Implementation
             }
         }
 
-        public ParkingLotResponse MakeParkingLotFavorite(int parkingLotId)
+        public ResponseBase MakeParkingLotFavorite(int parkingLotId)
         {
             try
             {
@@ -423,10 +390,9 @@ namespace IWParkingAPI.Services.Implementation
                 _userRepository.Update(user);
                 _unitOfWork.Save();
 
-                _response.ParkingLot = parkingLotDTO;
-                _response.StatusCode = HttpStatusCode.OK;
-                _response.Message = "Parking Lot added to Favorites";
-                return _response;
+                _baseResponse.StatusCode = HttpStatusCode.OK;
+                _baseResponse.Message = $"Parking Lot {parkingLot.Name} successfully added to Favorites";
+                return _baseResponse;
             }
             catch (NotFoundException ex)
             {
@@ -445,7 +411,7 @@ namespace IWParkingAPI.Services.Implementation
             }
         }
 
-        public AllFavouriteParkingLotsResponse GetUserFavouriteParkingLots(int pageNumber, int pageSize)
+        public AllParkingLotResponse GetUserFavouriteParkingLots(int pageNumber, int pageSize)
         {
             try
             {
@@ -453,11 +419,11 @@ namespace IWParkingAPI.Services.Implementation
 
                 if (!userWithParkingLots.ParkingLotsNavigation.Any())
                 {
-                    _getDTOResponse.StatusCode = HttpStatusCode.OK;
-                    _getDTOResponse.Message = "User doesn't have any favourite parking lots";
-                    _getDTOResponse.ParkingLots = Enumerable.Empty<ParkingLotWithFavouritesDTO>();
-                    _getDTOResponse.NumPages = 0;
-                    return _getDTOResponse;
+                    _allDTOResponse.StatusCode = HttpStatusCode.OK;
+                    _allDTOResponse.Message = "User doesn't have any favourite parking lots";
+                    _allDTOResponse.ParkingLots = Enumerable.Empty<ParkingLotWithAvailableCapacityDTO>();
+                    _allDTOResponse.NumPages = 0;
+                    return _allDTOResponse;
                 }
 
                 var favouritesList = userWithParkingLots.ParkingLotsNavigation.Where(a => a.IsDeactivated == false).ToList();
@@ -467,25 +433,38 @@ namespace IWParkingAPI.Services.Implementation
 
                 if (!paginatedParkingLots.Any())
                 {
-                    _getDTOResponse.StatusCode = HttpStatusCode.OK;
-                    _getDTOResponse.Message = "User doesn't have any favourite parking lots";
-                    _getDTOResponse.ParkingLots = Enumerable.Empty<ParkingLotWithFavouritesDTO>();
-                    return _getDTOResponse;
+                    _allDTOResponse.StatusCode = HttpStatusCode.OK;
+                    _allDTOResponse.Message = "User doesn't have any favourite parking lots";
+                    _allDTOResponse.ParkingLots = Enumerable.Empty<ParkingLotWithAvailableCapacityDTO>();
+                    return _allDTOResponse;
                 }
 
-                var ParkingLotDTOList = new List<ParkingLotWithFavouritesDTO>();
+                var date = DateTime.Now;
+                TimeSpan parsedTime;
+                var resTo = TimeSpan.TryParse(date.TimeOfDay.ToString(), out parsedTime);
+
+                var ParkingLotDTOList = new List<ParkingLotWithAvailableCapacityDTO>();
                 foreach (var p in paginatedParkingLots)
                 {
-                    var mappedObject = _mapper.Map<ParkingLotWithFavouritesDTO>(p);
+                    var mappedObject = _mapper.Map<ParkingLotWithAvailableCapacityDTO>(p);
                     mappedObject.IsFavourite = true;
+
+                    var madeReservationsCar = _calculateCapacityExtension.AvailableCapacity(0, _enumsExtensionVehicleTypes.GetDisplayName(VehicleTypes.Car), p.Id,
+                           date.Date, parsedTime, date.Date, parsedTime);
+                    var madeReservationsAdaptedCar = _calculateCapacityExtension.AvailableCapacity(0, _enumsExtensionVehicleTypes.GetDisplayName(VehicleTypes.AdaptedCar), p.Id,
+                        date.Date, parsedTime, date.Date, parsedTime);
+
+                    mappedObject.AvailableCapacityCar = mappedObject.CapacityCar - madeReservationsCar;
+                    mappedObject.AvailableCapacityAdaptedCar = mappedObject.CapacityAdaptedCar - madeReservationsAdaptedCar;
+
                     ParkingLotDTOList.Add(mappedObject);
                 }
 
-                _getDTOResponse.StatusCode = HttpStatusCode.OK;
-                _getDTOResponse.Message = "Favourite parking lots returned successfully";
-                _getDTOResponse.ParkingLots = ParkingLotDTOList;
-                _getDTOResponse.NumPages = totalPages;
-                return _getDTOResponse;
+                _allDTOResponse.StatusCode = HttpStatusCode.OK;
+                _allDTOResponse.Message = "Favourite parking lots returned successfully";
+                _allDTOResponse.ParkingLots = ParkingLotDTOList;
+                _allDTOResponse.NumPages = totalPages;
+                return _allDTOResponse;
             }
             catch (BadRequestException ex)
             {
@@ -539,7 +518,6 @@ namespace IWParkingAPI.Services.Implementation
                 throw new InternalErrorException("Unexpected error while checking if Parking Lot exists in CheckIfPLExists method");
             }
         }
-
         private void CheckIfUserExists(out int userId, out AspNetUser existingUser)
         {
             try
@@ -756,15 +734,17 @@ namespace IWParkingAPI.Services.Implementation
         {
             try
             {
-                var existingPLFromUser = _parkingLotRepository.GetAsQueryable(p => p.Id != parkingLot.Id && p.Name != request.Name && p.City == request.City && p.Address == request.Address
-                                          && p.Zone == request.Zone && p.WorkingHourFrom == from && p.WorkingHourTo == to &&
-                                          p.Price == request.Price && p.CapacityCar == request.CapacityCar && p.CapacityAdaptedCar == request.CapacityAdaptedCar
-                                           && (p.UserId == userId || p.UserId != userId) && p.IsDeactivated == false, null, null).FirstOrDefault();
-
-                var existingPLFromUser1 = _tempParkingLotRepository.GetAsQueryable(p => p.ParkingLotId != parkingLotId && p.Name != request.Name && p.City == request.City && p.Address == request.Address
+                var existingPLFromUser = _parkingLotRepository.GetAsQueryable(p => p.Id != parkingLot.Id
+                && p.Name != request.Name && p.City == request.City && p.Address == request.Address
                 && p.Zone == request.Zone && p.WorkingHourFrom == from && p.WorkingHourTo == to &&
                 p.Price == request.Price && p.CapacityCar == request.CapacityCar && p.CapacityAdaptedCar == request.CapacityAdaptedCar
-                 && (p.UserId == userId || p.UserId != userId) && p.IsDeactivated == false, null, null).FirstOrDefault();
+                && (p.UserId == userId || p.UserId != userId) && p.IsDeactivated == false, null, null).FirstOrDefault();
+
+                var existingPLFromUser1 = _tempParkingLotRepository.GetAsQueryable(p => p.ParkingLotId != parkingLotId
+                && p.Name != request.Name && p.City == request.City && p.Address == request.Address
+                && p.Zone == request.Zone && p.WorkingHourFrom == from && p.WorkingHourTo == to &&
+                p.Price == request.Price && p.CapacityCar == request.CapacityCar && p.CapacityAdaptedCar == request.CapacityAdaptedCar
+                && (p.UserId == userId || p.UserId != userId) && p.IsDeactivated == false, null, null).FirstOrDefault();
 
                 if (existingPLFromUser != null || existingPLFromUser1 != null)
                 {
@@ -783,7 +763,7 @@ namespace IWParkingAPI.Services.Implementation
                 throw new InternalErrorException("Unexpected error while checking if Parking Lot already exists in CheckIfPLAlreadyExistsForUpdate method");
             }
         }
-        private void CheckIfRequestExistsOrElseCreateNew(int parkingLotId, ParkingLot parkingLot)
+        private void InsertPLDetailsInTempPL(int parkingLotId, ParkingLot parkingLot)
         {
             try
             {
@@ -831,7 +811,7 @@ namespace IWParkingAPI.Services.Implementation
             }
 
         }
-        private ParkingLotResponse DeactivateParkingLotForSuperAdminRole(int parkingLotId, out ParkingLot parkingLot)
+        private ResponseBase DeactivateParkingLotForSuperAdminRole(int parkingLotId, out ParkingLot parkingLot)
         {
             parkingLot = _parkingLotRepository.GetAsQueryable(p => p.Id == parkingLotId,
             null, x => x.Include(y => y.Users)).FirstOrDefault();
@@ -852,13 +832,11 @@ namespace IWParkingAPI.Services.Implementation
             _parkingLotRepository.Update(parkingLot);
             _unitOfWork.Save();
 
-            var parkingLotDTO = _mapper.Map<ParkingLotDTO>(parkingLot);
-            _response.ParkingLot = parkingLotDTO;
-            _response.StatusCode = HttpStatusCode.OK;
-            _response.Message = "Parking Lot deactivated successfully";
-            return _response;
+            _baseResponse.StatusCode = HttpStatusCode.OK;
+            _baseResponse.Message = $"Parking Lot {parkingLot.Name} deactivated successfully";
+            return _baseResponse;
         }
-        private ParkingLotResponse DeactivateParkingLotForOwnerRole(int parkingLotId, int userId, out ParkingLot parkingLot)
+        private ResponseBase DeactivateParkingLotForOwnerRole(int parkingLotId, int userId, out ParkingLot parkingLot)
         {
             parkingLot = _parkingLotRepository.GetAsQueryable(p => p.Id == parkingLotId && p.UserId == userId,
             null, x => x.Include(y => y.Users)).FirstOrDefault();
@@ -890,12 +868,9 @@ namespace IWParkingAPI.Services.Implementation
                 _parkingLotRequestRepository.Insert(plrequest);
                 _unitOfWork.Save();
             }
-            var parkingLotDTOResponse = _mapper.Map<ParkingLotDTO>(parkingLot);
-
-            _response.ParkingLot = parkingLotDTOResponse;
-            _response.StatusCode = HttpStatusCode.OK;
-            _response.Message = "Request for deactivating the Parking Lot created successfully";
-            return _response;
+            _baseResponse.StatusCode = HttpStatusCode.OK; 
+            _baseResponse.Message = $"Request for deactivating the Parking Lot {parkingLot.Name} created successfully"; 
+            return _baseResponse;
         }
         private static void PaginateFavouriteParkingLots(ref int pageNumber, ref int pageSize, List<ParkingLot> favouritesList, out List<ParkingLot> paginatedParkingLots, out int totalPages)
         {
@@ -929,6 +904,37 @@ namespace IWParkingAPI.Services.Implementation
             var totalCount = favouritesList.Count();
             totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
         }
+        private void CheckIfPLAlreadyExists2ForUpdate(int parkingLotId, UpdateParkingLotRequest request, ParkingLot parkingLot, TimeSpan from, TimeSpan to)
+        {
+            var existingPlFromUser2 = _tempParkingLotRepository.GetAsQueryable(p => p.ParkingLotId == parkingLotId).FirstOrDefault();
+            if (existingPlFromUser2 != null)
+            {
+                existingPlFromUser2.Name = (existingPlFromUser2.Name == request.Name) ? existingPlFromUser2.Name : request.Name;
+                existingPlFromUser2.City = (existingPlFromUser2.City == request.City) ? existingPlFromUser2.City : request.City;
+                existingPlFromUser2.Zone = (existingPlFromUser2.Zone == request.Zone) ? existingPlFromUser2.Zone : request.Zone;
+                existingPlFromUser2.Address = (existingPlFromUser2.Address == request.Address) ? existingPlFromUser2.Address : request.Address;
+                existingPlFromUser2.City = (existingPlFromUser2.City == request.City) ? existingPlFromUser2.City : request.City;
+                existingPlFromUser2.WorkingHourFrom = (existingPlFromUser2.WorkingHourFrom == from) ? existingPlFromUser2.WorkingHourFrom : from;
+                existingPlFromUser2.WorkingHourTo = (existingPlFromUser2.WorkingHourTo == to) ? existingPlFromUser2.WorkingHourTo : to;
+                existingPlFromUser2.CapacityCar = (existingPlFromUser2.CapacityCar == request.CapacityCar) ? existingPlFromUser2.CapacityCar : request.CapacityCar;
+                existingPlFromUser2.CapacityAdaptedCar = (existingPlFromUser2.CapacityAdaptedCar == request.CapacityAdaptedCar) ? existingPlFromUser2.CapacityAdaptedCar : request.CapacityAdaptedCar;
+                existingPlFromUser2.Price = (existingPlFromUser2.Price == request.Price) ? existingPlFromUser2.Price : request.Price;
+                existingPlFromUser2.TimeModified = DateTime.Now;
+
+                _tempParkingLotRepository.Update(_mapper.Map<TempParkingLot>(existingPlFromUser2));
+            }
+            else
+            {
+                var tempParkingLot = _mapper.Map<TempParkingLot>(request);
+                tempParkingLot.TimeCreated = DateTime.Now;
+                tempParkingLot.UserId = parkingLot.UserId;
+                tempParkingLot.User = parkingLot.User;
+                tempParkingLot.ParkingLotId = parkingLot.Id;
+                _tempParkingLotRepository.Insert(tempParkingLot);
+
+                _unitOfWork.Save();
+            }
+        }
 
         private ParkingLotWithAvailableCapacityDTO CheckIsFavouriteAndSetAvailableCapacity(string? role, List<ParkingLot> userFavouritesList, DateTime date, TimeSpan parsedTime, ParkingLot p)
         {
@@ -950,7 +956,6 @@ namespace IWParkingAPI.Services.Implementation
             mappedObject.AvailableCapacityAdaptedCar = mappedObject.CapacityAdaptedCar - madeReservationsAdaptedCar;
             return mappedObject;
         }
-
         private void UserIdAndRoleFilter(FilterParkingLotRequest request, ref IQueryable<ParkingLot> query, string userId, string? role, ref List<ParkingLot> userFavouritesList)
         {
             if (userId == null)
@@ -985,8 +990,10 @@ namespace IWParkingAPI.Services.Implementation
                     ParkingLotStatus enumValue = (ParkingLotStatus)Enum.Parse(typeof(ParkingLotStatus), request.Status);
                     if ((int)enumValue == (int)ParkingLotStatus.Activated)
                         query = query.Where(x => x.IsDeactivated == false);
-                    else
+                    else if ((int)enumValue == (int)ParkingLotStatus.Deactivated)
                         query = query.Where(x => x.IsDeactivated == true);
+                    else
+                        query = query;
                 }
             }
             else
@@ -994,7 +1001,7 @@ namespace IWParkingAPI.Services.Implementation
                 query = query.Where(x => x.IsDeactivated == false);
             }
         }
-
+        
         private static void PaginateParkingLots(ref int pageNumber, ref int pageSize, IQueryable<ParkingLot> filteredParkingLots, out IEnumerable<ParkingLot> paginatedParkingLots, out int totalPages)
         {
             paginatedParkingLots = null;

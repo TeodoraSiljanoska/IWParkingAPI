@@ -164,12 +164,8 @@ public class UserService : IUserService
             _userRepository.Update(user);
             _unitOfWork.Save();
 
-            var userDto = _mapper.Map<UserDTO>(user);
-            userDto.IsDeactivated = true;
-
-            _userDTOResponse.User = userDto;
-            _userDTOResponse.StatusCode = HttpStatusCode.OK;
-            _userDTOResponse.Message = "User deactivated successfully";
+            _response.StatusCode = HttpStatusCode.OK;
+            _response.Message = "Profile successfully deactivated";
 
             return _userDTOResponse;
         }
@@ -190,7 +186,7 @@ public class UserService : IUserService
         }
     }
 
-    public UserResponse DeactivateUserAdmin(int userId)
+    public ResponseBase DeactivateUserAdmin(int userId)
     {
         try
         {
@@ -202,7 +198,7 @@ public class UserService : IUserService
             _unitOfWork.Save();
 
             _response.StatusCode = HttpStatusCode.OK;
-            _response.Message = "Profile successfully deactivated";
+            _response.Message = $"User {user.Name} {user.Surname} deactivated successfully";
 
             return _response;
         }
