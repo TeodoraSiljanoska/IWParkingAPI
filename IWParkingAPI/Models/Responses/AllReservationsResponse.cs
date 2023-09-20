@@ -4,7 +4,7 @@ namespace IWParkingAPI.Models.Responses
 {
     public class AllReservationsResponse : ResponseBase
     {
-        public IEnumerable<ReservationDTO>? Reservations { get; set; } = new List<ReservationDTO>();
+        public IEnumerable<ReservationWithParkingLotDTO>? Reservations { get; set; } = new List<ReservationWithParkingLotDTO>();
         public int NumPages { get; set; }
     }
 }

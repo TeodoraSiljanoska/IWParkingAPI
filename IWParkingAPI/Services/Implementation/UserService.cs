@@ -19,6 +19,7 @@ public class UserService : IUserService
     private readonly IGenericRepository<AspNetUser> _userRepository;
     private readonly AllUsersResponse _getResponse;
     private readonly UserResponse _userDTOResponse;
+    private readonly ResponseBase _response;
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
     private readonly IMapper _mapper;
     private readonly IJWTDecode _jWTDecode;
@@ -31,6 +32,7 @@ public class UserService : IUserService
         _userRepository = _unitOfWork.GetGenericRepository<AspNetUser>();
         _getResponse = new AllUsersResponse();
         _userDTOResponse = new UserResponse();
+        _response = new ResponseBase();
         _mapper = MapperConfig.InitializeAutomapper();
         _jWTDecode = jWTDecode;
     }
@@ -151,7 +153,7 @@ public class UserService : IUserService
         }
     }
 
-    public UserResponse DeactivateUser()
+    public ResponseBase DeactivateUser()
     {
         try
         {
@@ -199,14 +201,10 @@ public class UserService : IUserService
             _userRepository.Update(user);
             _unitOfWork.Save();
 
-            var userDto = _mapper.Map<UserDTO>(user);
-            userDto.IsDeactivated = true;
+            _response.StatusCode = HttpStatusCode.OK;
+            _response.Message = "Profile successfully deactivated";
 
-            _userDTOResponse.User = userDto;
-            _userDTOResponse.StatusCode = HttpStatusCode.OK;
-            _userDTOResponse.Message = "User deactivated successfully";
-
-            return _userDTOResponse;
+            return _response;
         }
         catch (BadRequestException ex)
         {

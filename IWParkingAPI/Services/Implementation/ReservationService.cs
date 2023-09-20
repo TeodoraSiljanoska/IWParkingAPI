@@ -66,14 +66,17 @@ namespace IWParkingAPI.Services.Implementation
                 {
                     _allReservationsResponse.StatusCode = HttpStatusCode.OK;
                     _allReservationsResponse.Message = "There aren't any reservations.";
-                    _allReservationsResponse.Reservations = Enumerable.Empty<ReservationDTO>();
+                    _allReservationsResponse.Reservations = Enumerable.Empty<ReservationWithParkingLotDTO>();
                     return _allReservationsResponse;
                 }
 
-                List<ReservationDTO> resDTOs = new List<ReservationDTO>();
+                List<ReservationWithParkingLotDTO> resDTOs = new List<ReservationWithParkingLotDTO>();
                 foreach (var res in paginatedReservations)
                 {
-                    resDTOs.Add(_mapper.Map<ReservationDTO>(res));
+                    ReservationWithParkingLotDTO reservationDTO = _mapper.Map<ReservationWithParkingLotDTO>(res);
+                    reservationDTO.ParkingLot = _mapper.Map<ParkingLotDTO>(res.ParkingLot);
+                    reservationDTO.Vehicle = _mapper.Map<VehicleDTO>(res.Vehicle);
+                    resDTOs.Add(reservationDTO);
                 }
 
                 _allReservationsResponse.Reservations = resDTOs;
@@ -81,7 +84,6 @@ namespace IWParkingAPI.Services.Implementation
                 _allReservationsResponse.Message = "User reservations returned successfully";
                 _allReservationsResponse.NumPages = totalPages;
                 return _allReservationsResponse;
-
             }
 
             catch (BadRequestException ex)
@@ -113,12 +115,11 @@ namespace IWParkingAPI.Services.Implementation
 
                 TimeSpan reservationStartTime;
                 TimeSpan reservationEndTime;
-                if (!TimeSpan.TryParse(request.StartTime, out reservationStartTime) ||
-                    !TimeSpan.TryParse(request.EndTime, out reservationEndTime))
-                {
-                    throw new BadRequestException("Invalid start or end time format");
-                }
+                TimeSpan.TryParse(request.StartTime, out reservationStartTime);
+                TimeSpan.TryParse(request.EndTime, out reservationEndTime);
+                
 
+                //DateTime for reservation start and end
                 DateTime reservationStartDateTime = request.StartDate.Date.Add(reservationStartTime);
                 DateTime reservationEndDateTime = request.EndDate.Date.Add(reservationEndTime);
                 if (reservationStartDateTime <= DateTime.Now || reservationEndDateTime <= DateTime.Now ||
@@ -183,21 +184,17 @@ namespace IWParkingAPI.Services.Implementation
             try
             {
                 var userId = Convert.ToInt32(_jWTDecode.ExtractClaimByType("Id"));
-                var reservation = _reservationRepository.GetAsQueryable(x => x.Id == reservationId
-                && x.UserId == userId
-                && x.Type == Enums.ReservationTypes.Successful.ToString()).FirstOrDefault();
+                var reservation = _reservationRepository.GetAsQueryable(x => x.Id == reservationId && x.UserId == userId
+                && x.Type == Enums.ReservationTypes.Successful.ToString(), null, x => x.Include(y => y.Vehicle)).FirstOrDefault();
                 if (reservation == null)
                 {
                     throw new NotFoundException("Reservation doesn't exist");
                 }
                 var parkingLot = _parkingLotRepository.GetAsQueryable(x => x.Id == reservation.ParkingLotId &&
                 x.IsDeactivated == false, null, null).FirstOrDefault();
-
+                
                 TimeSpan reservationExtendedEndTime;
-                if (!TimeSpan.TryParse(request.EndTime, out reservationExtendedEndTime))
-                {
-                    throw new BadRequestException("Invalid start or end time format");
-                }
+                TimeSpan.TryParse(request.EndTime, out reservationExtendedEndTime); 
 
                 DateTime reservationStartDateTime = reservation.StartDate.Add(reservation.StartTime);
                 DateTime reservationEndDateTime = reservation.EndDate.Add(reservation.EndTime);
@@ -245,7 +242,8 @@ namespace IWParkingAPI.Services.Implementation
             try
             {
                 var userId = Convert.ToInt32(_jWTDecode.ExtractClaimByType("Id"));
-                var reservation = _reservationRepository.GetAsQueryable(x => x.Id == reservationId && x.UserId == userId).FirstOrDefault();
+                var reservation = _reservationRepository.GetAsQueryable(x => x.Id == reservationId && x.UserId == userId,
+                    null, x => x.Include(y => y.ParkingLot).Include(y => y.Vehicle)).FirstOrDefault();
                 if (reservation == null)
                 {
                     throw new BadRequestException("Reservation doesn't exist");
@@ -274,8 +272,9 @@ namespace IWParkingAPI.Services.Implementation
                 _reservationRepository.Update(reservation);
                 _unitOfWork.Save();
 
-                var reservationDTO = _mapper.Map<ReservationDTO>(reservation);
-
+                var reservationDTO = _mapper.Map<ReservationWithParkingLotDTO>(reservation);
+                reservationDTO.Vehicle = _mapper.Map<VehicleDTO>(reservation.Vehicle);
+                reservationDTO.ParkingLot = _mapper.Map<ParkingLotDTO>(reservation.ParkingLot);
                 _reservationResponse.StatusCode = HttpStatusCode.OK;
                 _reservationResponse.Message = "Reservation cancelled successfully";
                 _reservationResponse.Reservation = reservationDTO;
@@ -378,9 +377,11 @@ namespace IWParkingAPI.Services.Implementation
             _reservationRepository.Update(reservation);
             _unitOfWork.Save();
 
-            var reservationDTO = _mapper.Map<ReservationDTO>(reservation);
+            var reservationDTO = _mapper.Map<ReservationWithParkingLotDTO>(reservation);
             reservationDTO.StartDate = reservation.StartDate;
             reservationDTO.StartTime = reservation.StartTime;
+            reservationDTO.ParkingLot = _mapper.Map<ParkingLotDTO>(parkingLot);
+            reservationDTO.Vehicle = _mapper.Map<VehicleDTO>(reservation.Vehicle);
 
             _reservationResponse.StatusCode = HttpStatusCode.OK;
             _reservationResponse.Message = "Reservation extended successfully";
@@ -405,9 +406,13 @@ namespace IWParkingAPI.Services.Implementation
             _reservationRepository.Insert(reservationToInsert);
             _unitOfWork.Save();
 
+            var resToReturn = _mapper.Map<ReservationWithParkingLotDTO>(reservationToInsert);
+            resToReturn.Vehicle = _mapper.Map<VehicleDTO>(selectedVehicle);
+            resToReturn.ParkingLot = _mapper.Map<ParkingLotDTO>(parkingLot);
+
             _reservationResponse.StatusCode = HttpStatusCode.OK;
             _reservationResponse.Message = "Reservation made successfully";
-            _reservationResponse.Reservation = _mapper.Map<ReservationDTO>(reservationToInsert);
+            _reservationResponse.Reservation = resToReturn;
         }
 
         private void CheckForExistingReservation(MakeReservationRequest request, AspNetUser user,

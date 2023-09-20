@@ -17,13 +17,12 @@ namespace IWParkingAPI.Services.Implementation
     {
 
         private readonly IMapper _mapper;
-        private readonly IJwtUtils _jwtUtils;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly RoleManager<ApplicationRole> _roleManager;
-        private readonly ResponseBase _responseBase;
-        private readonly UserResponse _userDTOResponse;
+        private readonly IJwtUtils _jwtUtils;
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
+        private readonly ResponseBase _responseBase;
 
         public AuthService(RoleManager<ApplicationRole> roleManager, UserManager<ApplicationUser> userManager,
             IJwtUtils jwtUtils, SignInManager<ApplicationUser> signInManager)
@@ -33,11 +32,10 @@ namespace IWParkingAPI.Services.Implementation
             _signInManager = signInManager;
             _roleManager = roleManager;
             _jwtUtils = jwtUtils;
-            _userDTOResponse = new UserResponse();
             _responseBase = new ResponseBase();
         }
 
-        public async Task<UserResponse> RegisterUser(UserRegisterRequest request)
+        public async Task<ResponseBase> RegisterUser(UserRegisterRequest request)
         {
             try
             {
@@ -55,15 +53,14 @@ namespace IWParkingAPI.Services.Implementation
                 if (result.Succeeded)
                 {
                     await _userManager.AddToRoleAsync(newUser, request.Role);
-                    _userDTOResponse.StatusCode = HttpStatusCode.OK;
-                    _userDTOResponse.Message = "User created successfully";
-                    _userDTOResponse.User = userDto;
+                    _responseBase.StatusCode = HttpStatusCode.OK;
+                    _responseBase.Message = "Successfully signed up";
                 }
                 else
                 {
                     throw new BadRequestException("User creation failed! Please check User details and try again");
                 }
-                return _userDTOResponse;
+                return _responseBase;
             }
             catch (BadRequestException ex)
             {

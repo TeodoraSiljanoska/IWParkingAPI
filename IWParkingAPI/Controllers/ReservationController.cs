@@ -1,4 +1,5 @@
-﻿using IWParkingAPI.Middleware.Authorization;
+﻿using IWParkingAPI.Fluent_Validations;
+using IWParkingAPI.Middleware.Authorization;
 using IWParkingAPI.Models;
 using IWParkingAPI.Models.Requests;
 using IWParkingAPI.Models.Responses;
@@ -19,32 +20,34 @@ namespace IWParkingAPI.Controllers
             _reservationService = reservationService;
         }
 
+        [HttpGet("GetByUser")]
+        [AuthorizeCustom(UserRoles.User)]
+        public AllReservationsResponse GetUserReservations(int pageNumber, int pageSize)
+        {
+            return _reservationService.GetUserReservations(pageNumber, pageSize);
+        }
+
         [HttpPost("Make")]
+        [Validate]
         [AuthorizeCustom(UserRoles.User)]
         public ReservationResponse MakeReservation(MakeReservationRequest request)
         {
            return _reservationService.MakeReservation(request); 
         }
 
-        [HttpGet("Cancel/{id}")]
-        [AuthorizeCustom(UserRoles.User)]
-        public ReservationResponse CancelReservation(int id)
-        {
-            return _reservationService.CancelReservation(id);
-        }
-
         [HttpPut("Extend/{id}")]
+        [Validate]
         [AuthorizeCustom(UserRoles.User)]
         public ReservationResponse ExtendReservation(int id, ExtendReservationRequest request)
         {
             return _reservationService.ExtendReservation(id, request);
         }
 
-        [HttpGet("GetByUser")]
+        [HttpDelete("Cancel/{id}")]
         [AuthorizeCustom(UserRoles.User)]
-        public AllReservationsResponse GetUserReservations(int pageNumber, int pageSize)
+        public ReservationResponse CancelReservation(int id)
         {
-            return _reservationService.GetUserReservations(pageNumber, pageSize);
+            return _reservationService.CancelReservation(id);
         }
 
     }

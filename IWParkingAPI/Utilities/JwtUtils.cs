@@ -63,7 +63,7 @@ namespace IWParkingAPI.Utilities
             var usertoken = new JwtSecurityTokenHandler().WriteToken(token);
 
             userLoginResponse.StatusCode = HttpStatusCode.OK;
-            userLoginResponse.Message = "User logged in successfully";
+            userLoginResponse.Message = "Successfully logged in";
             userLoginResponse.Token = usertoken;
             userLoginResponse.Role = userRoles.FirstOrDefault();
             return userLoginResponse;

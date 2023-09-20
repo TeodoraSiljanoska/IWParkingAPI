@@ -30,6 +30,7 @@ namespace IWParkingAPI.Services.Implementation
         private readonly AllFavouriteParkingLotsResponse _getDTOResponse;
         private readonly AllParkingLotResponse _allDTOResponse;
         private readonly ParkingLotResponse _response;
+        private readonly ResponseBase _baseResponse;
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
         private readonly ICalculateCapacityExtension _calculateCapacityExtension;
         private readonly IEnumsExtension<VehicleTypes> _enumsExtensionVehicleTypes;
@@ -55,6 +56,7 @@ namespace IWParkingAPI.Services.Implementation
             _response = new ParkingLotResponse();
             _getDTOResponse = new AllFavouriteParkingLotsResponse();
             _allDTOResponse = new AllParkingLotResponse();
+            _baseResponse = new ResponseBase();
             _jWTDecode = jWTDecode;
             _enumsExtensionVehicleTypes = enumsExtension;
         }
@@ -143,7 +145,7 @@ namespace IWParkingAPI.Services.Implementation
             }
         }
 
-        public ParkingLotResponse CreateParkingLot(ParkingLotReq request)
+        public ResponseBase CreateParkingLot(ParkingLotReq request)
         {
             try
             {
@@ -168,8 +170,6 @@ namespace IWParkingAPI.Services.Implementation
                 _tempParkingLotRepository.Insert(parkingLot);
                 _unitOfWork.Save();
 
-                var parkingLotDTO = _mapper.Map<ParkingLotDTO>(parkingLot);
-
                 var createdParkingLot = _tempParkingLotRepository.GetAsQueryable(p => p.Id == parkingLot.Id, null, null).FirstOrDefault();
                 if (createdParkingLot == null)
                 {
@@ -177,7 +177,6 @@ namespace IWParkingAPI.Services.Implementation
                 }
 
                 ParkingLotRequest plrequest = new ParkingLotRequest();
-
                 plrequest.ParkingLotId = parkingLot.Id;
                 plrequest.UserId = parkingLot.UserId;
                 plrequest.TimeCreated = DateTime.Now;
@@ -185,11 +184,9 @@ namespace IWParkingAPI.Services.Implementation
                 _parkingLotRequestRepository.Insert(plrequest);
                 _unitOfWork.Save();
 
-
-                _response.ParkingLot = parkingLotDTO;
-                _response.StatusCode = HttpStatusCode.OK;
-                _response.Message = "Request for creating the Parking Lot created successfully";
-                return _response;
+                _baseResponse.StatusCode = HttpStatusCode.OK;
+                _baseResponse.Message = $"Request for creating the Parking Lot {request.Name} created successfully";
+                return _baseResponse;
             }
             catch (NotFoundException ex)
             {
@@ -213,7 +210,8 @@ namespace IWParkingAPI.Services.Implementation
             }
         }
 
-        public ParkingLotResponse UpdateParkingLot(int parkingLotId, UpdateParkingLotRequest request)
+
+        public ResponseBase UpdateParkingLot(int id, UpdateParkingLotRequest request)
         {
             try
             {
@@ -280,12 +278,28 @@ namespace IWParkingAPI.Services.Implementation
                 }
                 CheckIfRequestExistsOrElseCreateNew(parkingLotId, parkingLot);
 
-                var parkingLotDTO = _mapper.Map<ParkingLotDTO>(parkingLot);
+                    if (existingRequest.Type != (int)RequestType.Update)
+                    {
+                        throw new BadRequestException("There is already a request for this Parking Lot. Please wait until it is processed");
+                    }
+                }
 
-                _response.ParkingLot = parkingLotDTO;
-                _response.StatusCode = HttpStatusCode.OK;
-                _response.Message = "Request for updating the Parking Lot created successfully";
-                return _response;
+                if (existingRequest == null)
+                {
+                    ParkingLotRequest plrequest = new ParkingLotRequest();
+
+                    plrequest.ParkingLotId = parkingLot.Id;
+                    plrequest.UserId = parkingLot.UserId;
+                    plrequest.TimeCreated = DateTime.Now;
+                    plrequest.Status = (int)RequestStatus.Pending;
+                    plrequest.Type = (int)RequestType.Update;
+                    _parkingLotRequestRepository.Insert(plrequest);
+                    _unitOfWork.Save();
+                }
+
+                _baseResponse.StatusCode = HttpStatusCode.OK;
+                _baseResponse.Message = $"Request for updating the Parking Lot {parkingLot.Name} created successfully";
+                return _baseResponse;
             }
             catch (BadRequestException ex)
             {
@@ -304,7 +318,7 @@ namespace IWParkingAPI.Services.Implementation
             }
         }
 
-        public ParkingLotResponse DeactivateParkingLot(int parkingLotId)
+        public ResponseBase DeactivateParkingLot(int id)
         {
             try
             {

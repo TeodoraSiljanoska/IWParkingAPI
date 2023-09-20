@@ -4,6 +4,6 @@ namespace IWParkingAPI.Models.Responses
 {
     public class ReservationResponse : ResponseBase
     {
-        public ReservationDTO Reservation { get; set; } = new ReservationDTO();
+        public ReservationWithParkingLotDTO Reservation { get; set; } = new ReservationWithParkingLotDTO();
     }
 }
