@@ -21,12 +21,14 @@ public class UserService : IUserService
     private readonly UserResponse _userDTOResponse;
     private readonly ResponseBase _response;
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
+    private readonly ILocalTimeExtension _localTime;
     private readonly IMapper _mapper;
     private readonly IJWTDecode _jWTDecode;
     private const int PageSize = 5;
     private const int PageNumber = 1;
 
-    public UserService(IUnitOfWork<ParkingDbContext> unitOfWork, IJWTDecode jWTDecode)
+    public UserService(IUnitOfWork<ParkingDbContext> unitOfWork, IJWTDecode jWTDecode,
+        ILocalTimeExtension localTime)
     {
         _unitOfWork = unitOfWork;
         _userRepository = _unitOfWork.GetGenericRepository<AspNetUser>();
@@ -35,6 +37,7 @@ public class UserService : IUserService
         _response = new ResponseBase();
         _mapper = MapperConfig.InitializeAutomapper();
         _jWTDecode = jWTDecode;
+        _localTime = localTime;
     }
 
     public AllUsersResponse GetAllUsers(int pageNumber, int pageSize)
@@ -112,6 +115,8 @@ public class UserService : IUserService
 
             CheckUserUpdateDetails(changes, user);
 
+            DateTime date = _localTime.GetLocalTime();
+
             user.Name = (user.Name == changes.Name) ? user.Name : changes.Name;
             user.Surname = (user.Surname == changes.Surname) ? user.Surname : changes.Surname;
             user.UserName = (user.UserName == changes.Email) ? user.UserName : changes.Email;
@@ -119,7 +124,7 @@ public class UserService : IUserService
             user.PhoneNumber = (user.PhoneNumber == changes.PhoneNumber) ? user.PhoneNumber : changes.PhoneNumber;
             user.Email = (user.Email == changes.Email) ? user.Email : changes.Email;
             user.NormalizedEmail = (user.NormalizedEmail == changes.Email.ToUpper()) ? user.NormalizedEmail : changes.Email.ToUpper();
-            user.TimeModified = DateTime.Now;
+            user.TimeModified = date;
             _userRepository.Update(user);
             _unitOfWork.Save();
 

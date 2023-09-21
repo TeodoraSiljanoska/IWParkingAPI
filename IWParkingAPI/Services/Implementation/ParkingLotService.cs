@@ -33,12 +33,14 @@ namespace IWParkingAPI.Services.Implementation
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
         private readonly ICalculateCapacityExtension _calculateCapacityExtension;
         private readonly IEnumsExtension<VehicleTypes> _enumsExtensionVehicleTypes;
+        private readonly ILocalTimeExtension _localTime;
         private readonly IJWTDecode _jWTDecode;
         private const int PageSize = 5;
         private const int PageNumber = 1;
 
         public ParkingLotService(IUnitOfWork<ParkingDbContext> unitOfWork, IJWTDecode jWTDecode,
-            ICalculateCapacityExtension calculateCapacityExtension, IEnumsExtension<VehicleTypes> enumsExtension)
+            ICalculateCapacityExtension calculateCapacityExtension, IEnumsExtension<VehicleTypes> enumsExtension,
+            ILocalTimeExtension localTime)
         {
             _mapper = MapperConfig.InitializeAutomapper();
             _unitOfWork = unitOfWork;
@@ -57,6 +59,7 @@ namespace IWParkingAPI.Services.Implementation
             _baseResponse = new ResponseBase();
             _jWTDecode = jWTDecode;
             _enumsExtensionVehicleTypes = enumsExtension;
+            _localTime = localTime;
         }
 
         public AllParkingLotResponse GetAllParkingLots(int pageNumber, int pageSize, FilterParkingLotRequest request)
@@ -89,7 +92,7 @@ namespace IWParkingAPI.Services.Implementation
                     return _allDTOResponse;
                 }
 
-                var date = DateTime.Now;
+                DateTime date = _localTime.GetLocalTime();
                 TimeSpan parsedTime;
                 var resTo = TimeSpan.TryParse(date.TimeOfDay.ToString(), out parsedTime);
 
@@ -120,7 +123,8 @@ namespace IWParkingAPI.Services.Implementation
             {
                 ParkingLot parkingLot = CheckIfPLExists(parkingLotId);
 
-                var date = DateTime.Now;
+                DateTime date = _localTime.GetLocalTime();
+
                 TimeSpan parsedTime;
                 var resTo = TimeSpan.TryParse(date.TimeOfDay.ToString(), out parsedTime);
 
@@ -176,7 +180,10 @@ namespace IWParkingAPI.Services.Implementation
                 var parkingLot = _mapper.Map<TempParkingLot>(request);
                 parkingLot.UserId = userId;
                 parkingLot.User = existingUser;
-                parkingLot.TimeCreated = DateTime.Now;
+
+                DateTime date = _localTime.GetLocalTime();
+
+                parkingLot.TimeCreated = date;
                 parkingLot.WorkingHourTo = from;
                 parkingLot.WorkingHourTo = to;
                 parkingLot.ParkingLotId = null;
@@ -192,7 +199,8 @@ namespace IWParkingAPI.Services.Implementation
                 ParkingLotRequest plRequest = new ParkingLotRequest();
                 plRequest.ParkingLotId = parkingLot.Id;
                 plRequest.UserId = parkingLot.UserId;
-                plRequest.TimeCreated = DateTime.Now;
+
+                plRequest.TimeCreated = date;
                 plRequest.Status = (int)RequestStatus.Pending;
                 _parkingLotRequestRepository.Insert(plRequest);
                 _unitOfWork.Save();
@@ -439,7 +447,8 @@ namespace IWParkingAPI.Services.Implementation
                     return _allDTOResponse;
                 }
 
-                var date = DateTime.Now;
+                DateTime date = _localTime.GetLocalTime();
+
                 TimeSpan parsedTime;
                 var resTo = TimeSpan.TryParse(date.TimeOfDay.ToString(), out parsedTime);
 
@@ -775,7 +784,10 @@ namespace IWParkingAPI.Services.Implementation
                         existingRequest.UserId = parkingLot.UserId;
                         existingRequest.Status = (int)RequestStatus.Pending;
                         existingRequest.Type = (int)RequestType.Update;
-                        existingRequest.TimeCreated = DateTime.Now;
+
+                        DateTime date = _localTime.GetLocalTime();
+
+                        existingRequest.TimeCreated = date;
                         _requestRepository.Update(existingRequest);
                         _unitOfWork.Save();
                     }
@@ -791,7 +803,10 @@ namespace IWParkingAPI.Services.Implementation
 
                     plrequest.ParkingLotId = parkingLot.Id;
                     plrequest.UserId = parkingLot.UserId;
-                    plrequest.TimeCreated = DateTime.Now;
+
+                    DateTime date = _localTime.GetLocalTime();
+
+                    plrequest.TimeCreated = date;
                     plrequest.Status = (int)RequestStatus.Pending;
                     plrequest.Type = (int)RequestType.Update;
                     _parkingLotRequestRepository.Insert(plrequest);
@@ -828,7 +843,10 @@ namespace IWParkingAPI.Services.Implementation
                 _unitOfWork.Save();
             }
             parkingLot.IsDeactivated = true;
-            parkingLot.TimeModified = DateTime.Now;
+
+            DateTime date = _localTime.GetLocalTime();
+
+            parkingLot.TimeModified = date;
             _parkingLotRepository.Update(parkingLot);
             _unitOfWork.Save();
 
@@ -861,7 +879,10 @@ namespace IWParkingAPI.Services.Implementation
                 ParkingLotRequest plrequest = new ParkingLotRequest();
                 plrequest.ParkingLotId = parkingLot.Id;
                 plrequest.UserId = parkingLot.UserId;
-                plrequest.TimeCreated = DateTime.Now;
+
+                DateTime date = _localTime.GetLocalTime();
+
+                plrequest.TimeCreated = date;
                 plrequest.Status = (int)RequestStatus.Pending;
                 plrequest.Type = (int)RequestType.Deactivate;
 
@@ -907,6 +928,7 @@ namespace IWParkingAPI.Services.Implementation
         private void CheckIfPLAlreadyExists2ForUpdate(int parkingLotId, UpdateParkingLotRequest request, ParkingLot parkingLot, TimeSpan from, TimeSpan to)
         {
             var existingPlFromUser2 = _tempParkingLotRepository.GetAsQueryable(p => p.ParkingLotId == parkingLotId).FirstOrDefault();
+            DateTime date = _localTime.GetLocalTime();
             if (existingPlFromUser2 != null)
             {
                 existingPlFromUser2.Name = (existingPlFromUser2.Name == request.Name) ? existingPlFromUser2.Name : request.Name;
@@ -919,14 +941,14 @@ namespace IWParkingAPI.Services.Implementation
                 existingPlFromUser2.CapacityCar = (existingPlFromUser2.CapacityCar == request.CapacityCar) ? existingPlFromUser2.CapacityCar : request.CapacityCar;
                 existingPlFromUser2.CapacityAdaptedCar = (existingPlFromUser2.CapacityAdaptedCar == request.CapacityAdaptedCar) ? existingPlFromUser2.CapacityAdaptedCar : request.CapacityAdaptedCar;
                 existingPlFromUser2.Price = (existingPlFromUser2.Price == request.Price) ? existingPlFromUser2.Price : request.Price;
-                existingPlFromUser2.TimeModified = DateTime.Now;
+                existingPlFromUser2.TimeModified = date;
 
                 _tempParkingLotRepository.Update(_mapper.Map<TempParkingLot>(existingPlFromUser2));
             }
             else
             {
                 var tempParkingLot = _mapper.Map<TempParkingLot>(request);
-                tempParkingLot.TimeCreated = DateTime.Now;
+                tempParkingLot.TimeCreated = date;
                 tempParkingLot.UserId = parkingLot.UserId;
                 tempParkingLot.User = parkingLot.User;
                 tempParkingLot.ParkingLotId = parkingLot.Id;
