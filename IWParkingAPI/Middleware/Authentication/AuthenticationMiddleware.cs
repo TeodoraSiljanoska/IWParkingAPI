@@ -17,7 +17,7 @@ namespace IWParkingAPI.Middleware.Authentication
 
         public async Task Invoke(HttpContext context, IJwtUtils jwtUtils)
         {
-            var allowedUrlsList = new List<string> { RouteEndpoints.Login, RouteEndpoints.Register };
+            var allowedUrlsList = new List<string> { RouteEndpoints.Login, RouteEndpoints.Register, RouteEndpoints.Cities, RouteEndpoints.Zones };
 
             // if the path is one of these defined paths,
             // the token doesn't need to be validated

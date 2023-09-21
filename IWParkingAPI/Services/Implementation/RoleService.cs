@@ -45,7 +45,7 @@ namespace IWParkingAPI.Services.Implementation
 
                 List<RoleDTO> rolesDto = new List<RoleDTO>();
 
-                foreach(var r in roles)
+                foreach (var r in roles)
                 {
                     rolesDto.Add(_mapper.Map<RoleDTO>(r));
                 }
@@ -62,20 +62,12 @@ namespace IWParkingAPI.Services.Implementation
 
             }
         }
+
         public RoleResponse GetRoleById(int id)
         {
             try
             {
-                if (id <= 0)
-                {
-                    throw new BadRequestException("Role Id is required");
-                }
-
-                ApplicationRole role = _roleRepository.GetById(id);
-                if (role == null)
-                {
-                    throw new NotFoundException("Role not found");
-                }
+                ApplicationRole role = CheckIfRoleExists(id);
 
                 var roleDto = _mapper.Map<RoleDTO>(role);
 
@@ -84,17 +76,17 @@ namespace IWParkingAPI.Services.Implementation
                 _response.Message = "Role returned successfully";
                 return _response;
             }
-            catch(NotFoundException ex)
+            catch (NotFoundException ex)
             {
                 _logger.Error($"Not Found for GetRoleById {Environment.NewLine}ErrorMessage: {ex.Message}");
                 throw;
             }
-            catch(BadRequestException ex)
+            catch (BadRequestException ex)
             {
                 _logger.Error($"Bad Request for GetRoleById {Environment.NewLine}ErrorMessage: {ex.Message}");
                 throw;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 _logger.Error($"Unexpected error while getting Role by Id {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
                 throw new InternalErrorException("Unexpected error while getting the Role by Id");
@@ -124,7 +116,7 @@ namespace IWParkingAPI.Services.Implementation
 
                 return _response;
             }
-            catch(BadRequestException ex)
+            catch (BadRequestException ex)
             {
                 _logger.Error($"Bad Request for CreateRole {Environment.NewLine}ErrorMessage: {ex.Message}");
                 throw;
@@ -135,33 +127,13 @@ namespace IWParkingAPI.Services.Implementation
                 throw new InternalErrorException("Unexpected error while creating the Role");
             }
         }
+
         public RoleResponse UpdateRole(int id, RoleRequest changes)
         {
             try
             {
-                if (id <= 0)
-                {
-                    throw new BadRequestException("Role Id is required");
-                }
-
-                ApplicationRole role = _roleRepository.GetById(id);
-                
-                if (role == null)
-                {
-                    throw new NotFoundException("Role not found");
-                }
-                if (changes.Name == role.Name)
-                {
-                    throw new BadRequestException("No updates were entered. Please enter the updates");
-                }
-
-                if (changes.Name != role.Name)
-                {
-                    if (_roleRepository.FindByPredicate(u => u.Name == changes.Name))
-                    {
-                        throw new BadRequestException("Role with that name already exists");
-                    }
-                }
+                ApplicationRole role = CheckIfRoleExists(id);
+                CheckRoleUpdateDetails(changes, role);
 
                 role.Name = (role.Name == changes.Name) ? role.Name : changes.Name;
                 role.NormalizedName = (role.NormalizedName == changes.Name.ToUpper()) ? role.NormalizedName : changes.Name.ToUpper();
@@ -171,24 +143,23 @@ namespace IWParkingAPI.Services.Implementation
                 _unitOfWork.Save();
 
                 var roleDto = _mapper.Map<RoleDTO>(role);
-
                 _response.Role = roleDto;
                 _response.StatusCode = HttpStatusCode.OK;
                 _response.Message = "Role updated successfully";
 
                 return _response;
             }
-            catch(BadRequestException ex)
+            catch (BadRequestException ex)
             {
                 _logger.Error($"Bad Request for UpdateRole {Environment.NewLine}ErrorMessage: {ex.Message}");
                 throw;
             }
-            catch(NotFoundException ex)
+            catch (NotFoundException ex)
             {
                 _logger.Error($"Not Found for UpdateRole {Environment.NewLine}ErrorMessage: {ex.Message}");
                 throw;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 _logger.Error($"Unexpected error while updating the Role {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
                 throw new InternalErrorException("Unexpected error while updating the Role");
@@ -199,16 +170,7 @@ namespace IWParkingAPI.Services.Implementation
         {
             try
             {
-                if (id <= 0)
-                {
-                    throw new BadRequestException("Role Id is required");
-                }
-
-                ApplicationRole role = _roleRepository.GetById(id);
-                if (role == null)
-                {
-                    throw new NotFoundException("Role not found");
-                }
+                ApplicationRole role = CheckIfRoleExists(id);
 
                 _roleRepository.Delete(role);
                 _unitOfWork.Save();
@@ -221,21 +183,88 @@ namespace IWParkingAPI.Services.Implementation
 
                 return _response;
             }
-            catch(BadRequestException ex)
+            catch (BadRequestException ex)
             {
                 _logger.Error($"Bad Request for DeleteRole {Environment.NewLine}ErrorMessage: {ex.Message}");
                 throw;
             }
-            catch(NotFoundException ex)
+            catch (NotFoundException ex)
             {
                 _logger.Error($"Not Found for DeleteRole {Environment.NewLine}ErrorMessage: {ex.Message}");
                 throw;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 _logger.Error($"Unexpected error while deleting the Role {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
                 throw new InternalErrorException("Unexpected error while deleting the Role");
             }
+        }
+
+        private ApplicationRole CheckIfRoleExists(int id)
+        {
+            try
+            {
+                if (id <= 0)
+                {
+                    throw new BadRequestException("Role Id is required");
+                }
+
+                ApplicationRole role = _roleRepository.GetById(id);
+                if (role == null)
+                {
+                    throw new NotFoundException("Role not found");
+                }
+
+                return role;
+            }
+            catch (NotFoundException ex)
+            {
+                _logger.Error($"Not Found for CheckIfRoleExists {Environment.NewLine}ErrorMessage: {ex.Message}");
+                throw;
+            }
+            catch (BadRequestException ex)
+            {
+                _logger.Error($"Bad Request for CheckIfRoleExists {Environment.NewLine}ErrorMessage: {ex.Message}");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.Error($"Unexpected error while checking if Role exists in CheckIfRoleExists method" +
+                    $" {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
+                throw new InternalErrorException("Unexpected error while checking if Role exists in CheckIfRoleExists method");
+            }
+
+        }
+
+        private void CheckRoleUpdateDetails(RoleRequest changes, ApplicationRole role)
+        {
+            try
+            {
+                if (changes.Name == role.Name)
+                {
+                    throw new BadRequestException("No updates were entered. Please enter the updates");
+                }
+
+                if (changes.Name != role.Name)
+                {
+                    if (_roleRepository.FindByPredicate(u => u.Name == changes.Name))
+                    {
+                        throw new BadRequestException("Role with that name already exists");
+                    }
+                }
+            }
+            catch (BadRequestException ex)
+            {
+                _logger.Error($"Bad Request for CheckRoleUpdateDetails {Environment.NewLine}ErrorMessage: {ex.Message}");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.Error($"Unexpected error while checking Role update details in CheckRoleUpdateDetails method" +
+                    $" {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
+                throw new InternalErrorException("Unexpected error while checking Role update details in CheckRoleUpdateDetails method");
+            }
+
         }
     }
 }

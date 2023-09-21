@@ -51,53 +51,32 @@ namespace IWParkingAPI.Services.Implementation
                 throw new InternalErrorException("Unexpected error while getting the Available Capacity");
             }
         }
-
-        public List<Reservation> CountReservations(string? vehicleType, int parkingLotId, DateTime startDate, TimeSpan startTime, DateTime endDate, TimeSpan endTime, double overlap)
+        public List<Reservation> CountReservations(string? vehicleType, int parkingLotId,
+            DateTime startDate, TimeSpan startTime, DateTime endDate, TimeSpan endTime, double overlap)
         {
-            List<Reservation> Reservations;
-            if (overlap < 0)
-            {
-                Reservations = _reservationRepository.GetAsQueryable(
-                x => x.Type.Equals(Enums.ReservationTypes.Successful.ToString()) &&
-                x.ParkingLotId == parkingLotId &&
-                (
-                   (x.StartDate == startDate && x.StartTime < endTime && x.EndTime > startTime) ||
-                   (x.StartDate == endDate && x.EndTime > startTime) ||
-                   (x.EndDate == startDate && x.StartTime < endTime) ||
-                   (x.StartDate < endDate && x.EndDate > startDate)
-               ),
-               null, x => x.Include(y => y.Vehicle)).Where(x => x.Vehicle.Type.Equals(vehicleType)).ToList();
-            }
-            else
-            {
-                ParkingLot parkingLot = _parkingLotRepository.GetAsQueryable(p => p.Id == parkingLotId, null, null).FirstOrDefault();
-                if ((parkingLot.WorkingHourTo - parkingLot.WorkingHourFrom).TotalHours < 0)
-                {
-                    Reservations = _reservationRepository.GetAsQueryable(
-                    x => x.Type.Equals(Enums.ReservationTypes.Successful.ToString()) &&
-                    x.ParkingLotId == parkingLotId &&
-                    (
-                      (x.StartDate == startDate && x.StartTime < endTime && x.EndTime > startTime) ||
-                      (x.StartDate == endDate && x.EndTime > startTime) ||
-                      (x.EndDate == startDate && x.StartTime < endTime) ||
-                      (x.StartDate < endDate && x.EndDate > startDate)
-                    ),
-                    null, x => x.Include(y => y.Vehicle)).Where(x => x.Vehicle.Type.Equals(Enums.VehicleTypes.Car.ToString())).ToList();
-                }
-                else
-                {
-                    Reservations = _reservationRepository.GetAsQueryable(
-                    x => (x.Type.Equals(Enums.ReservationTypes.Successful.ToString())) &&
-                    (x.ParkingLotId == parkingLotId) &&
-                    ((x.StartDate.Date <= endDate && x.EndDate.Date >= startDate &&
-                    x.StartTime < endTime && x.EndTime > startTime) ||
-                    (startTime >= x.StartTime && x.StartTime < endTime && endTime <= x.EndTime && x.EndTime > startTime)))
-                    .Where(reservation => reservation.Vehicle.Type.Equals(vehicleType)).ToList();
-                }
-            }
+            List<Reservation> Reservations = new List<Reservation>();
+            var existingReservations = _reservationRepository.GetAsQueryable(
+            x => (x.Type.Equals(Enums.ReservationTypes.Successful.ToString())) &&
+            (x.ParkingLotId == parkingLotId),
+            null, x => x.Include(y => y.Vehicle))
+            .Where(x => x.Vehicle.Type.Equals(vehicleType)).ToList();
+            DateTime startDateTime = startDate.Date.Add(startTime);
+            DateTime endDateTime = endDate.Date.Add(endTime);
 
+            foreach (var x in existingReservations)
+            {
+                DateTime reservationStartDateTime = x.StartDate.Add(x.StartTime);
+                DateTime reservationEndDateTime = x.EndDate.Add(x.EndTime);
+
+                var res = existingReservations.Where(r => (r.StartDate <= endDate &&
+                   r.EndDate >= startDate &&
+                   reservationStartDateTime < endDateTime &&
+                   reservationEndDateTime > startDateTime) ||
+                   (reservationStartDateTime == startDateTime && reservationEndDateTime == endDateTime)).FirstOrDefault();
+                if (res != null)
+                    Reservations.Add(res);
+            }
             return Reservations;
         }
-
     }
 }

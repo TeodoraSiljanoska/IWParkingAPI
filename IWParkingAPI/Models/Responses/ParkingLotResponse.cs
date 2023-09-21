@@ -5,6 +5,6 @@ namespace IWParkingAPI.Models.Responses
 {
     public class ParkingLotResponse : ResponseBase
     {
-        public ParkingLotDTO ParkingLot { get; set; } = new ParkingLotDTO();
+        public ParkingLotWithAvailableCapacityDTO ParkingLot { get; set; } = new ParkingLotWithAvailableCapacityDTO();
     }
 }

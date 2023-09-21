@@ -2,8 +2,6 @@
 using IWParkingAPI.Infrastructure.Repository;
 using IWParkingAPI.Infrastructure.UnitOfWork;
 using IWParkingAPI.Mappers;
-using IWParkingAPI.Models.Context;
-using IWParkingAPI.Models.Data;
 using IWParkingAPI.Models.Requests;
 using IWParkingAPI.Models.Responses;
 using IWParkingAPI.Services.Interfaces;
@@ -13,16 +11,8 @@ using NLog;
 using Microsoft.EntityFrameworkCore;
 using IWParkingAPI.Utilities;
 using IWParkingAPI.Models.Responses.Dto;
-using System.IdentityModel.Tokens.Jwt;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
 using IWParkingAPI.Models.Enums;
 using static IWParkingAPI.Models.Enums.Enums;
-using Newtonsoft.Json.Linq;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel;
-using System.Reflection;
-using System;
 using IWParkingAPI.Models;
 
 namespace IWParkingAPI.Services.Implementation
@@ -93,13 +83,7 @@ namespace IWParkingAPI.Services.Implementation
         {
             try
             {
-                var userId = Convert.ToInt32(_jWTDecode.ExtractClaimByType("Id"));
-                var existingUser = _userRepository.GetAsQueryable(u => u.Id == userId, null, null).FirstOrDefault();
-
-                if (existingUser == null || existingUser.IsDeactivated == true)
-                {
-                    throw new NotFoundException("User doesn't exist");
-                }
+                int userId = CheckIfUserExists();
 
                 var checkExistingPlateNumber = _vehicleRepository.GetAsQueryable(v => v.PlateNumber == request.PlateNumber).FirstOrDefault();
                 if (checkExistingPlateNumber != null)
@@ -119,9 +103,7 @@ namespace IWParkingAPI.Services.Implementation
                 vehicle.UserId = userId;
                 _vehicleRepository.Insert(vehicle);
                 _unitOfWork.Save();
-
                 var VehicleDTO = _mapper.Map<VehicleDTO>(vehicle);
-
                 _makePrimaryResponse.Vehicle = VehicleDTO;
                 _makePrimaryResponse.StatusCode = HttpStatusCode.OK;
                 _makePrimaryResponse.Message = "Vehicle created successfully";
@@ -149,46 +131,18 @@ namespace IWParkingAPI.Services.Implementation
             }
         }
 
-        public VehicleResponse DeleteVehicle(int id)
+        public VehicleResponse DeleteVehicle(int vehicleId)
         {
             try
             {
-                var strUserId = _jWTDecode.ExtractClaimByType("Id");
-                if (strUserId == null)
-                {
-                    throw new BadRequestException("Unexpected error while Creating the Parking Lot");
-                }
-                var userId = Convert.ToInt32(strUserId);
+                int userId = CheckIfUserExists();
 
-                if (id <= 0)
-                {
-                    throw new BadRequestException("Vehicle Id is required");
-                }
+                Vehicle? vehicle = CheckIfVehicleExists(vehicleId, userId);
 
-                var vehicle = _vehicleRepository.GetAsQueryable(x => x.Id == id && x.UserId == userId, null, x => x.Include(y => y.User)).FirstOrDefault();
-                if (vehicle == null)
-                {
-                    throw new NotFoundException("Vehicle not found");
-                }
-
-                if (vehicle.IsPrimary == true)
-                {
-                    var vehiclesOfUser = _vehicleRepository.GetAsQueryable(v => v.UserId == vehicle.UserId).ToList();
-                    if (vehiclesOfUser != null && vehiclesOfUser.Count() > 1)
-                    {
-                        vehiclesOfUser.Remove(vehicle);
-                        vehiclesOfUser.First().IsPrimary = true;
-                    }
-                }
+                CheckPrimaryVehicleForDelete(vehicle);
 
                 _vehicleRepository.Delete(vehicle);
                 _unitOfWork.Save();
-
-                var deletedVehicle = _vehicleRepository.GetAsQueryable(x => x.Id == id, null, x => x.Include(y => y.User)).FirstOrDefault();
-                if (deletedVehicle != null)
-                {
-                    throw new InternalErrorException("An error while deleting the Vehicle occurred");
-                }
 
                 var VehicleDTO = _mapper.Map<VehicleDTO>(vehicle);
 
@@ -219,46 +173,15 @@ namespace IWParkingAPI.Services.Implementation
             }
         }
 
-        public VehicleResponse UpdateVehicle(int id, UpdateVehicleRequest request)
+        public VehicleResponse UpdateVehicle(int vehicleId, UpdateVehicleRequest request)
         {
             try
             {
-                if (id <= 0)
-                {
-                    throw new BadRequestException("Vehicle Id is required");
-                }
+                int userId = CheckIfUserExists();
 
-                var strUserId = _jWTDecode.ExtractClaimByType("Id");
-                if (strUserId == null)
-                {
-                    throw new BadRequestException("Unexpected error while Creating the Parking Lot");
-                }
-                var userId = Convert.ToInt32(strUserId);
+                Vehicle? vehicle = CheckIfVehicleExists(vehicleId, userId);
 
-                var vehicle = _vehicleRepository.GetAsQueryable(x => x.Id == id, null, x => x.Include(y => y.User)).FirstOrDefault();
-                if (vehicle == null)
-                {
-                    throw new NotFoundException("Vehicle not found");
-                }
-
-                if (vehicle.UserId != userId)
-                {
-                    throw new BadRequestException("You do not own this vehicle");
-                }
-
-                if (vehicle.PlateNumber == request.PlateNumber && vehicle.Type == request.Type)
-                {
-                    throw new BadRequestException("No updates were entered. Please enter the updates");
-                }
-
-                if (request.PlateNumber != vehicle.PlateNumber)
-                {
-                    var checkExistingPlateNumber = _vehicleRepository.GetAsQueryable(v => v.PlateNumber == request.PlateNumber).FirstOrDefault();
-                    if (checkExistingPlateNumber != null)
-                    {
-                        throw new BadRequestException("Vehicle with that plate number already exists");
-                    }
-                }
+                CheckVehicleUpdateDetails(request, vehicle);
 
                 vehicle.PlateNumber = (vehicle.PlateNumber == request.PlateNumber) ? vehicle.PlateNumber : request.PlateNumber;
                 vehicle.Type = (vehicle.Type == request.Type) ? vehicle.Type : request.Type;
@@ -268,7 +191,6 @@ namespace IWParkingAPI.Services.Implementation
                 _unitOfWork.Save();
 
                 var VehicleDTO = _mapper.Map<VehicleDTO>(vehicle);
-
                 _makePrimaryResponse.Vehicle = VehicleDTO;
                 _makePrimaryResponse.StatusCode = HttpStatusCode.OK;
                 _makePrimaryResponse.Message = "Vehicle updated successfully";
@@ -296,33 +218,13 @@ namespace IWParkingAPI.Services.Implementation
             }
         }
 
-        public VehicleResponse GetVehicleById(int id)
+        public VehicleResponse GetVehicleById(int vehicleId)
         {
             try
             {
-                var strUserId = _jWTDecode.ExtractClaimByType("Id");
-                if (strUserId == null)
-                {
-                    throw new BadRequestException("Unexpected error while Creating the Parking Lot");
-                }
-                var userId = Convert.ToInt32(strUserId);
+                int userId = CheckIfUserExists();
 
-                if (id <= 0)
-                {
-                    throw new BadRequestException("Vehicle Id is required");
-                }
-
-                var vehicle = _vehicleRepository.GetAsQueryable(x => x.Id == id, null, x => x.Include(y => y.User)).FirstOrDefault();
-
-                if (vehicle == null)
-                {
-                    throw new NotFoundException("Vehicle not found");
-                }
-
-                if (vehicle.UserId != userId)
-                {
-                    throw new BadRequestException("You do not own this vehicle");
-                }
+                Vehicle? vehicle = CheckIfVehicleExists(vehicleId, userId);
 
                 var VehicleDTO = _mapper.Map<VehicleDTO>(vehicle);
 
@@ -352,12 +254,7 @@ namespace IWParkingAPI.Services.Implementation
         {
             try
             {
-                var userId = Convert.ToInt32(_jWTDecode.ExtractClaimByType("Id"));
-                var user = _userRepository.GetById(userId);
-                if (user == null || user.IsDeactivated == true)
-                {
-                    throw new NotFoundException("User not found");
-                }
+                int userId = CheckIfUserExists();
 
                 var vehicles = _vehicleRepository.GetAsQueryable(x => x.UserId == userId).ToList();
 
@@ -431,24 +328,9 @@ namespace IWParkingAPI.Services.Implementation
         {
             try
             {
-                var userId = Convert.ToInt32(_jWTDecode.ExtractClaimByType("Id"));
-                if (vehicleId <= 0)
-                {
-                    throw new BadRequestException("Vehicle Id is required");
-                }
+                int userId = CheckIfUserExists();
 
-                Vehicle vehicle = _vehicleRepository.GetById(vehicleId);
-                if (vehicle == null)
-                {
-                    throw new NotFoundException("Vehicle not found");
-                }
-
-                var user = _userRepository.GetById(userId);
-
-                if (user == null)
-                {
-                    throw new NotFoundException("User not found");
-                }
+                Vehicle? vehicle = CheckIfVehicleExists(vehicleId, userId);
 
                 var vehiclesOfTheUser = _vehicleRepository.GetAll().Where(v => v.UserId == userId);
 
@@ -494,6 +376,112 @@ namespace IWParkingAPI.Services.Implementation
                 _logger.Error($"Unexpected error while making the Vehicle primary {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
                 throw new InternalErrorException("Unexpected error while making Vehicle primary");
             }
+        }
+
+        private int CheckIfUserExists()
+        {
+            try
+            {
+                var userId = Convert.ToInt32(_jWTDecode.ExtractClaimByType("Id"));
+                var user = _userRepository.GetById(userId);
+                if (user == null || user.IsDeactivated == true)
+                {
+                    throw new NotFoundException("User not found");
+                }
+                return userId;
+            }
+            catch (NotFoundException ex)
+            {
+                _logger.Error($"Not Found for CheckIfUserExists {Environment.NewLine}ErrorMessage: {ex.Message}");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.Error($"Unexpected error while checking if User exists in CheckIfUserExists method" +
+                    $" {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
+                throw new InternalErrorException("Unexpected error while checking if User exists in CheckIfUserExists method");
+            }
+        }
+
+        private Vehicle CheckIfVehicleExists(int vehicleId, int userId)
+        {
+            try
+            {
+                if (vehicleId <= 0)
+                {
+                    throw new BadRequestException("Vehicle Id is required");
+                }
+
+                var vehicle = _vehicleRepository.GetAsQueryable(x => x.Id == vehicleId && x.UserId == userId,
+                                                null, x => x.Include(y => y.User)).FirstOrDefault();
+                if (vehicle == null)
+                {
+                    throw new NotFoundException("Vehicle not found");
+                }
+
+                return vehicle;
+            }
+            catch (BadRequestException ex)
+            {
+                _logger.Error($"Bad Request for CheckIfVehicleExists {Environment.NewLine}ErrorMessage: {ex.Message}");
+                throw;
+            }
+            catch (NotFoundException ex)
+            {
+                _logger.Error($"Not Found for CheckIfVehicleExists {Environment.NewLine}ErrorMessage: {ex.Message}");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.Error($"Unexpected error while checking if Vehicle exists in CheckIfVehicleExists method" +
+                    $" {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
+                throw new InternalErrorException("Unexpected error while checking if Vehicle exists in CheckIfVehicleExists method");
+            }
+        }
+
+        private void CheckPrimaryVehicleForDelete(Vehicle vehicle)
+        {
+            if (vehicle.IsPrimary == true)
+            {
+                var vehiclesOfUser = _vehicleRepository.GetAsQueryable(v => v.UserId == vehicle.UserId).ToList();
+                if (vehiclesOfUser != null && vehiclesOfUser.Count() > 1)
+                {
+                    vehiclesOfUser.Remove(vehicle);
+                    vehiclesOfUser.First().IsPrimary = true;
+                }
+            }
+        }
+
+        private void CheckVehicleUpdateDetails(UpdateVehicleRequest request, Vehicle vehicle)
+        {
+            try
+            {
+                if (vehicle.PlateNumber == request.PlateNumber && vehicle.Type == request.Type)
+                {
+                    throw new BadRequestException("No updates were entered. Please enter the updates");
+                }
+
+                if (request.PlateNumber != vehicle.PlateNumber)
+                {
+                    var checkExistingPlateNumber = _vehicleRepository.GetAsQueryable(v => v.PlateNumber == request.PlateNumber).FirstOrDefault();
+                    if (checkExistingPlateNumber != null)
+                    {
+                        throw new BadRequestException("Vehicle with that plate number already exists");
+                    }
+                }
+            }
+            catch (BadRequestException ex)
+            {
+                _logger.Error($"Bad Request for CheckVehicleUpdateDetails {Environment.NewLine}ErrorMessage: {ex.Message}");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.Error($"Unexpected error while checking Vehicle update details in CheckVehicleUpdateDetails method" +
+                    $" {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
+                throw new InternalErrorException("Unexpected error while checking Vehicle update details in CheckVehicleUpdateDetails method");
+            }
+
         }
     }
 }

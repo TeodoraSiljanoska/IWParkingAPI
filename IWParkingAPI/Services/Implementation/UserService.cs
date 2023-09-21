@@ -1,7 +1,5 @@
 ﻿using IWParkingAPI.Infrastructure.Repository;
 using IWParkingAPI.Infrastructure.UnitOfWork;
-using IWParkingAPI.Models.Context;
-using IWParkingAPI.Models.Data;
 using IWParkingAPI.Models.Requests;
 using IWParkingAPI.Services.Interfaces;
 using System.Net;
@@ -23,12 +21,14 @@ public class UserService : IUserService
     private readonly UserResponse _userDTOResponse;
     private readonly ResponseBase _response;
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
+    private readonly ILocalTimeExtension _localTime;
     private readonly IMapper _mapper;
     private readonly IJWTDecode _jWTDecode;
     private const int PageSize = 5;
     private const int PageNumber = 1;
 
-    public UserService(IUnitOfWork<ParkingDbContext> unitOfWork, IJWTDecode jWTDecode)
+    public UserService(IUnitOfWork<ParkingDbContext> unitOfWork, IJWTDecode jWTDecode,
+        ILocalTimeExtension localTime)
     {
         _unitOfWork = unitOfWork;
         _userRepository = _unitOfWork.GetGenericRepository<AspNetUser>();
@@ -37,6 +37,7 @@ public class UserService : IUserService
         _response = new ResponseBase();
         _mapper = MapperConfig.InitializeAutomapper();
         _jWTDecode = jWTDecode;
+        _localTime = localTime;
     }
 
     public AllUsersResponse GetAllUsers(int pageNumber, int pageSize)
@@ -44,22 +45,10 @@ public class UserService : IUserService
         try
         {
             var users = _userRepository.GetAsQueryable(null, null, x => x.Include(y => y.Roles)).ToList();
+            int totalPages;
+            List<AspNetUser> paginatedUsers;
 
-            if (pageNumber == 0)
-            {
-                pageNumber = PageNumber;
-            }
-            if (pageSize == 0)
-            {
-                pageSize = PageSize;
-            }
-
-            var totalCount = users.Count();
-            var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
-
-            var paginatedUsers = users.Skip((pageNumber - 1) * pageSize)
-                                                 .Take(pageSize)
-                                                 .ToList();
+            PaginateUsers(ref pageNumber, ref pageSize, users, out totalPages, out paginatedUsers);
 
             if (!paginatedUsers.Any())
             {
@@ -92,14 +81,7 @@ public class UserService : IUserService
     {
         try
         {
-            var id = Convert.ToInt32(_jWTDecode.ExtractClaimByType("Id"));
-
-            var user = _userRepository.GetAsQueryable(u => u.Id == id, null, x => x.Include(y => y.Roles)).FirstOrDefault();
-
-            if (user == null)
-            {
-                throw new NotFoundException("User not found");
-            }
+            AspNetUser? user = CheckIfUserExists();
 
             var userDto = _mapper.Map<UserDTO>(user);
 
@@ -129,26 +111,11 @@ public class UserService : IUserService
     {
         try
         {
-            var id = Convert.ToInt32(_jWTDecode.ExtractClaimByType("Id"));
-            var user = _userRepository.GetAsQueryable(u => u.Id == id, null, x => x.Include(y => y.Roles)).FirstOrDefault();
-            if (user == null || user.IsDeactivated == true)
-            {
-                throw new NotFoundException("User not found");
-            }
+            AspNetUser? user = CheckIfUserExists();
 
-            if (user.Name == changes.Name && user.Surname == changes.Surname && user.Email == changes.Email && user.PhoneNumber == changes.PhoneNumber)
-            {
-                throw new BadRequestException("No updates were entered. Please enter the updates");
-            }
+            CheckUserUpdateDetails(changes, user);
 
-            if (changes.Email != user.Email)
-            {
-                var userByUsername = _userRepository.GetAsQueryable(p => p.Email == changes.Email || p.UserName == changes.Email, null, null).FirstOrDefault();
-                if (userByUsername != null)
-                {
-                    throw new BadRequestException("User with that email already exists");
-                }
-            }
+            DateTime date = _localTime.GetLocalTime();
 
             user.Name = (user.Name == changes.Name) ? user.Name : changes.Name;
             user.Surname = (user.Surname == changes.Surname) ? user.Surname : changes.Surname;
@@ -157,7 +124,7 @@ public class UserService : IUserService
             user.PhoneNumber = (user.PhoneNumber == changes.PhoneNumber) ? user.PhoneNumber : changes.PhoneNumber;
             user.Email = (user.Email == changes.Email) ? user.Email : changes.Email;
             user.NormalizedEmail = (user.NormalizedEmail == changes.Email.ToUpper()) ? user.NormalizedEmail : changes.Email.ToUpper();
-            user.TimeModified = DateTime.Now;
+            user.TimeModified = date;
             _userRepository.Update(user);
             _unitOfWork.Save();
 
@@ -189,30 +156,13 @@ public class UserService : IUserService
             _logger.Error($"Unexpected error while updating the User {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
             throw new InternalErrorException("Unexpected error while updating the User");
         }
-
     }
 
     public ResponseBase DeactivateUser()
     {
         try
         {
-            var id = Convert.ToInt32(_jWTDecode.ExtractClaimByType("Id"));
-            if (id <= 0)
-            {
-                throw new BadRequestException("User Id is required");
-            }
-
-            var user = _userRepository.GetAsQueryable(u => u.Id == id, null, x => x.Include(y => y.Roles)).FirstOrDefault();
-
-            if (user == null)
-            {
-                throw new NotFoundException("User not found");
-            }
-
-            if (user.IsDeactivated == true)
-            {
-                throw new BadRequestException("User is already deactivated");
-            }
+            AspNetUser? user = CheckIfUserExists();
 
             user.IsDeactivated = true;
             user.TimeModified = DateTime.Now;
@@ -222,7 +172,7 @@ public class UserService : IUserService
             _response.StatusCode = HttpStatusCode.OK;
             _response.Message = "Profile successfully deactivated";
 
-            return _response;
+            return _userDTOResponse;
         }
         catch (BadRequestException ex)
         {
@@ -241,26 +191,11 @@ public class UserService : IUserService
         }
     }
 
-    public ResponseBase DeactivateUserAdmin(int id)
+    public ResponseBase DeactivateUserAdmin(int userId)
     {
         try
         {
-            if (id <= 0)
-            {
-                throw new BadRequestException("User Id is required");
-            }
-
-            var user = _userRepository.GetAsQueryable(u => u.Id == id, null, x => x.Include(y => y.Roles)).FirstOrDefault();
-
-            if (user == null)
-            {
-                throw new NotFoundException("User not found");
-            }
-
-            if (user.IsDeactivated == true)
-            {
-                throw new BadRequestException("User is already deactivated");
-            }
+            AspNetUser? user = CheckIfUserExistsAdmin(userId);
 
             user.IsDeactivated = true;
             user.TimeModified = DateTime.Now;
@@ -287,6 +222,132 @@ public class UserService : IUserService
             _logger.Error($"Unexpected error while deactivating the User {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
             throw new InternalErrorException("Unexpected error while deactivating the User");
         }
+    }
+
+    private static void PaginateUsers(ref int pageNumber, ref int pageSize, List<AspNetUser> users,
+        out int totalPages, out List<AspNetUser> paginatedUsers)
+    {
+        if (pageNumber == 0)
+        {
+            pageNumber = PageNumber;
+        }
+        if (pageSize == 0)
+        {
+            pageSize = PageSize;
+        }
+
+        var totalCount = users.Count();
+        totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+        paginatedUsers = users.Skip((pageNumber - 1) * pageSize)
+                                             .Take(pageSize)
+                                             .ToList();
+    }
+
+    private AspNetUser CheckIfUserExists()
+    {
+        try
+        {
+            var id = Convert.ToInt32(_jWTDecode.ExtractClaimByType("Id"));
+
+            if (id <= 0)
+            {
+                throw new BadRequestException("User Id is required");
+            }
+
+            var user = _userRepository.GetAsQueryable(u => u.Id == id, null, x => x.Include(y => y.Roles)).FirstOrDefault();
+
+            if (user == null || user.IsDeactivated == true)
+            {
+                throw new NotFoundException("User not found");
+            }
+
+            return user;
+        }
+        catch (BadRequestException ex)
+        {
+            _logger.Error($"Bad Request for CheckIfUserExists {Environment.NewLine}ErrorMessage: {ex.Message}");
+            throw;
+        }
+        catch (NotFoundException ex)
+        {
+            _logger.Error($"Not Found for CheckIfUserExists {Environment.NewLine}ErrorMessage: {ex.Message}");
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.Error($"Unexpected error while checking if User exists in CheckIfUserExists method" +
+                $" {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
+            throw new InternalErrorException("Unexpected error while checking if User exists in CheckIfUserExists method");
+        }
+    }
+
+    private AspNetUser CheckIfUserExistsAdmin(int id)
+    {
+        try
+        {
+            if (id <= 0)
+            {
+                throw new BadRequestException("User Id is required");
+            }
+
+            var user = _userRepository.GetAsQueryable(u => u.Id == id, null, x => x.Include(y => y.Roles)).FirstOrDefault();
+
+            if (user == null || user.IsDeactivated == true)
+            {
+                throw new NotFoundException("User not found");
+            }
+
+            return user;
+        }
+        catch (BadRequestException ex)
+        {
+            _logger.Error($"Bad Request for CheckIfUserExistsAdmin {Environment.NewLine}ErrorMessage: {ex.Message}");
+            throw;
+        }
+        catch (NotFoundException ex)
+        {
+            _logger.Error($"Not Found for CheckIfUserExistsAdmin {Environment.NewLine}ErrorMessage: {ex.Message}");
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.Error($"Unexpected error while checking if User exists from Admin in CheckIfUserExistsAdmin method" +
+                $" {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
+            throw new InternalErrorException("Unexpected error while checking if User exists from Admin in CheckIfUserExistsAdmin method");
+        }
+
+    }
+
+    private void CheckUserUpdateDetails(UpdateUserRequest changes, AspNetUser user)
+    {
+        try
+        {
+            if (user.Name == changes.Name && user.Surname == changes.Surname && user.Email == changes.Email && user.PhoneNumber == changes.PhoneNumber)
+            {
+                throw new BadRequestException("No updates were entered. Please enter the updates");
+            }
+
+            if (changes.Email != user.Email)
+            {
+                var userByUsername = _userRepository.GetAsQueryable(p => p.Email == changes.Email || p.UserName == changes.Email, null, null).FirstOrDefault();
+                if (userByUsername != null)
+                {
+                    throw new BadRequestException("User with that email already exists");
+                }
+            }
+        }
+        catch (BadRequestException ex)
+        {
+            _logger.Error($"Bad Request for CheckUserUpdateDetails {Environment.NewLine}ErrorMessage: {ex.Message}");
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.Error($"Unexpected error while checking User update details in CheckUserUpdateDetails method" +
+                $" {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
+            throw new InternalErrorException("Unexpected error while checking User update details in CheckUserUpdateDetails method");
+        }
+
     }
 }
 

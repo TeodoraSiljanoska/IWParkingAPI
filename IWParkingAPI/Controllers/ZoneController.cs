@@ -21,7 +21,6 @@ namespace IWParkingAPI.Controllers
             _zoneService = zoneService;
         }
 
-        [AuthorizeCustom(UserRoles.SuperAdmin, UserRoles.Owner, UserRoles.User)]
         [HttpGet("GetAll")]
         public AllZonesResponse GetAll()
         {

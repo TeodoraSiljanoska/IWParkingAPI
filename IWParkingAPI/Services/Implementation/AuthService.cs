@@ -1,8 +1,6 @@
 ﻿using AutoMapper;
 using IWParkingAPI.CustomExceptions;
 using IWParkingAPI.Mappers;
-using IWParkingAPI.Models;
-using IWParkingAPI.Models.Context;
 using IWParkingAPI.Models.Data;
 using IWParkingAPI.Models.Requests;
 using IWParkingAPI.Models.Responses;
@@ -41,17 +39,7 @@ namespace IWParkingAPI.Services.Implementation
         {
             try
             {
-                var user = await _userManager.FindByNameAsync(request.Email);
-                if (user != null)
-                {
-                    throw new BadRequestException("User already exists");
-                }
-
-                var role = await _roleManager.FindByNameAsync(request.Role);
-                if (role == null)
-                {
-                    throw new BadRequestException("Role with that name doesn't exist");
-                }
+                await CheckUserRegisterDetails(request);
 
                 var newUser = _mapper.Map<ApplicationUser>(request);
                 newUser.TimeCreated = DateTime.Now;
@@ -90,22 +78,7 @@ namespace IWParkingAPI.Services.Implementation
         {
             try
             {
-                var user = await _userManager.FindByNameAsync(model.Email);
-
-                if (user == null)
-                {
-                    throw new BadRequestException("User with that email doesn't exist");
-                }
-
-                if (user.IsDeactivated == true)
-                {
-                    throw new BadRequestException("User is deactivated");
-                }
-
-                if (!await _userManager.CheckPasswordAsync(user, model.Password))
-                {
-                    throw new UnauthorizedException("Password isn't correct");
-                }
+                ApplicationUser user = await CheckUserLoginDetails(model);
 
                 // authentication successful so generate jwt token
                 return await _jwtUtils.GenerateToken(user);
@@ -131,28 +104,12 @@ namespace IWParkingAPI.Services.Implementation
         {
             try
             {
-                var user = await _userManager.FindByNameAsync(model.Email);
-               // var userAspNet = _userRepository.GetAsQueryable(x => x.Email.Equals(model.Email), null, x => x.Include(y => y.Roles)).FirstOrDefault();
-                if (user == null)
-                {
-                    throw new BadRequestException("User with that email doesn't exist");
-                }
-
-                var checkOldPass = await _signInManager.PasswordSignInAsync(user.Email, model.OldPassword, false, false);
-                if (!checkOldPass.Succeeded)
-                {
-                    throw new BadRequestException("The old password isn't correct");
-                }
+                ApplicationUser user = await CheckChangePasswordDetails(model);
 
                 string resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
                 if (string.IsNullOrEmpty(resetToken))
                 {
                     throw new InternalErrorException("Unexpected error while generating reset token");
-                }
-
-                if (model.NewPassword == model.OldPassword || model.ConfirmNewPassword == model.OldPassword)
-                {
-                    throw new BadRequestException("No updates were entered. Please enter the updates");
                 }
 
                 var result = await _userManager.ResetPasswordAsync(user, resetToken, model.NewPassword);
@@ -189,23 +146,7 @@ namespace IWParkingAPI.Services.Implementation
         {
             try
             {
-                var user = await _userManager.FindByNameAsync(model.OldEmail);
-
-                if (user == null)
-                {
-                    throw new BadRequestException("User with that email doesn't exist");
-                }
-
-                if (user.Email != model.OldEmail)
-                {
-                    throw new BadRequestException("The old email is incorrect");
-                }
-
-                var userWithThatUsername = await _userManager.FindByNameAsync(model.NewEmail);
-                if (userWithThatUsername != null)
-                {
-                    throw new BadRequestException("Email is already taken");
-                }
+                ApplicationUser user = await CheckChangeEmailDetails(model);
 
                 user.Email = model.NewEmail;
                 user.NormalizedEmail = model.NewEmail.ToUpper();
@@ -239,6 +180,158 @@ namespace IWParkingAPI.Services.Implementation
                 _logger.Error($"Unexpected error while changing the email {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
                 throw new InternalErrorException("Unexpected error while changing the email");
             }
+        }
+
+        private async Task CheckUserRegisterDetails(UserRegisterRequest request)
+        {
+            try
+            {
+                var user = await _userManager.FindByNameAsync(request.Email);
+                if (user != null)
+                {
+                    throw new BadRequestException("User already exists");
+                }
+
+                var role = await _roleManager.FindByNameAsync(request.Role);
+                if (role == null)
+                {
+                    throw new BadRequestException("Role with that name doesn't exist");
+                }
+            }
+            catch (BadRequestException ex)
+            {
+                _logger.Error($"Bad Request for CheckUserRegisterDetails {Environment.NewLine}ErrorMessage: {ex.Message}");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.Error($"Unexpected error while checking if the User and Role exist in the RegisterUser method " +
+                    $"{Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
+                throw new InternalErrorException("Unexpected error while checking if the User and Role exist in the RegisterUser method");
+            }
+        }
+
+        private async Task<ApplicationUser> CheckUserLoginDetails(UserLoginRequest model)
+        {
+            try
+            {
+                var user = await _userManager.FindByNameAsync(model.Email);
+
+                if (user == null)
+                {
+                    throw new BadRequestException("User with that email doesn't exist");
+                }
+
+                if (user.IsDeactivated == true)
+                {
+                    throw new BadRequestException("User is deactivated");
+                }
+
+                if (!await _userManager.CheckPasswordAsync(user, model.Password))
+                {
+                    throw new UnauthorizedException("Password isn't correct");
+                }
+
+                return user;
+            }
+            catch (BadRequestException ex)
+            {
+                _logger.Error($"Bad Request for CheckUserLoginDetails {Environment.NewLine}ErrorMessage: {ex.Message}");
+                throw;
+            }
+            catch (UnauthorizedException ex)
+            {
+                _logger.Error($"Unauthorized for CheckUserLoginDetails {Environment.NewLine}ErrorMessage: {ex.Message}");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.Error($"Unexpected error while checking User Login Details {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
+                throw new InternalErrorException("Unexpected error while checking User Login Details");
+            }
+        }
+
+        private async Task<ApplicationUser> CheckChangePasswordDetails(UserResetPasswordRequest model)
+        {
+            try
+            {
+                var user = await _userManager.FindByNameAsync(model.Email);
+                if (user == null)
+                {
+                    throw new BadRequestException("User with that email doesn't exist");
+                }
+
+                var checkOldPass = await _signInManager.PasswordSignInAsync(user.Email, model.OldPassword, false, false);
+                if (!checkOldPass.Succeeded)
+                {
+                    throw new BadRequestException("The old password isn't correct");
+                }
+
+                if (model.NewPassword == model.OldPassword || model.ConfirmNewPassword == model.OldPassword)
+                {
+                    throw new BadRequestException("No updates were entered. Please enter the updates");
+                }
+
+                return user;
+            }
+            catch (BadRequestException ex)
+            {
+                _logger.Error($"Bad Request for CheckChangePasswordDetails {Environment.NewLine}ErrorMessage: {ex.Message}");
+                throw;
+            }
+            catch (InternalErrorException ex)
+            {
+                _logger.Error($"Internal Error for CheckChangePasswordDetails {Environment.NewLine}ErrorMessage: {ex.Message}");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.Error($"Unexpected error while checking Change Password Details {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
+                throw new InternalErrorException("Unexpected error while checking Change Password Details");
+            }
+
+        }
+
+        private async Task<ApplicationUser> CheckChangeEmailDetails(UserChangeEmailRequest model)
+        {
+            try
+            {
+                var user = await _userManager.FindByNameAsync(model.OldEmail);
+
+                if (user == null)
+                {
+                    throw new BadRequestException("User with that email doesn't exist");
+                }
+
+                if (user.Email != model.OldEmail)
+                {
+                    throw new BadRequestException("The old email is incorrect");
+                }
+
+                var userWithThatUsername = await _userManager.FindByNameAsync(model.NewEmail);
+                if (userWithThatUsername != null)
+                {
+                    throw new BadRequestException("Email is already taken");
+                }
+
+                return user;
+            }
+            catch (BadRequestException ex)
+            {
+                _logger.Error($"Bad Request for CheckChangeEmailDetails {Environment.NewLine}ErrorMessage: {ex.Message}");
+                throw;
+            }
+            catch (InternalErrorException ex)
+            {
+                _logger.Error($"Internal Error for CheckChangeEmailDetails {Environment.NewLine}ErrorMessage: {ex.Message}");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.Error($"Unexpected error while checking Change Email details {Environment.NewLine}ErrorMessage: {ex.Message}", ex.StackTrace);
+                throw new InternalErrorException("Unexpected error while checking Change Email details");
+            }
+
         }
     }
 }

@@ -49,6 +49,7 @@ namespace IWParkingAPI
             services.AddScoped<ICalculateCapacityExtension, CalculateCapacityExtension>();
             services.AddScoped<IReservationService, ReservationService>();
             services.AddScoped(typeof(IEnumsExtension<>), typeof(EnumsExtension<>));
+            services.AddScoped<ILocalTimeExtension, LocalTimeExtension>();
             services.AddAutoMapper(typeof(Startup));
             services.AddControllers();
 
