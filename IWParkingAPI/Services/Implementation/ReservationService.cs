@@ -65,9 +65,8 @@ namespace IWParkingAPI.Services.Implementation
                 orderBy: q => q.OrderBy(x => x),
                 include: x => x.Include(y => y.ParkingLot).Include(y => y.Vehicle),
                 orderProperty: x => x.TimeCreated,
-                isDescending: true
-            );
-                var reservations = _reservationRepository.GetAsQueryable(x => x.UserId == int.Parse(userId));
+                isDescending: true);
+
                 int totalPages;
                 List<Reservation> paginatedReservations;
                 PaginateReservations(ref pageNumber, ref pageSize, reservations, out totalPages, out paginatedReservations);
