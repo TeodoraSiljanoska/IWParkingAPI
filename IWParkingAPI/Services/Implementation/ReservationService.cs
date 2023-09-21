@@ -29,11 +29,13 @@ namespace IWParkingAPI.Services.Implementation
         private readonly ReservationResponse _reservationResponse;
         private readonly AllReservationsResponse _allReservationsResponse;
         private readonly IEnumsExtension<Enums.VehicleTypes> _enumsExtensionVehicleTypes;
+        private readonly ILocalTimeExtension _localTime;
         private const int PageSize = 5;
         private const int PageNumber = 1;
 
         public ReservationService(IUnitOfWork<ParkingDbContext> unitOfWork, IJWTDecode jWTDecode,
-            ICalculateCapacityExtension calculateCapacityExtension, IEnumsExtension<Enums.VehicleTypes> enumsExtension)
+            ICalculateCapacityExtension calculateCapacityExtension, IEnumsExtension<Enums.VehicleTypes> enumsExtension,
+            ILocalTimeExtension localTime)
         {
             _mapper = MapperConfig.InitializeAutomapper();
             _unitOfWork = unitOfWork;
@@ -45,6 +47,7 @@ namespace IWParkingAPI.Services.Implementation
             _reservationResponse = new ReservationResponse();
             _allReservationsResponse = new AllReservationsResponse();
             _enumsExtensionVehicleTypes = enumsExtension;
+            _localTime = localTime;
         }
 
         public AllReservationsResponse GetUserReservations(int pageNumber, int pageSize)
@@ -117,12 +120,13 @@ namespace IWParkingAPI.Services.Implementation
                 TimeSpan reservationEndTime;
                 TimeSpan.TryParse(request.StartTime, out reservationStartTime);
                 TimeSpan.TryParse(request.EndTime, out reservationEndTime);
-                
+
+                DateTime date = _localTime.GetLocalTime();
 
                 DateTime reservationStartDateTime = request.StartDate.Date.Add(reservationStartTime);
                 DateTime reservationEndDateTime = request.EndDate.Date.Add(reservationEndTime);
-                if (reservationStartDateTime <= DateTime.Now || reservationEndDateTime <= DateTime.Now ||
-                    reservationEndDateTime <= reservationStartDateTime)
+                if (reservationStartDateTime <= date || reservationEndDateTime <= date ||
+                   reservationEndDateTime <= reservationStartDateTime)
                 {
                     throw new BadRequestException("Please enter valid date and time range to make a reservation");
                 }
@@ -199,7 +203,9 @@ namespace IWParkingAPI.Services.Implementation
                 DateTime reservationEndDateTime = reservation.EndDate.Add(reservation.EndTime);
                 DateTime reservationExtendedEndDateTime = request.EndDate.Add(reservationExtendedEndTime);
 
-                if (reservationEndDateTime < DateTime.Now)
+                DateTime date = _localTime.GetLocalTime();
+
+                if (reservationEndDateTime < date)
                 {
                     throw new BadRequestException("Can't extend this reservation, because it has already finished");
                 }
@@ -253,7 +259,8 @@ namespace IWParkingAPI.Services.Implementation
                     throw new BadRequestException("Reservation is already cancelled");
                 }
 
-                DateTime dateTimeNow = DateTime.Now;
+                DateTime date = _localTime.GetLocalTime();
+                DateTime dateTimeNow = date;
                 DateTime reservationStartDateTime = reservation.StartDate.Add(reservation.StartTime);
                 DateTime reservationEndDateTime = reservation.EndDate.Add(reservation.EndTime);
                 TimeSpan timeNow = dateTimeNow.TimeOfDay;
@@ -266,8 +273,9 @@ namespace IWParkingAPI.Services.Implementation
                 {
                     throw new BadRequestException("Can't cancel this reservation, because it has already started");
                 }
+
                 reservation.Type = Enums.ReservationTypes.Cancelled.ToString();
-                reservation.TimeModified = DateTime.Now;
+                reservation.TimeModified = date;
                 _reservationRepository.Update(reservation);
                 _unitOfWork.Save();
 
@@ -372,7 +380,10 @@ namespace IWParkingAPI.Services.Implementation
             double totalPrice = CalculatePrice(parkingLot, reservationStartDateTime, reservation.EndDate.Add(reservation.EndTime));
             totalPrice = Math.Ceiling(totalPrice);
             reservation.Amount = (int)totalPrice;
-            reservation.TimeModified = DateTime.Now;
+
+            DateTime date = _localTime.GetLocalTime();
+
+            reservation.TimeModified = date;
             _reservationRepository.Update(reservation);
             _unitOfWork.Save();
 
@@ -399,7 +410,10 @@ namespace IWParkingAPI.Services.Implementation
             reservation.UserId = int.Parse(userId);
             reservation.ParkingLotId = parkingLot.Id;
             reservation.VehicleId = selectedVehicle.Id;
-            reservation.TimeCreated = DateTime.Now;
+
+            DateTime date = _localTime.GetLocalTime();
+
+            reservation.TimeCreated = date;
 
             var reservationToInsert = _mapper.Map<Reservation>(reservation);
             _reservationRepository.Insert(reservationToInsert);

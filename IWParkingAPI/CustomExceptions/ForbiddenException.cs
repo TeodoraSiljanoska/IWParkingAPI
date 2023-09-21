@@ -1,4 +1,9 @@
-﻿namespace IWParkingAPI.CustomExceptions
+﻿
+
+
+
+
+namespace IWParkingAPI.CustomExceptions
 {
     public class ForbiddenException : ApplicationException
     {
