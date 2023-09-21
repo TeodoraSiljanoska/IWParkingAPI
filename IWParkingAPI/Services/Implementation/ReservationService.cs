@@ -60,7 +60,13 @@ namespace IWParkingAPI.Services.Implementation
                     throw new BadRequestException("Please login to make a reservation");
                 }
 
-                var reservations = _reservationRepository.GetAsQueryable(x => x.UserId == int.Parse(userId));
+                var reservations = _reservationRepository.GetAsQueryable(
+                x => x.UserId == int.Parse(userId),
+                orderBy: q => q.OrderBy(x => x),
+                include: x => x.Include(y => y.ParkingLot).Include(y => y.Vehicle),
+                orderProperty: x => x.TimeCreated,
+                isDescending: true);
+
                 int totalPages;
                 List<Reservation> paginatedReservations;
                 PaginateReservations(ref pageNumber, ref pageSize, reservations, out totalPages, out paginatedReservations);
@@ -195,9 +201,9 @@ namespace IWParkingAPI.Services.Implementation
                 }
                 var parkingLot = _parkingLotRepository.GetAsQueryable(x => x.Id == reservation.ParkingLotId &&
                 x.IsDeactivated == false, null, null).FirstOrDefault();
-                
+
                 TimeSpan reservationExtendedEndTime;
-                TimeSpan.TryParse(request.EndTime, out reservationExtendedEndTime); 
+                TimeSpan.TryParse(request.EndTime, out reservationExtendedEndTime);
 
                 DateTime reservationStartDateTime = reservation.StartDate.Add(reservation.StartTime);
                 DateTime reservationEndDateTime = reservation.EndDate.Add(reservation.EndTime);

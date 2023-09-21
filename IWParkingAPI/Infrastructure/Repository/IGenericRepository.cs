@@ -13,9 +13,11 @@ namespace IWParkingAPI.Infrastructure.Repository
         void Save();
         bool FindByPredicate(Func<TEntity, bool> predicate);
 
-       IQueryable<TEntity> GetAsQueryable(
-           Expression<Func<TEntity, bool>>? filter = null,
-           Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
-           Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object>>? include = null);
+        IQueryable<TEntity> GetAsQueryable(
+            Expression<Func<TEntity, bool>>? filter = null,
+            Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
+            Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object>>? include = null,
+            Expression<Func<TEntity, object>>? orderProperty = null,
+            bool isDescending = false);
     }
 }

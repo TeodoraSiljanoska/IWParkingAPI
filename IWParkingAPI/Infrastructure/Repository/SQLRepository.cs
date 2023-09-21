@@ -53,7 +53,9 @@ namespace IWParkingAPI.Infrastructure.Repository
        public virtual IQueryable<TEntity> GetAsQueryable(
            Expression<Func<TEntity, bool>>? filter = null,
            Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
-           Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object>>? include = null)
+           Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object>>? include = null,
+           Expression<Func<TEntity, object>>? orderProperty = null,
+           bool isDescending = false)
         {
             IQueryable<TEntity> query = _db;
 
@@ -67,9 +69,16 @@ namespace IWParkingAPI.Infrastructure.Repository
                 query = include(query);
             }
 
-            if(orderBy != null)
+            if (orderBy != null)
             {
-                return orderBy(query);
+                if (isDescending)
+                {
+                    return orderBy(query).OrderByDescending(orderProperty);
+                }
+                else
+                {
+                    return orderBy(query).OrderBy(orderProperty);
+                }
             }
 
             else
