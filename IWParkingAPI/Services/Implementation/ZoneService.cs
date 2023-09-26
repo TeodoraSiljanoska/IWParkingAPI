@@ -34,7 +34,9 @@ namespace IWParkingAPI.Services.Implementation
         {
             try
             {
-                var zones = _zoneRepository.GetAll();
+                var zones = _zoneRepository.GetAsQueryable(null,
+                orderBy: q => q.OrderBy(x => x), null,
+                orderProperty: x => x.Name);
                 if (zones.Count() == 0)
                 {
                     _getResponse.StatusCode = HttpStatusCode.NoContent;
