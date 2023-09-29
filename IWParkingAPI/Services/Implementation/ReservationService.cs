@@ -334,7 +334,7 @@ namespace IWParkingAPI.Services.Implementation
 
         }
 
-        private static Vehicle CheckIfVehicleIsValid(MakeReservationRequest request, AspNetUser? user)
+        public static Vehicle CheckIfVehicleIsValid(MakeReservationRequest request, AspNetUser? user)
         {
             try
             {
@@ -551,7 +551,7 @@ namespace IWParkingAPI.Services.Implementation
             return priceToReturn;
         }
 
-        private void ValidateDateTimeRange(ParkingLot parkingLot, DateTime reservationStartDateTime, DateTime reservationEndDateTime)
+        public void ValidateDateTimeRange(ParkingLot parkingLot, DateTime reservationStartDateTime, DateTime reservationEndDateTime)
         {
             try
             {

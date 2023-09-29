@@ -1,6 +1,10 @@
-﻿using IWParkingAPI.Models.Data;
+﻿using IWParkingAPI.Infrastructure.Repository;
+using IWParkingAPI.Infrastructure.UnitOfWork;
+using IWParkingAPI.Models;
+using IWParkingAPI.Models.Data;
 using IWParkingAPI.Models.Responses;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Net;
@@ -16,17 +20,24 @@ namespace IWParkingAPI.Utilities
         private readonly UserLoginResponse userLoginResponse;
         private readonly TokenValidationResponse tokenValidationResponse;
         private readonly string secretKey;
-     
+        private readonly IJWTDecode _jwtDecode;
+        private readonly IGenericRepository<AspNetUser> _userRepository;
+        private readonly IGenericRepository<AspNetRole> _roleRepository;
+        private readonly IUnitOfWork<ParkingDbContext> _unitOfWork;
 
-       
-        public JwtUtils(IConfiguration configuration, UserManager<ApplicationUser> userManager)
+
+        public JwtUtils(IConfiguration configuration, UserManager<ApplicationUser> userManager,
+            IJWTDecode jwtDecode, IUnitOfWork<ParkingDbContext> unitOfWork)
         {
+            _unitOfWork = unitOfWork;
+            _userRepository = _unitOfWork.GetGenericRepository<AspNetUser>();
+            _roleRepository = _unitOfWork.GetGenericRepository<AspNetRole>();
             _config = configuration;
             _userManager = userManager;
             userLoginResponse = new UserLoginResponse();
             tokenValidationResponse = new TokenValidationResponse();
             secretKey = _config["Jwt:Key"];
-
+            _jwtDecode = jwtDecode;
         }
         public async Task<UserLoginResponse> GenerateToken(ApplicationUser user)
         {
@@ -89,6 +100,23 @@ namespace IWParkingAPI.Utilities
                     ClockSkew = TimeSpan.Zero // Optional: Adjust the tolerance for expired tokens
                 }, out SecurityToken validatedToken);
 
+
+                var userIdFromClaims = _jwtDecode.ExtractClaimByType("Id");
+                var roleFromClaims = _jwtDecode.ExtractClaimByType("Role");
+
+                var applicationUser = _userRepository.GetAsQueryable(x => x.Id == int.Parse(userIdFromClaims),
+                    null, x => x.Include(y => y.Roles)).FirstOrDefault();
+
+                var role = _roleRepository.GetAsQueryable(x => x.Name == roleFromClaims.ToString()).FirstOrDefault();
+                if (applicationUser == null || role == null || !applicationUser.Roles.Contains(role))
+
+                {
+                    tokenValidationResponse.StatusCode = HttpStatusCode.BadRequest;
+                    tokenValidationResponse.Message = "Token authentication validation failed";
+                    tokenValidationResponse.IsValid = false;
+                    return tokenValidationResponse;
+                }
+
                 tokenValidationResponse.StatusCode = HttpStatusCode.OK;
                 tokenValidationResponse.Message = "Token authentication validation is successful";
                 tokenValidationResponse.IsValid = true;
@@ -104,3 +132,4 @@ namespace IWParkingAPI.Utilities
         }
     }
 }
+
